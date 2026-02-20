@@ -1,0 +1,11 @@
+services:
+  konvertHR-saas-frontend:
+    image: konverthr-saas-frontend
+    container_name: konvertHR-saas-frontend-container
+    # env_file:
+    #   - .env.development
+    build: .
+    ports:
+      - "3002:3002"
+    restart: always
+    # scale: 3
