@@ -49,21 +49,22 @@ const LeaveRequestKHR = () => {
     setLoading(true);
     try {
       const result = await getLeaveRequests();
-      const safeResult = Array.isArray(result.data.data)
-        ? result.data?.data
+      const safeResult = Array.isArray(result.data?.data)
+        ? result.data.data
         : [];
 
-      // Extract raw data
       const mappedData = safeResult.map((item: any) => ({
-        id: item.id,
-        employee_name: item.employee_name || item.employee_id,
-        company_name: item.company_name || item.company_id,
-        department_name: item.department_name || item.department_id,
+        // Map API request_id to id for the table and modal
+        id: item.request_id,
+        employee_name: item.employee_name,
+        leave_type_id: item.leave_type_id,
         leave_type: item.leave_type_name,
-        // Map dates from validity object
-        from_date: item?.from,
-        to_date: item?.to,
-        status: item.status, // Keep raw status for mapping logic
+        // Pass the raw ISO strings directly
+        from_date: item.from,
+        to_date: item.to,
+        status: item.status,
+        no_of_days: item.days,
+        reason: item.reason,
       }));
 
       setData(mappedData);
@@ -161,7 +162,7 @@ const LeaveRequestKHR = () => {
             data-bs-toggle="modal"
             data-bs-target="#add_leave_request"
             onClick={() => {
-              setSelectedPolicy(record);
+              setSelectedPolicy({ ...record });
               const jq = (window as any).jQuery || (window as any).$;
               if (jq && jq("#add_leave_request").modal) {
                 try {

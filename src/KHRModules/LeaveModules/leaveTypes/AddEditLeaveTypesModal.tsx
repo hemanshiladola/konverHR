@@ -32,6 +32,14 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
   const [leaveTypeCode, setLeaveTypeCode] = useState<string>("");
   const [leaveCategory, setLeaveCategory] = useState<string>("");
   const [requestUnit, setRequestUnit] = useState<string>("half_day");
+
+  const [eligibleAfter, setEligibleAfter] = useState<string>("");
+  const [eligibleAfterDays, setEligibleAfterDays] = useState<number | string>(
+    "",
+  );
+  const [employeeCategory, setEmployeeCategory] = useState<string>("");
+  const [genderRestriction, setGenderRestriction] = useState<string>("");
+
   const [includePublicHolidaysInDuration, setIncludePublicHolidaysInDuration] =
     useState<boolean>(true);
   const [overtimeDeductible, setOvertimeDeductible] = useState<boolean>(false);
@@ -49,6 +57,25 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
     { value: "statutory", label: "Statutory" },
     { value: "non_statutory", label: "Non Statutory" },
     { value: "custom", label: "Custom" },
+  ];
+
+  const eligibleAfterOptions = [
+    { value: "joining", label: "Days After Joining" },
+    { value: "confirmation", label: "Confirmation Date" },
+  ];
+
+  const employeeCategoryOptions = [
+    { value: "staff", label: "Staff" },
+    { value: "contract", label: "Contract" },
+    { value: "intern", label: "Intern" },
+  ];
+
+  const genderRestrictionOptions = [
+    { value: "na", label: "Not Applicable" },
+    { value: "all", label: "All" },
+    { value: "female", label: "Female" },
+    { value: "male", label: "Male" },
+    { value: "other", label: "Other" },
   ];
 
   const validationOptions = [
@@ -85,6 +112,12 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
       setResponsibleIds(data.responsible_ids || []);
       setLeaveTypeCode(data.leave_type_code || "");
       setLeaveCategory(data.leave_category || "");
+
+      setEligibleAfter(data.eligiable_after || "");
+      setEligibleAfterDays(data.eligiable_after_days || "");
+      setEmployeeCategory(data.employee_category || "");
+      setGenderRestriction(data.gender_restrication || "");
+
       setRequestUnit(data.request_unit || "half_day");
       setIncludePublicHolidaysInDuration(
         data.include_public_holidays_in_duration ?? true,
@@ -103,6 +136,10 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
     setRequiresAllocation("");
     setEmployeeRequests("");
     setResponsibleIds([]);
+    setEligibleAfter("");
+    setEligibleAfterDays("");
+    setEmployeeCategory("");
+    setGenderRestriction("");
     setLeaveTypeCode("");
     setLeaveCategory("");
     setRequestUnit("half_day");
@@ -157,6 +194,10 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
         include_public_holidays_in_duration: includePublicHolidaysInDuration,
         overtime_deductible: overtimeDeductible,
         is_earned_leave: isEarnedLeave,
+        eligiable_after: eligibleAfter || undefined,
+        eligiable_after_days: eligibleAfterDays ? Number(eligibleAfterDays) : 0,
+        employee_category: employeeCategory || undefined,
+        gender_restrication: genderRestriction || undefined,
       };
 
       if (data && data.id) {
@@ -293,9 +334,64 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                   )}
                 </div>
               </div>
+              {/* Eligible After (NEW) */}
+              <div className="col-md-6">
+                <label className="form-label fs-13 fw-bold">
+                  Eligibility Based On
+                </label>
+                <CommonSelect
+                  options={eligibleAfterOptions}
+                  value={eligibleAfterOptions.find(
+                    (o) => o.value === eligibleAfter,
+                  )}
+                  onChange={(opt) => setEligibleAfter(opt?.value || "")}
+                />
+              </div>
+
+              {/* Days Required (NEW) */}
+              <div className="col-md-6">
+                <label className="form-label fs-13 fw-bold">
+                  Wait Period (Days)
+                </label>
+                <input
+                  type="number"
+                  className="form-control"
+                  value={eligibleAfterDays}
+                  onChange={(e) => setEligibleAfterDays(e.target.value)}
+                  placeholder="Enter days"
+                />
+              </div>
+
+              {/* Employee Category (NEW) */}
+              <div className="col-md-6">
+                <label className="form-label fs-13 fw-bold">
+                  Applicable Employee Category
+                </label>
+                <CommonSelect
+                  options={employeeCategoryOptions}
+                  value={employeeCategoryOptions.find(
+                    (o) => o.value === employeeCategory,
+                  )}
+                  onChange={(opt) => setEmployeeCategory(opt?.value || "")}
+                />
+              </div>
+
+              {/* Gender Restriction (NEW) */}
+              <div className="col-md-6">
+                <label className="form-label fs-13 fw-bold">
+                  Gender Applicability
+                </label>
+                <CommonSelect
+                  options={genderRestrictionOptions}
+                  value={genderRestrictionOptions.find(
+                    (o) => o.value === genderRestriction,
+                  )}
+                  onChange={(opt) => setGenderRestriction(opt?.value || "")}
+                />
+              </div>
 
               {/* 4. LEAVE VALIDATION (Common Select) */}
-              <div className="col-md-6">
+              {/* <div className="col-md-6">
                 <div className="form-group">
                   <label className="form-label fs-13">
                     Leave Validation Type
@@ -309,10 +405,10 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                     onChange={(opt) => setLeaveValidationType(opt?.value || "")}
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* 5. ALLOCATION VALIDATION (Common Select) */}
-              <div className="col-md-6">
+              {/* <div className="col-md-6">
                 <div className="form-group">
                   <label className="form-label fs-13">
                     Allocation Validation Type
@@ -328,10 +424,10 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                     }
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* 6. REQUIRES ALLOCATION (Common Select) */}
-              <div className="col-md-6">
+              {/* <div className="col-md-6">
                 <div className="form-group">
                   <label className="form-label fs-13">
                     Requires Allocation
@@ -345,10 +441,10 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                     onChange={(opt) => setRequiresAllocation(opt?.value || "")}
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* 7. EMPLOYEE REQUESTS (Common Select) */}
-              <div className="col-md-6">
+              {/* <div className="col-md-6">
                 <div className="form-group">
                   <label className="form-label fs-13">Employee Requests</label>
                   <CommonSelect
@@ -360,12 +456,12 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                     onChange={(opt) => setEmployeeRequests(opt?.value || "")}
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* 8. REQUEST UNIT (Common Select) */}
-              <div className="col-md-6">
+              {/* <div className="col-md-6">
                 <div className="form-group">
-                  <label className="form-label fs-13">Request Unit</label>
+                  <label className="form-label fs-13">Take Leave In</label>
                   <CommonSelect
                     options={unitOptions}
                     placeholder="Select Unit"
@@ -373,7 +469,7 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                     onChange={(opt) => setRequestUnit(opt?.value || "half_day")}
                   />
                 </div>
-              </div>
+              </div> */}
 
               {/* 9. RESPONSIBLE IDs (Number Input) */}
               {/* <div className="col-md-6">
@@ -394,7 +490,7 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
               </div> */}
 
               {/* 10. CHECKBOXES */}
-              <div className="col-md-12 mt-4">
+              {/* <div className="col-md-12 mt-4">
                 <div className="row g-3 p-3 bg-light rounded border border-dashed mx-0">
                   <div className="col-md-4">
                     <div className="form-check">
@@ -454,7 +550,7 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* FOOTER */}

@@ -51,8 +51,8 @@ const JobPosition = () => {
       const mapped = rawArray.map((item: any) => ({
         ...item,
         // Using job_id from your specific JSON object
-        id: String(item.job_id),
-        key: String(item.job_id),
+        id: String(item.id),
+        key: String(item.id),
         // Ensuring strings for display
         name: item.name || "N/A",
         department_name: item.department_name || "-",
@@ -448,7 +448,7 @@ const JobPosition = () => {
             className="me-2"
             data-bs-toggle="modal"
             data-bs-target="#add_job_modal"
-            onClick={() => setSelectedJob(record)}
+            onClick={() => setSelectedJob({ ...record })}
           >
             <i className="ti ti-edit text-primary" />
           </Link>

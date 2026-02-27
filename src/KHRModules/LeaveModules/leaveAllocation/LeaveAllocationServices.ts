@@ -21,11 +21,11 @@ export const getLeaveAllocations = async (): Promise<any> => {
       headers: { Authorization: getToken() },
     };
 
-    const response = await Instance.get("/api/leave-allocate", config);
+    const response = await Instance.get("/api/get/leave_allocations", config);
 
     // Based on your JSON: { status: "success", data: { count: 9523, allocations: [...] } }
     // We return the 'data' object so the component can access 'allocations'
-    return response.data?.data || { allocations: [], count: 0 };
+    return response.data.data || { allocations: [], count: 0 };
   } catch (error: any) {
     console.error("Error fetching leave allocations:", error);
     return { allocations: [], count: 0 };
@@ -34,7 +34,7 @@ export const getLeaveAllocations = async (): Promise<any> => {
 
 export const approveRefuseLeaveAllocation = async (
   allocationId: number,
-  action: "approve" | "refuse"
+  action: "approve" | "refuse",
 ) => {
   try {
     const data = {
@@ -50,26 +50,26 @@ export const approveRefuseLeaveAllocation = async (
   } catch (error: any) {
     console.error(
       `Error performing ${action}:`,
-      error.response?.data ?? error.message
+      error.response?.data ?? error.message,
     );
     throw error;
   }
 };
 
 export const createLeaveAllocation = async (data: any) => {
-  return await Instance.post("/api/create/leave-allocate", data, {
+  return await Instance.post("/api/create/leave_allocation", data, {
     params: { user_id: getUserId() },
   });
 };
 
 export const updateLeaveAllocation = async (id: number, data: any) => {
-  return await Instance.put(`/api/leave-allocation/${id}`, data, {
+  return await Instance.put(`/api/update/leave_allocation/${id}`, data, {
     params: { user_id: getUserId() },
   });
 };
 
 export const deleteLeaveAllocation = async (id: number) => {
-  return await Instance.delete(`/api/leave-allocation/${id}`, {
+  return await Instance.delete(`/api/delete/leave_allocation/${id}`, {
     params: { user_id: getUserId() },
   });
 };

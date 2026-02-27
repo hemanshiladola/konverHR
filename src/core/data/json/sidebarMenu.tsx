@@ -56,7 +56,7 @@ const rawSidebarData = [
           { label: "Department", link: routes.departmentsKHR },
           { label: "Designation", link: routes.jobPositionsKHR },
           { label: "Branch", link: routes.branchKHR },
-          // { label: "Work Location", link: routes.workLocationKHR },
+          { label: "Work Location", link: routes.workLocationKHR },
           { label: "Working Schedule", link: routes.workingScheduleKHR },
           { label: "Work Entry Type", link: routes.workEntryTypeKHR },
           { label: "Skills", link: routes.skillsKHR },
@@ -65,7 +65,7 @@ const rawSidebarData = [
           // { label: "Bank Account", link: routes.banksAccountKHR },
           { label: "HR Contract Type ", link: routes.hrContractTypeKHR },
           { label: "Expense Category", link: routes.expenseCategoryKHR },
-          // { label: "Accrural Plan", link: routes.accruralPlanKHR },
+          { label: "Accrural Plan", link: routes.accruralPlanKHR },
         ],
       },
     ],
@@ -212,13 +212,13 @@ const rawSidebarData = [
     ],
   },
   {
-    tittle: "Calender",
+    tittle: "Calendar",
     icon: "airplay",
     showAsTab: true,
     separateRoute: false,
     submenuItems: [
       {
-        label: "Calender",
+        label: "Calendar",
         link: routes.employeeCalenderKHR,
         submenu: false,
         icon: "calendar",

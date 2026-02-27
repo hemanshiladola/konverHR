@@ -32,7 +32,7 @@ const getUserId = () => {
 
 export const getEmployees = async () => {
   try {
-    const response = await Instance.get("/employee/employees", {
+    const response = await Instance.get("/api/employees", {
       params: { user_id: getUserId() },
     });
     return response.data.data || response.data || [];
@@ -96,7 +96,7 @@ export const getEmployees = async () => {
 
 export const getEmployeesBasicInfo = async () => {
   try {
-    const response = await Instance.get("/employee/employees-basic-info", {
+    const response = await Instance.get("/api/employees/basic-info", {
       params: { user_id: getUserId() },
     });
     return response.data.data || response.data || [];
@@ -113,7 +113,9 @@ export const getApprovalGroups = async () => {
   try {
     // Calling: http://localhost:4000/api/groups
     // Note: If Instance base URL is different, use the full URL: await Instance.get("http://localhost:4000/api/groups")
-    const response = await Instance.get("/api/groups");
+    const response = await Instance.get("/api/get_group_list", {
+      params: { user_id: getUserId() },
+    });
     return response.data || [];
   } catch (error) {
     console.error("Error fetching approval groups:", error);
@@ -125,7 +127,7 @@ export const getGroupUsers = async (groupId: string, userId?: string) => {
   if (!groupId) return [];
   try {
     // Calling: http://localhost:4000/api/groups/users?group_id=69
-    const response = await Instance.get("/api/groups/users", {
+    const response = await Instance.get("/api/get_user_group_users", {
       params: { group_id: groupId, user_id: userId || getUserId() },
     });
     return response.data || [];
@@ -145,7 +147,7 @@ export const getBusinessTypes = async () => {
 };
 
 export const getBusinessLocations = async () => {
-  const response = await Instance.get("/employee/business-locations", {
+  const response = await Instance.get("/employee/business_locations", {
     params: { user_id: getUserId() },
   });
   return response.data.data || [];
@@ -216,7 +218,7 @@ export const getWorkingSchedules = async () => {
 
 export const getShiftRosters = async () => {
   try {
-    const response = await Instance.get("/api/shift-rosters", {
+    const response = await Instance.get("/api/shift_rosters", {
       params: { user_id: getUserId() },
     });
     // Assuming the API returns the standard structure { status, data: [...] }
@@ -230,7 +232,9 @@ export const getShiftRosters = async () => {
 // Add to EmployeeServices.ts
 export const getCountries = async () => {
   try {
-    const response = await Instance.get("/api/countries");
+    const response = await Instance.get("/api/countries", {
+      params: { user_id: getUserId() },
+    });
     // Assuming it returns { data: [{ id: 1, name: 'India' }] }
     return response.data.data || response.data || [];
   } catch (error) {
@@ -240,7 +244,7 @@ export const getCountries = async () => {
 
 export const getBranches = async () => {
   try {
-    const response = await Instance.get("/api/branch", {
+    const response = await Instance.get("/api/branches", {
       params: { user_id: getUserId() },
     });
     // Assuming the API returns { status: "success", data: [...] }
@@ -260,13 +264,34 @@ export const getBranches = async () => {
 //   }
 // };
 
+// export const getStates = async (countryId?: string) => {
+//   try {
+//     const response = await Instance.get(`/api/states`, {
+//       params: { country_id: countryId || "104", user_id: getUserId() }, // Default to India if not provided
+//     });
+//     return response.data.data || response.data || [];
+//   } catch (error) {
+//     return [];
+//   }
+// };
+
+// Fetch states for a given country (defaults to India)
 export const getStates = async (countryId?: string) => {
+  const params = {
+    user_id: getUserId(), // Always include user ID
+    country_id: countryId ?? "104", // Use provided countryId or default to India
+  };
+
   try {
-    const response = await Instance.get(`/api/states`, {
-      params: { country_id: countryId || "104" }, // Default to India if not provided
-    });
-    return response.data.data || response.data || [];
+    const response = await Instance.get("/api/states", { params });
+
+    // Prefer structured data if available
+    if (response?.data?.data) return response.data.data;
+    if (response?.data) return response.data;
+
+    return [];
   } catch (error) {
+    console.error("Failed to fetch states:", error);
     return [];
   }
 };
@@ -295,8 +320,12 @@ export const getBanks = async () => {
 
 export const getDistricts = async (countryId: string, stateId: string) => {
   try {
-    const response = await Instance.get("/api/city", {
-      params: { country_id: countryId, state_id: stateId },
+    const response = await Instance.get("/api/districts", {
+      params: {
+        country_id: countryId,
+        state_id: stateId,
+        user_id: getUserId(),
+      },
     });
     return response.data.data || response.data || [];
   } catch (error) {

@@ -1,15 +1,8 @@
 import axios from "axios";
 
 const Instance = axios.create({
-  // baseURL: "http://192.168.11.150:4000/",
-  // baseURL: "http://192.168.11.245:4000/",
-  // baseURL: "https://konverthrnode.onrender.com/",
-  // baseURL: "http://178.236.185.232/",
-  // baseURL: "http://178.236.185.232:4001/",
-  // baseURL: "https://www.api.konverthr.com/",
-  // baseURL: "http://178.236.185.232:4002/",
-  // baseURL: "https://staging.konverthr.com/",
   baseURL: "https://odooapi.konverthr.com/",
+  // baseURL: "http://odooprod.konverthr.com/",
 
   headers: {
     "Content-Type": "application/json",
@@ -21,17 +14,10 @@ const getFreshToken = async () => {
     console.log("🔄 Fetching fresh token...");
 
     const response = await axios.post(
-      // "http://192.168.11.150:4000/api/auth"
-      // "http://192.168.11.245:4000/api/auth",
-      // "http://178.236.185.232/api/auth",
-      // "https://konverthrnode.onrender.com/api/auth",
-      // "http://178.236.185.232:4001/api/auth",
-      // "https://www.api.konverthr.com/api/auth",
-      // "http://178.236.185.232:4002/api/auth",
-      // "https://staging.konverthr.com/api/auth",
       "https://odooapi.konverthr.com//api/auth",
+      // "http://odooprod.konverthr.com//api/auth",
       {
-        user_name: "dhaval",
+        user_name: "jhon",
       },
     );
 

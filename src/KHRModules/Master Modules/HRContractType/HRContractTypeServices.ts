@@ -32,7 +32,7 @@ export const addContractType = async (data: any) => {
     ...data,
     // user_id: getUserId(),
   };
-  return await Instance.post("/api/create/ContractType", payload, {
+  return await Instance.post("/api/create/contract-type", payload, {
     params: { user_id: getUserId() },
   });
 };
@@ -43,12 +43,9 @@ export const updateContractType = async (id: string, data: any) => {
     ...data,
     // user_id: getUserId(),
   };
-  return (
-    await Instance.put(`/api/hr/contract-type/${id}`, payload),
-    {
-      params: { user_id: getUserId() },
-    }
-  );
+  return await Instance.put(`/api/hr/contract-type/${id}`, payload, {
+    params: { user_id: getUserId() },
+  });
 };
 
 // DELETE - Delete

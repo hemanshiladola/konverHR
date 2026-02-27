@@ -28,7 +28,7 @@ const getUserId = () => {
 // GET: http://localhost:4000/api/work-location?user_id=219
 export const getWorkLocations = async (): Promise<APIWorkLocation[]> => {
   try {
-    const response = await Instance.get("/api/work-location", {
+    const response = await Instance.get("/api/work-locations", {
       params: { user_id: getUserId() },
     });
     // Returning response.data.data or direct array depending on API structure

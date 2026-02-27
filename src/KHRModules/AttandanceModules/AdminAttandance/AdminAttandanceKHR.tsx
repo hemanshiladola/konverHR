@@ -1088,7 +1088,7 @@ const AdminAttandanceKHR = () => {
                     <p>
                       {selectedEmployeeId
                         ? `Individual employee attendance data`
-                        : `Data from the 800+ total no of employees`}
+                        : `Team Attendance Overview`}
                     </p>
                   </div>
                 </div>

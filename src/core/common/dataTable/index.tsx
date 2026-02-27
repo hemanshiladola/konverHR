@@ -9,19 +9,19 @@ function Datatable<T extends object = object>({
   Selection,
 }: DatatableProps<T>) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [searchText, setSearchText] = useState<string>("");
-  const [Selections, setSelections] = useState<boolean>(true);
-  const [filteredDataSource, setFilteredDataSource] = useState<T[]>(dataSource);
+  const [selections, setSelections] = useState<boolean>(true);
+  // const [searchText, setSearchText] = useState<string>("");
+  // const [filteredDataSource, setFilteredDataSource] = useState<T[]>(dataSource);
 
   // Memoize the filtered data to prevent recalculation on every render
-  const filteredData = useMemo(() => {
-    if (!searchText) return dataSource;
-    return dataSource.filter((record: T) =>
-      Object.values(record).some((field) =>
-        String(field).toLowerCase().includes(searchText.toLowerCase())
-      )
-    );
-  }, [dataSource, searchText]);
+  // const filteredData = useMemo(() => {
+  //   if (!searchText) return dataSource;
+  //   return dataSource.filter((record: T) =>
+  //     Object.values(record).some((field) =>
+  //       String(field).toLowerCase().includes(searchText.toLowerCase()),
+  //     ),
+  //   );
+  // }, [dataSource, searchText]);
 
   // Memoize the row selection configuration
   const rowSelection = useMemo(
@@ -29,7 +29,7 @@ function Datatable<T extends object = object>({
       selectedRowKeys,
       onChange: setSelectedRowKeys,
     }),
-    [selectedRowKeys]
+    [selectedRowKeys],
   );
 
   // Memoize pagination configuration
@@ -41,8 +41,10 @@ function Datatable<T extends object = object>({
       defaultPageSize: 10,
       showSizeChanger: true,
       pageSizeOptions: ["10", "20", "30"],
+      showTotal: (total: number, range: [number, number]) =>
+        `Showing ${range[0]} - ${range[1]} of ${total} entries`,
     }),
-    []
+    [],
   );
 
   // Memoize pagination config with selection
@@ -52,34 +54,34 @@ function Datatable<T extends object = object>({
       showTotal: (total: number, range: [number, number]) =>
         `Showing ${range[0]} - ${range[1]} of ${total} entries`,
     }),
-    [paginationConfig]
+    [paginationConfig],
   );
 
   // Debounced search handler
-  const handleSearch = useCallback((value: string) => {
-    setSearchText(value);
-  }, []);
+  // const handleSearch = useCallback((value: string) => {
+  //   setSearchText(value);
+  // }, []);
 
   // Memoize the search input change handler
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      handleSearch(e.target.value);
-    },
-    [handleSearch]
-  );
+  // const handleSearchChange = useCallback(
+  //   (e: React.ChangeEvent<HTMLInputElement>) => {
+  //     handleSearch(e.target.value);
+  //   },
+  //   [handleSearch],
+  // );
 
   useEffect(() => {
     setSelections(Selection ?? true);
   }, [Selection]);
 
   // Update filtered data when search text changes
-  useEffect(() => {
-    setFilteredDataSource(filteredData);
-  }, [filteredData]);
+  // useEffect(() => {
+  //   setFilteredDataSource(filteredData);
+  // }, [filteredData]);
 
   return (
     <>
-      <div className="table-top-data">
+      {/* <div className="table-top-data">
         <div className="row p-3">
           <div className="col-sm-12 col-md-6">
             <div
@@ -125,7 +127,19 @@ function Datatable<T extends object = object>({
           dataSource={filteredDataSource}
           pagination={paginationConfigWithSelection}
         />
-      )}
+      )} */}
+      <div className="table-responsive custom-table">
+        <Table
+          className="table datanew dataTable no-footer"
+          // Toggle selection based on prop
+          rowSelection={selections ? rowSelection : undefined}
+          columns={columns}
+          rowHoverable={false}
+          // Use dataSource directly (it's already filtered/sorted by DatatableKHR)
+          dataSource={dataSource}
+          pagination={paginationConfig}
+        />
+      </div>
     </>
   );
 }

@@ -35,7 +35,7 @@ const getAuthDetails = () => ({
 export const getWorkEntryTypes = async (): Promise<APIWorkEntryType[]> => {
   try {
     const { user_id } = getAuthDetails();
-    const response = await Instance.get(`/api/work-entry-types`, {
+    const response = await Instance.get(`/api/work-entry-type`, {
       params: { user_id },
     });
     return response.data.data || response.data || [];

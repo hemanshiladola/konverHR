@@ -25,7 +25,12 @@ export const approveRequest = async (id: string | number) => {
     approval_request_id: id, // Passing the main ID (129, 130...)
     user_id: getCurrentUserId(),
   };
-  return await Instance.post(`/api/admin/approve`, payload);
+  const config = {
+    params: {
+      user_id: getCurrentUserId(),
+    },
+  };
+  return await Instance.post(`/api/admin/approve`, payload, config);
 };
 
 /**
@@ -39,5 +44,10 @@ export const rejectRequest = async (id: string | number, remarks: string) => {
     user_id: getCurrentUserId(),
     remarks: remarks,
   };
-  return await Instance.post(`/api/admin/reject`, payload);
+  const config = {
+    params: {
+      user_id: getCurrentUserId(),
+    },
+  };
+  return await Instance.post(`/api/admin/reject`, payload, config);
 };

@@ -8,6 +8,7 @@ import AddEditContractModal from "./AddEditContractModal";
 // Service Imports
 import { getContracts, deleteContract, Contract } from "./contractService";
 import { toast } from "react-toastify";
+import dayjs from "dayjs";
 
 interface GroupedData {
   groupName: string;
@@ -30,22 +31,65 @@ const EmployeeContractKHR = () => {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   // 1. Fetch & Map Data
+  // const fetchData = async () => {
+  //   setLoading(true);
+  //   try {
+  //     const response = await getContracts();
+
+  //     // Map the data to include formatted fields
+  //     const mappedData: Contract[] = response.map((item: any) => ({
+  //       ...item,
+  //       id: String(item.id),
+  //       key: String(item.id),
+  //       formatted_wage: `₹${item.wage?.toLocaleString() || "0"}`,
+  //       formatted_date: item.date_start
+  //         ? new Date(item.date_start).toLocaleDateString()
+  //         : "-",
+  //       employee_name: item.employee?.name || "Unknown Employee",
+  //       department_name: item.department?.name || "No Department",
+  //     }));
+
+  //     setData(mappedData);
+  //   } catch (error) {
+  //     console.error("Failed to load contracts", error);
+  //     toast.error("Failed to load contract list");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchData = async () => {
     setLoading(true);
     try {
       const response = await getContracts();
 
-      // Map the data to include formatted fields
       const mappedData: Contract[] = response.map((item: any) => ({
         ...item,
-        id: String(item.id),
-        key: String(item.id),
+        // Use contract_id as the primary key
+        id: String(item.contract_id || item.id),
+        key: String(item.contract_id || item.id),
+
+        // Extract names from [id, "name"] tuples
+        employee_name: Array.isArray(item.employee)
+          ? item.employee[1]
+          : item.employee || "Unknown",
+        department_name: Array.isArray(item.department_id)
+          ? item.department_id[1]
+          : "No Department",
+        contract_type_name: Array.isArray(item.contract_type_id)
+          ? item.contract_type_id[1]
+          : "-",
+
+        // Formatting
         formatted_wage: `₹${item.wage?.toLocaleString() || "0"}`,
         formatted_date: item.date_start
-          ? new Date(item.date_start).toLocaleDateString()
+          ? new Date(item.date_start).toLocaleDateString("en-GB") // DD/MM/YYYY
           : "-",
-        employee_name: item.employee?.name || "Unknown Employee",
-        department_name: item.department?.name || "No Department",
+        formatted_enddate: item.date_end
+          ? new Date(item.date_end).toLocaleDateString("en-GB") // DD/MM/YYYY
+          : "-",
+
+        // We explicitly ignore leave_allocations here for the table view
       }));
 
       setData(mappedData);
@@ -386,16 +430,89 @@ const EmployeeContractKHR = () => {
         new Date(a.date_start).getTime() - new Date(b.date_start).getTime(),
     },
     {
-      title: "Work Entry",
-      dataIndex: "work_entry_source",
-      render: (text: string) => (
-        <span
-          className={`badge ${text === "calendar" ? "badge-info" : "badge-warning"}`}
-        >
-          {text === "calendar" ? "Working Schedule" : "Attendances"}
-        </span>
-      ),
+      title: "End Date",
+      dataIndex: "formatted_enddate",
+      sorter: (a: Contract, b: Contract) =>
+        new Date(a.date_end).getTime() - new Date(b.date_end).getTime(),
     },
+    {
+      title: "Status",
+      dataIndex: "state",
+      width: "120px",
+      render: (state: string, record: any) => {
+        // Logic to check if contract is actually expired even if state says 'open'
+        const isExpired =
+          record.date_end && dayjs().isAfter(dayjs(record.date_end));
+
+        let badgeClass = "bg-outline-secondary";
+        let label = state;
+
+        if (state === "draft") {
+          badgeClass = "bg-soft-info text-info border-info";
+          label = "Draft";
+        } else if (state === "open" || state === "running") {
+          if (isExpired) {
+            badgeClass = "bg-soft-danger text-danger border-danger";
+            label = "Expired";
+          } else {
+            badgeClass = "bg-soft-success text-success border-success";
+            label = "Running";
+          }
+        } else if (state === "close") {
+          badgeClass = "bg-soft-secondary text-secondary border-secondary";
+          label = "Closed";
+        }
+
+        return (
+          <span
+            className={`badge border px-2 py-1 fs-11 fw-bold text-uppercase ${badgeClass}`}
+          >
+            {label}
+          </span>
+        );
+      },
+      sorter: (a: any, b: any) =>
+        String(a.state).localeCompare(String(b.state)),
+    },
+    {
+      title: "Contract Tenure",
+      render: (record: any) => {
+        if (!record.date_start) return "-";
+        const start = dayjs(record.date_start);
+        const end = record.date_end ? dayjs(record.date_end) : dayjs();
+
+        const months = end.diff(start, "month");
+        const days = end.diff(start, "day") % 30;
+
+        return (
+          <div className="fs-12">
+            <div className="fw-medium text-dark">
+              {months} Months, {days} Days
+            </div>
+            <div
+              className="progress mt-1"
+              style={{ height: "4px", width: "80px" }}
+            >
+              <div
+                className={`progress-bar ${dayjs().isAfter(dayjs(record.date_end)) ? "bg-danger" : "bg-primary"}`}
+                style={{ width: "100%" }}
+              />
+            </div>
+          </div>
+        );
+      },
+    },
+    // {
+    //   title: "Work Entry",
+    //   dataIndex: "work_entry_source",
+    //   render: (text: string) => (
+    //     <span
+    //       className={`badge ${text === "calendar" ? "badge-info" : "badge-warning"}`}
+    //     >
+    //       {text === "calendar" ? "Working Schedule" : "Attendances"}
+    //     </span>
+    //   ),
+    // },
     {
       title: "Actions",
       dataIndex: "id",

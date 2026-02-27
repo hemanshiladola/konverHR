@@ -4,11 +4,11 @@ import {
   LeaveRequest,
   updateLeaveRequest,
   createLeaveRequest,
-  getAllLeaveTypes,
 } from "./LeaveRequestServices";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
 import CommonSelect from "../../../core/common/commonSelect";
+import { getAllLeaveTypes } from "../leaveTypes/LeavetypesServices";
 
 interface Props {
   onSuccess: () => void;

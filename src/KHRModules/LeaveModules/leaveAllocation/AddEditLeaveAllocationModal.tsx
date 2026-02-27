@@ -9,7 +9,7 @@ import {
   updateLeaveAllocation,
 } from "./LeaveAllocationServices";
 import { getEmployeesBasicInfo } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
-import { getLeaveTypesCode } from "../leaveTypes/LeavetypesServices";
+import { getAllLeaveTypes } from "../leaveTypes/LeavetypesServices";
 import { getAccruralPlans } from "@/KHRModules/Master Modules/AccruralPlan/AccruralPlanServices";
 
 interface Props {
@@ -68,24 +68,38 @@ const AddEditLeaveAllocationModal: React.FC<Props> = ({
     };
   }, [resetForm]);
 
+  const extractDataArray = (res: any) => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (res?.data && Array.isArray(res.data)) return res.data;
+    if (res?.data?.data && Array.isArray(res.data.data)) return res.data.data;
+    if (res?.result && Array.isArray(res.result)) return res.result;
+    return [];
+  };
+
   // --- Fetch Dropdowns ---
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
         const [emps, lTypes, plans] = await Promise.all([
           getEmployeesBasicInfo(),
-          getLeaveTypesCode(),
+          getAllLeaveTypes(),
           getAccruralPlans(),
         ]);
 
+        const extractedLeaves = extractDataArray(lTypes);
+
         setEmployeeOptions(
-          emps.map((e: any) => ({ value: String(e.id), label: e.name }))
+          emps.map((e: any) => ({ value: String(e.id), label: e.name })),
         );
         setLeaveTypeOptions(
-          lTypes.map((l: any) => ({ value: String(l.id), label: l.name }))
+          extractedLeaves.map((l: any) => ({
+            value: String(l.id),
+            label: l.name,
+          })),
         );
         setAccruralPlanOptions(
-          plans.map((p: any) => ({ value: String(p.id), label: p.name }))
+          plans.map((p: any) => ({ value: String(p.id), label: p.name })),
         );
       } catch (err) {
         console.error("Dropdown load error", err);
@@ -186,7 +200,7 @@ const AddEditLeaveAllocationModal: React.FC<Props> = ({
     try {
       const payload: any = {
         employee_id: Number(formData.employee_id),
-        leave_type: Number(formData.leave_type_id),
+        leave_type_id: Number(formData.leave_type_id),
         holiday_status_id: Number(formData.leave_type_id),
         allocation_type: formData.allocation_type || "regular",
         date_from: formData.from_date,
@@ -260,7 +274,7 @@ const AddEditLeaveAllocationModal: React.FC<Props> = ({
                       options={employeeOptions}
                       placeholder="Select employee"
                       defaultValue={employeeOptions.find(
-                        (o) => o.value === formData.employee_id
+                        (o) => o.value === formData.employee_id,
                       )}
                       onChange={(opt) => {
                         setFormData({
@@ -321,7 +335,7 @@ const AddEditLeaveAllocationModal: React.FC<Props> = ({
                       options={leaveTypeOptions}
                       placeholder="Select type"
                       defaultValue={leaveTypeOptions.find(
-                        (o) => o.value === formData.leave_type_id
+                        (o) => o.value === formData.leave_type_id,
                       )}
                       onChange={(opt) => {
                         setFormData({
@@ -357,7 +371,7 @@ const AddEditLeaveAllocationModal: React.FC<Props> = ({
                         options={accruralPlanOptions}
                         placeholder="Select Accrual Plan"
                         defaultValue={accruralPlanOptions.find(
-                          (o) => o.value === formData.accrual_plan_id
+                          (o) => o.value === formData.accrual_plan_id,
                         )}
                         onChange={(opt) => {
                           setFormData({
@@ -488,8 +502,8 @@ const AddEditLeaveAllocationModal: React.FC<Props> = ({
                   {isSubmitting
                     ? "Saving..."
                     : data?.id
-                    ? "Update Allocation"
-                    : "Save Allocation"}
+                      ? "Update Allocation"
+                      : "Save Allocation"}
                 </button>
               </div>
             </form>

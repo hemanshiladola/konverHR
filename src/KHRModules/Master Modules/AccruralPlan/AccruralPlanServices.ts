@@ -25,7 +25,7 @@ export const getAccruralPlans = async (): Promise<AccruralPlan[]> => {
   try {
     const { user_id } = getAuthDetails();
     // API: GET /api/accural-plan?user_id=...
-    const response = await Instance.get("/api/accural-plan", {
+    const response = await Instance.get("/api/accrual-plan", {
       params: { user_id },
     });
     return response.data.data || response.data || [];
@@ -46,7 +46,7 @@ export const addAccruralPlan = async (formData: Omit<AccruralPlan, "id">) => {
     company_id: company_id,
   };
 
-  return await Instance.post("/api/create/accural-plan", payload, {
+  return await Instance.post("/api/create/accrual-plan", payload, {
     params: { user_id },
   });
 };
@@ -63,7 +63,7 @@ export const updateAccruralPlan = async (
     ...formData,
   };
 
-  return await Instance.put(`/api/accural-plan/${id}`, payload, {
+  return await Instance.put(`/api/accrual-plan/${id}`, payload, {
     params: { user_id },
   });
 };
@@ -73,7 +73,7 @@ export const deleteAccruralPlan = async (id: string) => {
   const { user_id } = getAuthDetails();
 
   // API: DELETE /api/accural-plan/:id?user_id=...
-  return await Instance.delete(`/api/accural-plan/${id}`, {
+  return await Instance.delete(`/api/accrual-plan/${id}`, {
     params: { user_id },
   });
 };

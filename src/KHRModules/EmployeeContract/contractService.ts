@@ -5,9 +5,11 @@ import axios from "axios";
 const { user_id } = Service.getAuthDetails();
 
 export interface Contract {
+  contract_id?: number;
   id?: string;
   name: string;
   employee_code: string;
+  employee?: [number, string];
   employee_id: number;
   job_id: number;
   date_start: string;
@@ -33,6 +35,18 @@ export interface Contract {
   gratuity: number;
   professional_tax: number;
   lta: number;
+  leave_allocations?: LeaveAllocationEntry[]; // Add this to the interface
+}
+
+export interface LeaveAllocationEntry {
+  id?: number | null;
+  holiday_status_id: number;
+  allocation_type: string;
+  accrual_plan_id: number | false; // Use 'false' instead of 'boolean'
+  date_from: string;
+  date_to: string | false; // Use 'false' instead of 'boolean'
+  number_of_days: number;
+  description: string;
 }
 
 export interface Employee {
@@ -46,10 +60,12 @@ export interface Employee {
 export interface WorkingSchedule {
   id: number;
   name: string;
+  flexible_hours?: boolean;
+  is_night_shift?: boolean;
   hours_per_day?: number;
-  days_per_week?: number;
+  tz?: string;
+  // Any other fields you might need later
 }
-
 export interface Department {
   id: number;
   name: string;
@@ -68,7 +84,7 @@ export const getContracts = async (): Promise<Contract[]> => {
         "Content-Type": "application/json",
         authorization: `${localStorage.getItem("authToken")}`,
       },
-      url: `/api/employee/Contract`,
+      url: `/api/employee/contracts`,
       params: { user_id },
     });
 
@@ -93,7 +109,7 @@ export const createContract = async (
         "Content-Type": "application/json",
         authorization: `${localStorage.getItem("authToken")}`,
       },
-      url: `/api/employee/Contracts`,
+      url: `/api/employee/contracts`,
       params: { user_id },
       data: contractData,
     });
@@ -120,7 +136,7 @@ export const updateContract = async (
         "Content-Type": "application/json",
         authorization: `${localStorage.getItem("authToken")}`,
       },
-      url: `/api/employee/Contract/${id}`,
+      url: `/api/employee/contracts/${id}`,
       params: { user_id },
       data: contractData,
     });
@@ -165,7 +181,7 @@ export const getEmployees = async (): Promise<Employee[]> => {
         "Content-Type": "application/json",
         authorization: `${localStorage.getItem("authToken")}`,
       },
-      url: `/employee/employees-basic-info`,
+      url: `/api/employees/basic-info`,
       params: { user_id },
     });
 

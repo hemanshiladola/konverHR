@@ -83,7 +83,7 @@ export const createLeaveType = async (data: LeaveTypePayload) => {
     config.params = { user_id: localStorage.getItem("user_id") };
 
     const response = await Instance.post(
-      "/api/create/leave-type",
+      "/api/create/leave/type",
       data,
       config,
     );
@@ -117,7 +117,7 @@ export const updateLeaveType = async (id: number, data: any) => {
   let user_id = localStorage.getItem("user_id");
   try {
     const response = await Instance.put(
-      `/api/leave-type/${id}?user_id=${user_id}`,
+      `/api/update/leave/type/${id}?user_id=${user_id}`,
       data,
     );
     return response.data;
@@ -130,7 +130,9 @@ export const updateLeaveType = async (id: number, data: any) => {
 // Get all leave types
 export const getAllLeaveTypes = async () => {
   let user_id = localStorage.getItem("user_id");
-  const response = await Instance.get(`/api/leave-type?user_id=${user_id}`);
+  const response = await Instance.get(
+    `/api/list/leave/type?user_id=${user_id}`,
+  );
   return response.data;
 };
 
@@ -138,7 +140,7 @@ export const getAllLeaveTypes = async () => {
 export const deleteLeaveType = async (id: number) => {
   let user_id = localStorage.getItem("user_id");
   const response = await Instance.delete(
-    `/api/leave-type/${id}?user_id=${user_id}`,
+    `/api/delete/leave/${id}?user_id=${user_id}`,
   );
   return response.data;
 };

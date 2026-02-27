@@ -30,7 +30,7 @@ const getUserId = () => {
 
 export const getEmployeeLeaveDashboard = async () => {
   try {
-    const response = await Instance.get("/employee/employee-dashboard", {
+    const response = await Instance.get("/api/employee/dashboard", {
       params: { user_id: getUserId() },
     });
     // This returns the whole object: { status, data: [], meta: {} }

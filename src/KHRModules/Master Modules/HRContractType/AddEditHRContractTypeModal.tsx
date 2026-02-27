@@ -18,7 +18,7 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
   const [formData, setFormData] = useState({
     name: "",
     code: "",
-    country_name: "",
+    // country_name: "",
   });
 
   const [errors, setErrors] = useState<any>({});
@@ -28,7 +28,7 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
     setFormData({
       name: "",
       code: "",
-      country_name: "",
+      // country_name: "",
     });
     setErrors({});
     setIsSubmitted(false);
@@ -40,7 +40,7 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
       setFormData({
         name: data.name || "",
         code: data.code || "",
-        country_name: data.country_name || "",
+        // country_name: data.country_name || "",
       });
     } else {
       resetForm();
@@ -75,8 +75,8 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
     let tempErrors: any = {};
     if (!formData.name.trim()) tempErrors.name = "Contract Name is required";
     if (!formData.code.trim()) tempErrors.code = "Code is required";
-    if (!formData.country_name.trim())
-      tempErrors.country_name = "Country Name is required";
+    // if (!formData.country_name.trim())
+    //   tempErrors.country_name = "Country Name is required";
 
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -95,7 +95,7 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
     const payload = {
       name: formData.name.trim(),
       code: formData.code.trim(),
-      country_name: formData.country_name.trim(),
+      // country_name: formData.country_name.trim(),
     };
 
     try {
@@ -111,7 +111,7 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
       resetForm();
     } catch (error: any) {
       toast.error(
-        error.response?.data?.message || "Error saving contract type"
+        error.response?.data?.message || "Error saving contract type",
       );
     } finally {
       setIsSubmitting(false);
@@ -187,7 +187,7 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
                     onChange={(e) =>
                       handleChange(
                         "code",
-                        e.target.value.toUpperCase().replace(/\s/g, "_")
+                        e.target.value.toUpperCase().replace(/\s/g, "_"),
                       )
                     }
                     placeholder="e.g. FT_CONTRACT"
@@ -198,7 +198,7 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
                   <div className="invalid-feedback">{errors.code}</div>
                 </div>
 
-                <div className="mb-3">
+                {/* <div className="mb-3">
                   <label className="form-label fs-13 fw-bold">
                     Country Name <span className="text-danger">*</span>
                   </label>
@@ -212,7 +212,7 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
                     placeholder="e.g. India"
                   />
                   <div className="invalid-feedback">{errors.country_name}</div>
-                </div>
+                </div> */}
 
                 {/* Footer matches Bank Account style */}
                 <div className="modal-footer border-0 px-0 mt-4 pb-0">

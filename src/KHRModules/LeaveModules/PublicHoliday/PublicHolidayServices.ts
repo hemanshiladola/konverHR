@@ -59,53 +59,59 @@ export const getWorkEntryTypes = async (): Promise<any> => {
     console.error("Error fetching work entry types:", error);
     return [];
   }
-}
+};
 
 // POST :- http://192.168.11.245:4000/api/create/public-holiday?user_id=219
-// Create a holiday 
+// Create a holiday
 export const createHoliday = async (data: any): Promise<any> => {
   let user_id = localStorage.getItem("user_id");
-  return await Instance.post(`/api/create/public-holiday?user_id=${user_id}`, data);
-}
+  return await Instance.post(
+    `/api/create/public_holiday?user_id=${user_id}`,
+    data,
+  );
+};
 
 // GET : http://192.168.11.245:4000/api/public-holiday?user_id=219
 // Get all holidays
 export const getHolidays = async (): Promise<any> => {
-  let user_id = localStorage.getItem("user_id");  
-  return await Instance.get(`/api/public-holiday?user_id=${user_id}`);
-} 
+  let user_id = localStorage.getItem("user_id");
+  return await Instance.get(`/api/public_holiday?user_id=${user_id}`);
+};
 
 // GET :- http://192.168.11.245:4000/api/work-entry-types?user_id=159
 // work entry type
 export const getWorkEntryType = async (): Promise<any> => {
-  let user_id = localStorage.getItem("user_id");    
-  return await Instance.get(`/api/work-entry-types?user_id=${user_id}`);
-}
+  let user_id = localStorage.getItem("user_id");
+  return await Instance.get(`/api/work-entry-type?user_id=${user_id}`);
+};
 
 // GET :- http://192.168.11.245:4000/api/WorkingSchedules?user_id=3145
 // calender ID :-
 export const getCalenderId = async (): Promise<any> => {
-  let user_id = localStorage.getItem("user_id");    
+  let user_id = localStorage.getItem("user_id");
   return await Instance.get(`/api/WorkingSchedules?user_id=${user_id}`);
-}
+};
 
 // get :- http://192.168.11.245:4000/api/work-entry-types?user_id=219
 // work entry type
 // export const getWorkEntryType = async () =>{
-//   let user_id = localStorage.getItem("user_id");    
+//   let user_id = localStorage.getItem("user_id");
 //   return await Instance.get(`/api/work-entry-types?user_id=${user_id}`);
 // }
 
 // put :- http://192.168.11.245:4000/api/public-holiday/70?user_id=3145
 export const updateHoliday = async (id: number, data: any): Promise<any> => {
   let user_id = localStorage.getItem("user_id");
-  return await Instance.put(`/api/public-holiday/${id}?user_id=${user_id}`, data);
-}
-
+  return await Instance.put(
+    `/api/update/public_holiday/${id}?user_id=${user_id}`,
+    data,
+  );
+};
 
 // delete :- http://192.168.11.245:4000/api/public-holiday/70?user_id=3145
 export const deleteHoliday = async (id: number): Promise<any> => {
   let user_id = localStorage.getItem("user_id");
-  return await Instance.delete(`/api/public-holiday/${id}?user_id=${user_id}`);
-
-}
+  return await Instance.delete(
+    `/api/delete/public_holiday/${id}?user_id=${user_id}`,
+  );
+};

@@ -79,7 +79,7 @@ const LeaveAllocationKHR = () => {
 
   const handleStatusUpdate = async (
     id: number,
-    action: "approve" | "refuse"
+    action: "approve" | "refuse",
   ) => {
     try {
       const res = await approveRefuseLeaveAllocation(id, action);
@@ -106,12 +106,124 @@ const LeaveAllocationKHR = () => {
     }
   };
 
+  // const columns = [
+  //   {
+  //     title: "Employee",
+  //     dataIndex: "employee_name",
+  //     render: (text: string) => (
+  //       <span className="fw-medium text-dark">{text || "-"}</span>
+  //     ),
+  //     sorter: (a: any, b: any) =>
+  //       (a.employee_name || "").localeCompare(b.employee_name || ""),
+  //   },
+  //   {
+  //     title: "Leave Type",
+  //     dataIndex: "leave_type_name",
+  //   },
+  //   {
+  //     title: "Allocation Type",
+  //     dataIndex: "allocation_type",
+  //     render: (text: string, record: any) => (
+  //       <div>
+  //         <span className="text-capitalize">{text}</span>
+  //         {text === "accrual" && (
+  //           <div className="fs-11 text-muted">
+  //             Plan: {record.accrual_plan_name}
+  //           </div>
+  //         )}
+  //       </div>
+  //     ),
+  //   },
+  //   {
+  //     title: "Days",
+  //     dataIndex: "number_of_days",
+  //     render: (text: any) => <span className="fw-bold">{text}</span>,
+  //   },
+  //   {
+  //     title: "Status",
+  //     dataIndex: "state",
+  //     render: (text: string) => {
+  //       let label = text;
+  //       let badgeClass = "bg-light text-muted";
+  //       switch (text?.toLowerCase()) {
+  //         case "confirm":
+  //         case "to_approve":
+  //           label = "To Approve";
+  //           badgeClass = "bg-soft-warning text-warning";
+  //           break;
+  //         case "refuse":
+  //         case "refused":
+  //           label = "Refused";
+  //           badgeClass = "bg-soft-danger text-danger";
+  //           break;
+  //         case "validate":
+  //         case "approved":
+  //           label = "Approved";
+  //           badgeClass = "bg-soft-success text-success";
+  //           break;
+  //         default:
+  //           label = text || "-";
+  //       }
+  //       return (
+  //         <span
+  //           className={`badge ${badgeClass} fs-12 px-3 py-2 fw-bold text-uppercase`}
+  //         >
+  //           {label}
+  //         </span>
+  //       );
+  //     },
+  //   },
+  //   {
+  //     title: "Actions",
+  //     dataIndex: "id",
+  //     width: "150px",
+  //     render: (_: any, record: any) => (
+  //       <div className="action-icon d-inline-flex align-items-center flex-nowrap">
+  //         {record.state === "confirm" && (
+  //           <>
+  //             <Link
+  //               to="#"
+  //               className="me-2 text-success action-btn"
+  //               onClick={() => handleStatusUpdate(record.id, "approve")}
+  //             >
+  //               <i className="ti ti-check fs-20" />
+  //             </Link>
+  //             <Link
+  //               to="#"
+  //               className="me-2 text-danger action-btn"
+  //               onClick={() => handleStatusUpdate(record.id, "refuse")}
+  //             >
+  //               <i className="ti ti-x fs-20" />
+  //             </Link>
+  //           </>
+  //         )}
+  //         <Link
+  //           to="#"
+  //           className="me-2 action-btn"
+  //           data-bs-toggle="modal"
+  //           data-bs-target="#add_leave_allocation_modal"
+  //           onClick={() => setSelectedAllocation(record)}
+  //         >
+  //           <i className="ti ti-edit text-blue" />
+  //         </Link>
+  //         <Link
+  //           to="#"
+  //           className="action-btn"
+  //           onClick={() => handleDelete(record.id)}
+  //         >
+  //           <i className="ti ti-trash text-danger" />
+  //         </Link>
+  //       </div>
+  //     ),
+  //   },
+  // ];
+
   const columns = [
     {
       title: "Employee",
       dataIndex: "employee_name",
       render: (text: string) => (
-        <span className="fw-medium text-dark">{text || "-"}</span>
+        <span className="fw-medium text-dark">{text}</span>
       ),
       sorter: (a: any, b: any) =>
         (a.employee_name || "").localeCompare(b.employee_name || ""),
@@ -121,52 +233,46 @@ const LeaveAllocationKHR = () => {
       dataIndex: "leave_type_name",
     },
     {
-      title: "Allocation Type",
-      dataIndex: "allocation_type",
-      render: (text: string, record: any) => (
-        <div>
-          <span className="text-capitalize">{text}</span>
-          {text === "accrual" && (
-            <div className="fs-11 text-muted">
-              Plan: {record.accrual_plan_name}
-            </div>
-          )}
+      title: "Dates",
+      render: (record: any) => (
+        <div className="fs-12">
+          <div>
+            <span className="text-muted">From:</span> {record.from_date}
+          </div>
+          <div>
+            <span className="text-muted">To:</span> {record.to_date}
+          </div>
         </div>
       ),
     },
     {
       title: "Days",
       dataIndex: "number_of_days",
-      render: (text: any) => <span className="fw-bold">{text}</span>,
+      render: (text: any) => (
+        <span className="fw-bold text-primary">{text}</span>
+      ),
     },
     {
       title: "Status",
       dataIndex: "state",
       render: (text: string) => {
-        let label = text;
-        let badgeClass = "bg-light text-muted";
-        switch (text?.toLowerCase()) {
-          case "confirm":
-          case "to_approve":
-            label = "To Approve";
-            badgeClass = "bg-soft-warning text-warning";
-            break;
-          case "refuse":
-          case "refused":
-            label = "Refused";
-            badgeClass = "bg-soft-danger text-danger";
-            break;
-          case "validate":
-          case "approved":
-            label = "Approved";
-            badgeClass = "bg-soft-success text-success";
-            break;
-          default:
-            label = text || "-";
+        let label = "To Approve";
+        let badgeClass = "bg-soft-warning text-warning";
+
+        // Logic to handle strings or the mapped 'confirm' status
+        const statusKey = String(text).toLowerCase();
+
+        if (statusKey === "validate" || statusKey === "approved") {
+          label = "Approved";
+          badgeClass = "bg-soft-success text-success";
+        } else if (statusKey === "refuse" || statusKey === "refused") {
+          label = "Refused";
+          badgeClass = "bg-soft-danger text-danger";
         }
+
         return (
           <span
-            className={`badge ${badgeClass} fs-12 px-3 py-2 fw-bold text-uppercase`}
+            className={`badge ${badgeClass} fs-11 px-2 py-2 fw-bold text-uppercase`}
           >
             {label}
           </span>
@@ -176,42 +282,42 @@ const LeaveAllocationKHR = () => {
     {
       title: "Actions",
       dataIndex: "id",
-      width: "150px",
       render: (_: any, record: any) => (
-        <div className="action-icon d-inline-flex align-items-center flex-nowrap">
+        <div className="action-icon d-inline-flex align-items-center">
+          {/* Show Approve/Refuse only for 'confirm' state (which is our mapped false) */}
           {record.state === "confirm" && (
             <>
               <Link
                 to="#"
-                className="me-2 text-success action-btn"
+                className="me-2 text-success"
                 onClick={() => handleStatusUpdate(record.id, "approve")}
               >
-                <i className="ti ti-check fs-20" />
+                <i className="ti ti-check fs-18" />
               </Link>
               <Link
                 to="#"
-                className="me-2 text-danger action-btn"
+                className="me-2 text-danger"
                 onClick={() => handleStatusUpdate(record.id, "refuse")}
               >
-                <i className="ti ti-x fs-20" />
+                <i className="ti ti-x fs-18" />
               </Link>
             </>
           )}
           <Link
             to="#"
-            className="me-2 action-btn"
+            className="me-2"
             data-bs-toggle="modal"
             data-bs-target="#add_leave_allocation_modal"
-            onClick={() => setSelectedAllocation(record)}
+            onClick={() => setSelectedAllocation({ ...record })} // Create new reference for Modal useEffect
           >
             <i className="ti ti-edit text-blue" />
           </Link>
           <Link
             to="#"
-            className="action-btn"
+            className="text-danger"
             onClick={() => handleDelete(record.id)}
           >
-            <i className="ti ti-trash text-danger" />
+            <i className="ti ti-trash" />
           </Link>
         </div>
       ),

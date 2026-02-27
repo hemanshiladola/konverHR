@@ -250,9 +250,15 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                       value={formData.absent_if}
                       onChange={handleChange}
                     >
-                      <option value="in_out_abs">In & Out Absent</option>
-                      <option value="in_abs">In Absent</option>
-                      <option value="out_abs">Out Absent</option>
+                      <option value="in_out_abs">
+                        Any of In or Out Entry not done then absent
+                      </option>
+                      <option value="in_abs">
+                        In Entry not done but Out done then abset
+                      </option>
+                      <option value="out_abs">
+                        Out Entry not done but in done then absent
+                      </option>
                     </select>
                   </div>
 

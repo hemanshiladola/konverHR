@@ -72,14 +72,14 @@ const AddDepartmentModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
         // Create Logic
         const createPayload = {
           name: name.trim(),
-          parent_id: null,
-          color: 5,
-          unit_code: "HO-001",
-          range_start: 100,
-          range_end: 200,
-          is_no_range: false,
-          is_lapse_allocation: false,
-          wage: 50000,
+          // parent_id: null,
+          // color: 5,
+          // unit_code: "HO-001",
+          // range_start: 100,
+          // range_end: 200,
+          // is_no_range: false,
+          // is_lapse_allocation: false,
+          // wage: 50000,
         };
         await addDepartment(createPayload);
         toast.success("Department created successfully");

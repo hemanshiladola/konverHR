@@ -16,31 +16,6 @@ import axios from "axios";
 // console.log(user_id, "user_iddd");
 
 //Usersignin
-export const Usersignin = createAsyncThunk(
-  "Usersignin",
-  async (userdata, thunkAPI) => {
-    try {
-      let result = await axios({
-        method: "POST",
-        baseURL: CONFIG.BASE_URL_ALL,
-        // headers: authheader,
-        url: `api/login`,
-        data: userdata,
-      });
-      if (result.data) {
-        return result.data;
-      } else {
-        return thunkAPI.rejectWithValue({ error: result.data.errorMessage });
-      }
-    } catch (error: any) {
-      console.error(
-        "try catch [ Usersignin ] error.message >>",
-        error?.message,
-      );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error", });
-    }
-  },
-);
 //
 // https://konverthrnode.onrender.com/api/auth
 
@@ -62,7 +37,10 @@ export const ApiAuth = createAsyncThunk("ApiAuth", async (_, thunkAPI) => {
     }
   } catch (error: any) {
     console.error("try catch [ Usersignin ] error.message >>", error?.message);
-    return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error", });
+    return thunkAPI.rejectWithValue({
+      error:
+        error?.response?.data?.errorMessage || error?.message || "API error",
+    });
   }
 });
 
@@ -73,8 +51,7 @@ export const AttendancesApi = createAsyncThunk(
     console.log(userdata);
     try {
       const user_id = localStorage.getItem("user_id");
-      console.log(user_id,"user_id");
-      
+      console.log(user_id, "user_id");
 
       let result = await axios({
         method: "GET",
@@ -96,28 +73,34 @@ export const AttendancesApi = createAsyncThunk(
         "try catch [ AttendancesApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
 //AttendancesGetApi
 export const AttendancesGetApi = createAsyncThunk(
   "AttendancesGetApi",
-  async (userdata: { 
-    employee_id?: string; 
-    date_from?: string; 
-    date_to?: string; 
-  } = {}, thunkAPI) => {
+  async (
+    userdata: {
+      employee_id?: string;
+      date_from?: string;
+      date_to?: string;
+    } = {},
+    thunkAPI,
+  ) => {
     console.log(userdata);
     try {
       const user_id = localStorage.getItem("user_id");
       const params: any = { user_id };
-      
+
       // Add employee_id parameter if provided
       if (userdata.employee_id) {
         params.employee_id = userdata.employee_id;
       }
-      
+
       // Add date range parameters if provided
       if (userdata.date_from) {
         params.date_from = userdata.date_from;
@@ -133,7 +116,7 @@ export const AttendancesGetApi = createAsyncThunk(
           "Content-Type": "application/json",
           authorization: `${localStorage.getItem("authToken")}`,
         },
-        url: `/api/admin/attendances`,
+        url: `/api/admin/attendance`,
         params,
       });
       if (result.data) {
@@ -146,10 +129,14 @@ export const AttendancesGetApi = createAsyncThunk(
         "try catch [ AttendancesGetApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
+
 //UpdateAdminAttendanceApi
 export const UpdateAdminAttendanceApi = createAsyncThunk(
   "UpdateAdminAttendanceApi",
@@ -181,7 +168,10 @@ export const UpdateAdminAttendanceApi = createAsyncThunk(
         "try catch [ UpdateAdminAttendanceApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -212,7 +202,10 @@ export const AdminWorkingHours = createAsyncThunk(
         "try catch [ AdminWorkingHours ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -244,7 +237,10 @@ export const EmployeeRegcategories = createAsyncThunk(
         "try catch [ AdminWorkingHours ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -277,7 +273,8 @@ export const createRegCategory = createAsyncThunk(
         error?.message,
       );
       return thunkAPI.rejectWithValue({
-        error: error?.response?.data?.errorMessage || error?.message || "API error"
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
       });
     }
   },
@@ -285,17 +282,20 @@ export const createRegCategory = createAsyncThunk(
 
 export const EmployeeAttendanceApi = createAsyncThunk(
   "EmployeeAttendanceApi",
-  async (userdata: { 
-    month?: number; 
-    year?: number; 
-    date_from?: string; 
-    date_to?: string; 
-  } = {}, thunkAPI) => {
+  async (
+    userdata: {
+      month?: number;
+      year?: number;
+      date_from?: string;
+      date_to?: string;
+    } = {},
+    thunkAPI,
+  ) => {
     console.log(userdata);
     try {
       const user_id = localStorage.getItem("user_id");
       const params: any = { user_id };
-      
+
       // Add month and year parameters if provided
       if (userdata.month) {
         params.month = userdata.month;
@@ -303,7 +303,7 @@ export const EmployeeAttendanceApi = createAsyncThunk(
       if (userdata.year) {
         params.year = userdata.year;
       }
-      
+
       // Add date range parameters if provided (for multi-month queries)
       if (userdata.date_from) {
         params.date_from = userdata.date_from;
@@ -319,7 +319,7 @@ export const EmployeeAttendanceApi = createAsyncThunk(
           "Content-Type": "application/json",
           authorization: `${localStorage.getItem("authToken")}`,
         },
-        url: `/api/employee/attendance`,
+        url: `/api/employee/attendance/complete`,
         params,
       });
       // console.log(result.data)
@@ -333,7 +333,10 @@ export const EmployeeAttendanceApi = createAsyncThunk(
         "try catch [ EmployeeAttendanceApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -351,7 +354,7 @@ export const Employeeregularization = createAsyncThunk(
           "Content-Type": "application/json",
           authorization: `${localStorage.getItem("authToken")}`,
         },
-        url: `/api/create/regularization`,
+        url: `/api/attendance/regularization/create`,
         params: { user_id },
         data: userdata,
       });
@@ -363,14 +366,15 @@ export const Employeeregularization = createAsyncThunk(
         return thunkAPI.rejectWithValue({ error: result.data.errorMessage });
       }
     } catch (error: any) {
-      console.log("====================================");
       console.log(error, "uiui");
-      console.log("====================================");
       console.error(
         "try catch [ AdminWorkingHours ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -388,7 +392,7 @@ export const getRegularizationStatus = createAsyncThunk(
           "Content-Type": "application/json",
           authorization: `${localStorage.getItem("authToken")}`,
         },
-        url: `/api/regularization`,
+        url: `/api/attendance/regularization`,
         params: { user_id },
       });
       if (result.data) {
@@ -401,7 +405,10 @@ export const getRegularizationStatus = createAsyncThunk(
         "try catch [ getRegularizationStatus ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -412,15 +419,33 @@ export const getCurrentAttendanceStatus = createAsyncThunk(
     try {
       const user_id = localStorage.getItem("user_id");
       const email = localStorage.getItem("user_email");
+      const authToken = localStorage.getItem("authToken");
+
+      // Validate required data before making API call
+      if (!user_id || !email) {
+        console.error(
+          "❌ Missing user_id or email for getCurrentAttendanceStatus",
+        );
+        return thunkAPI.rejectWithValue({ error: "Missing user credentials" });
+      }
+
+      if (!authToken || authToken === "undefined" || authToken === "null") {
+        console.error(
+          "❌ Missing or invalid authToken for getCurrentAttendanceStatus",
+        );
+        return thunkAPI.rejectWithValue({
+          error: "Missing authentication token",
+        });
+      }
 
       let result = await axios({
         method: "GET",
         baseURL: CONFIG.BASE_URL_ALL,
         headers: {
           "Content-Type": "application/json",
-          authorization: `${localStorage.getItem("authToken")}`,
+          authorization: `${authToken}`,
         },
-        url: `/api/checkin_checkout_status`,
+        url: `/api/checkin-checkout`,
         params: { user_id, email },
       });
 
@@ -434,7 +459,10 @@ export const getCurrentAttendanceStatus = createAsyncThunk(
         "try catch [ getCurrentAttendanceStatus ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -460,7 +488,7 @@ export const CheckinCheckout = createAsyncThunk(
           "Content-Type": "application/json",
           authorization: `${localStorage.getItem("authToken")}`,
         },
-        url: `/api/employee/attandence`,
+        url: `/api/attendance`,
         params: { user_id }, // still sent as query param
         data: payload, // 👈 merged payload
       });
@@ -474,7 +502,8 @@ export const CheckinCheckout = createAsyncThunk(
       }
     } catch (error: any) {
       return thunkAPI.rejectWithValue({
-        error: error?.response?.data?.errorMessage || error?.message || "API error"
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
       });
     }
   },
@@ -507,7 +536,10 @@ export const GetStructureTypes = createAsyncThunk(
         "try catch [ AttendancesGetApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -539,7 +571,10 @@ export const getCountries = createAsyncThunk(
         "try catch [ AttendancesGetApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -571,7 +606,10 @@ export const getWorkingSchedules = createAsyncThunk(
         "try catch [ AttendancesGetApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -603,7 +641,10 @@ export const getRegularPayStructure = createAsyncThunk(
         "try catch [ getRegularPayStructure ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -635,7 +676,10 @@ export const getWorkEntryType = createAsyncThunk(
         "try catch [ getRegularPayStructure ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -667,7 +711,10 @@ export const getSalaryRules = createAsyncThunk(
         "try catch [ getSalaryRules ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -699,7 +746,10 @@ export const getSalaryStructure = createAsyncThunk(
         "try catch [ getSalaryRules ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -731,7 +781,10 @@ export const getDashboadrdCount = createAsyncThunk(
         "try catch [ getSalaryRules ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -779,7 +832,10 @@ export const EmployeeAttendanceExportExcel = createAsyncThunk(
         "try catch [ EmployeeAttendanceExportExcel ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -827,7 +883,10 @@ export const EmployeeAttendanceExportPdf = createAsyncThunk(
         "try catch [ EmployeeAttendanceExportPdf ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -874,7 +933,10 @@ export const AdminAttendanceExportExcel = createAsyncThunk(
         "try catch [ AdminAttendanceExportExcel ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -921,7 +983,10 @@ export const AdminAttendanceExportPdf = createAsyncThunk(
         "try catch [ AdminAttendanceExportPdf ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -942,10 +1007,10 @@ export const getEmployeesBasicInfo = createAsyncThunk(
           "Content-Type": "application/json",
           authorization: `${localStorage.getItem("authToken")}`,
         },
-        url: `/employee/employees-basic-info`,
+        url: `/api/employees/basic-info`,
         params: { user_id: finalUserId },
       });
-      
+
       if (result.data) {
         return result.data;
       } else {
@@ -956,7 +1021,10 @@ export const getEmployeesBasicInfo = createAsyncThunk(
         "try catch [ getEmployeesBasicInfo ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -977,7 +1045,7 @@ export const getContractsApi = createAsyncThunk(
         url: `/api/contracts`,
         params: { user_id },
       });
-      
+
       if (result.data) {
         return result.data;
       } else {
@@ -988,7 +1056,10 @@ export const getContractsApi = createAsyncThunk(
         "try catch [ getContractsApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -1010,7 +1081,7 @@ export const createContractApi = createAsyncThunk(
         params: { user_id },
         data: contractData,
       });
-      
+
       if (result.data) {
         return result.data;
       } else {
@@ -1021,7 +1092,10 @@ export const createContractApi = createAsyncThunk(
         "try catch [ createContractApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -1043,7 +1117,7 @@ export const updateContractApi = createAsyncThunk(
         params: { user_id },
         data: userdata.payload,
       });
-      
+
       if (result.data) {
         return result.data;
       } else {
@@ -1054,7 +1128,10 @@ export const updateContractApi = createAsyncThunk(
         "try catch [ updateContractApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -1075,7 +1152,7 @@ export const deleteContractApi = createAsyncThunk(
         url: `/api/contracts/${contractId}`,
         params: { user_id },
       });
-      
+
       if (result.data) {
         return result.data;
       } else {
@@ -1086,7 +1163,10 @@ export const deleteContractApi = createAsyncThunk(
         "try catch [ deleteContractApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -1107,7 +1187,7 @@ export const getDepartmentsApi = createAsyncThunk(
         url: `/api/department`,
         params: { user_id },
       });
-      
+
       if (result.data) {
         return result.data;
       } else {
@@ -1118,7 +1198,10 @@ export const getDepartmentsApi = createAsyncThunk(
         "try catch [ getDepartmentsApi ] error.message >>",
         error?.message,
       );
-      return thunkAPI.rejectWithValue({ error: error?.response?.data?.errorMessage || error?.message || "API error" });
+      return thunkAPI.rejectWithValue({
+        error:
+          error?.response?.data?.errorMessage || error?.message || "API error",
+      });
     }
   },
 );
@@ -1525,8 +1608,8 @@ export const TBSlice = createSlice({
           state.isError = false;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1568,8 +1651,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1610,8 +1693,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1655,8 +1738,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1699,8 +1782,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1742,8 +1825,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1783,8 +1866,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1866,8 +1949,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1907,8 +1990,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -1923,43 +2006,49 @@ export const TBSlice = createSlice({
     });
 
     // getCurrentAttendanceStatus reducers
-    builder.addCase(getCurrentAttendanceStatus.fulfilled, (state, { payload }) => {
-      try {
-        state.getCurrentAttendanceStatusData = payload;
-        state.isGetCurrentAttendanceStatus = true;
-        state.isGetCurrentAttendanceStatusFetching = false;
+    builder.addCase(
+      getCurrentAttendanceStatus.fulfilled,
+      (state, { payload }) => {
+        try {
+          state.getCurrentAttendanceStatusData = payload;
+          state.isGetCurrentAttendanceStatus = true;
+          state.isGetCurrentAttendanceStatusFetching = false;
 
-        // Update CheckinCheckoutData with current status to maintain consistency
-        if (payload) {
-          state.CheckinCheckoutData = payload;
+          // Update CheckinCheckoutData with current status to maintain consistency
+          if (payload) {
+            state.CheckinCheckoutData = payload;
+          }
+
+          return state;
+        } catch (error) {
+          console.error(
+            "Error: getCurrentAttendanceStatus.fulfilled try catch error >>",
+            error,
+          );
         }
+      },
+    );
 
-        return state;
-      } catch (error) {
-        console.error(
-          "Error: getCurrentAttendanceStatus.fulfilled try catch error >>",
-          error,
-        );
-      }
-    });
-
-    builder.addCase(getCurrentAttendanceStatus.rejected, (state, { payload }: { payload: any }) => {
-      try {
-        state.isGetCurrentAttendanceStatus = false;
-        state.isGetCurrentAttendanceStatusFetching = false;
-        state.isError = true;
-        payload
-          ? (state.errorMessage = payload?.error?.message
-            ? payload?.error?.message || payload?.error
-            : payload?.error)
-          : (state.errorMessage = "API Response Invalid. Please Check API");
-      } catch (error) {
-        console.error(
-          "Error: [getCurrentAttendanceStatus.rejected] try catch error >>",
-          error,
-        );
-      }
-    });
+    builder.addCase(
+      getCurrentAttendanceStatus.rejected,
+      (state, { payload }: { payload: any }) => {
+        try {
+          state.isGetCurrentAttendanceStatus = false;
+          state.isGetCurrentAttendanceStatusFetching = false;
+          state.isError = true;
+          payload
+            ? (state.errorMessage = payload?.error?.message
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
+            : (state.errorMessage = "API Response Invalid. Please Check API");
+        } catch (error) {
+          console.error(
+            "Error: [getCurrentAttendanceStatus.rejected] try catch error >>",
+            error,
+          );
+        }
+      },
+    );
 
     builder.addCase(getCurrentAttendanceStatus.pending, (state) => {
       state.isGetCurrentAttendanceStatusFetching = true;
@@ -1991,8 +2080,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2032,8 +2121,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2073,8 +2162,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2114,8 +2203,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2155,8 +2244,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2196,8 +2285,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2237,8 +2326,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2278,8 +2367,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2423,8 +2512,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2465,8 +2554,8 @@ export const TBSlice = createSlice({
           state.isError = true;
           payload
             ? (state.errorMessage = payload?.error?.message
-              ? payload?.error?.message || payload?.error
-              : payload?.error)
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
             : (state.errorMessage = "API Response Invalid. Please Check API");
         } catch (error) {
           console.error(
@@ -2492,23 +2581,32 @@ export const TBSlice = createSlice({
         state.errorMessage = "";
         return state;
       } catch (error) {
-        console.error("Error: getContractsApi.fulfilled try catch error >>", error);
+        console.error(
+          "Error: getContractsApi.fulfilled try catch error >>",
+          error,
+        );
       }
     });
-    builder.addCase(getContractsApi.rejected, (state, { payload }: { payload: any }) => {
-      try {
-        state.isGetContractsApi = false;
-        state.isGetContractsApiFetching = false;
-        state.isError = true;
-        payload
-          ? (state.errorMessage = payload?.error?.message
-            ? payload?.error?.message || payload?.error
-            : payload?.error)
-          : (state.errorMessage = "API Response Invalid. Please Check API");
-      } catch (error) {
-        console.error("Error: [getContractsApi.rejected] try catch error >>", error);
-      }
-    });
+    builder.addCase(
+      getContractsApi.rejected,
+      (state, { payload }: { payload: any }) => {
+        try {
+          state.isGetContractsApi = false;
+          state.isGetContractsApiFetching = false;
+          state.isError = true;
+          payload
+            ? (state.errorMessage = payload?.error?.message
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
+            : (state.errorMessage = "API Response Invalid. Please Check API");
+        } catch (error) {
+          console.error(
+            "Error: [getContractsApi.rejected] try catch error >>",
+            error,
+          );
+        }
+      },
+    );
     builder.addCase(getContractsApi.pending, (state) => {
       state.isGetContractsApiFetching = true;
     });
@@ -2520,24 +2618,34 @@ export const TBSlice = createSlice({
         state.isCreateContractApi = true;
         state.isCreateContractApiFetching = false;
         state.isSuccess = true;
-        state.successMessage = payload?.message || "Contract created successfully";
+        state.successMessage =
+          payload?.message || "Contract created successfully";
         state.isError = false;
         state.errorMessage = "";
         return state;
       } catch (error) {
-        console.error("Error: createContractApi.fulfilled try catch error >>", error);
+        console.error(
+          "Error: createContractApi.fulfilled try catch error >>",
+          error,
+        );
       }
     });
-    builder.addCase(createContractApi.rejected, (state, { payload }: { payload: any }) => {
-      try {
-        state.isCreateContractApi = false;
-        state.isCreateContractApiFetching = false;
-        state.isError = true;
-        state.errorMessage = payload?.error || "Failed to create contract";
-      } catch (error) {
-        console.error("Error: [createContractApi.rejected] try catch error >>", error);
-      }
-    });
+    builder.addCase(
+      createContractApi.rejected,
+      (state, { payload }: { payload: any }) => {
+        try {
+          state.isCreateContractApi = false;
+          state.isCreateContractApiFetching = false;
+          state.isError = true;
+          state.errorMessage = payload?.error || "Failed to create contract";
+        } catch (error) {
+          console.error(
+            "Error: [createContractApi.rejected] try catch error >>",
+            error,
+          );
+        }
+      },
+    );
     builder.addCase(createContractApi.pending, (state) => {
       state.isCreateContractApiFetching = true;
     });
@@ -2549,24 +2657,34 @@ export const TBSlice = createSlice({
         state.isUpdateContractApi = true;
         state.isUpdateContractApiFetching = false;
         state.isSuccess = true;
-        state.successMessage = payload?.message || "Contract updated successfully";
+        state.successMessage =
+          payload?.message || "Contract updated successfully";
         state.isError = false;
         state.errorMessage = "";
         return state;
       } catch (error) {
-        console.error("Error: updateContractApi.fulfilled try catch error >>", error);
+        console.error(
+          "Error: updateContractApi.fulfilled try catch error >>",
+          error,
+        );
       }
     });
-    builder.addCase(updateContractApi.rejected, (state, { payload }: { payload: any }) => {
-      try {
-        state.isUpdateContractApi = false;
-        state.isUpdateContractApiFetching = false;
-        state.isError = true;
-        state.errorMessage = payload?.error || "Failed to update contract";
-      } catch (error) {
-        console.error("Error: [updateContractApi.rejected] try catch error >>", error);
-      }
-    });
+    builder.addCase(
+      updateContractApi.rejected,
+      (state, { payload }: { payload: any }) => {
+        try {
+          state.isUpdateContractApi = false;
+          state.isUpdateContractApiFetching = false;
+          state.isError = true;
+          state.errorMessage = payload?.error || "Failed to update contract";
+        } catch (error) {
+          console.error(
+            "Error: [updateContractApi.rejected] try catch error >>",
+            error,
+          );
+        }
+      },
+    );
     builder.addCase(updateContractApi.pending, (state) => {
       state.isUpdateContractApiFetching = true;
     });
@@ -2578,24 +2696,34 @@ export const TBSlice = createSlice({
         state.isDeleteContractApi = true;
         state.isDeleteContractApiFetching = false;
         state.isSuccess = true;
-        state.successMessage = payload?.message || "Contract deleted successfully";
+        state.successMessage =
+          payload?.message || "Contract deleted successfully";
         state.isError = false;
         state.errorMessage = "";
         return state;
       } catch (error) {
-        console.error("Error: deleteContractApi.fulfilled try catch error >>", error);
+        console.error(
+          "Error: deleteContractApi.fulfilled try catch error >>",
+          error,
+        );
       }
     });
-    builder.addCase(deleteContractApi.rejected, (state, { payload }: { payload: any }) => {
-      try {
-        state.isDeleteContractApi = false;
-        state.isDeleteContractApiFetching = false;
-        state.isError = true;
-        state.errorMessage = payload?.error || "Failed to delete contract";
-      } catch (error) {
-        console.error("Error: [deleteContractApi.rejected] try catch error >>", error);
-      }
-    });
+    builder.addCase(
+      deleteContractApi.rejected,
+      (state, { payload }: { payload: any }) => {
+        try {
+          state.isDeleteContractApi = false;
+          state.isDeleteContractApiFetching = false;
+          state.isError = true;
+          state.errorMessage = payload?.error || "Failed to delete contract";
+        } catch (error) {
+          console.error(
+            "Error: [deleteContractApi.rejected] try catch error >>",
+            error,
+          );
+        }
+      },
+    );
     builder.addCase(deleteContractApi.pending, (state) => {
       state.isDeleteContractApiFetching = true;
     });
@@ -2612,23 +2740,32 @@ export const TBSlice = createSlice({
         state.errorMessage = "";
         return state;
       } catch (error) {
-        console.error("Error: getDepartmentsApi.fulfilled try catch error >>", error);
+        console.error(
+          "Error: getDepartmentsApi.fulfilled try catch error >>",
+          error,
+        );
       }
     });
-    builder.addCase(getDepartmentsApi.rejected, (state, { payload }: { payload: any }) => {
-      try {
-        state.isGetDepartmentsApi = false;
-        state.isGetDepartmentsApiFetching = false;
-        state.isError = true;
-        payload
-          ? (state.errorMessage = payload?.error?.message
-            ? payload?.error?.message || payload?.error
-            : payload?.error)
-          : (state.errorMessage = "API Response Invalid. Please Check API");
-      } catch (error) {
-        console.error("Error: [getDepartmentsApi.rejected] try catch error >>", error);
-      }
-    });
+    builder.addCase(
+      getDepartmentsApi.rejected,
+      (state, { payload }: { payload: any }) => {
+        try {
+          state.isGetDepartmentsApi = false;
+          state.isGetDepartmentsApiFetching = false;
+          state.isError = true;
+          payload
+            ? (state.errorMessage = payload?.error?.message
+                ? payload?.error?.message || payload?.error
+                : payload?.error)
+            : (state.errorMessage = "API Response Invalid. Please Check API");
+        } catch (error) {
+          console.error(
+            "Error: [getDepartmentsApi.rejected] try catch error >>",
+            error,
+          );
+        }
+      },
+    );
     builder.addCase(getDepartmentsApi.pending, (state) => {
       state.isGetDepartmentsApiFetching = true;
     });

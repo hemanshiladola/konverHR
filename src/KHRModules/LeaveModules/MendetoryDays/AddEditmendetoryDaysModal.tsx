@@ -1,239 +1,228 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
-  createMandatoryDays,updateMandatoryDays,getBranches
+  createMandatoryDays,
+  updateMandatoryDays,
 } from "./mendetoryDaysServices";
 import { DatePicker } from "antd";
 import dayjs from "dayjs";
+import { toast } from "react-toastify";
 
 interface Props {
   onSuccess: () => void;
   data: any;
+  onClose?: () => void;
 }
 
-const AddEditMandatoryDaysModal: React.FC<Props> = ({ onSuccess, data }) => {
-  const initialFormState = {
+const initialFormState = {
   name: "",
   start_date: "",
   end_date: "",
-  color: "",
-  company: ""
 };
 
+const AddEditMandatoryDaysModal: React.FC<Props> = ({
+  onSuccess,
+  data,
+  onClose,
+}) => {
   const [formData, setFormData] = useState<any>(initialFormState);
-  const [validated, setValidated] = useState(false);
-  const [companyOptions, setCompanyOptions] = useState<any[]>([]);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<any>({});
 
-  const COLOR_OPTIONS = [
-  { id: 1, label: "Red", hex: "#dc3545" },
-  { id: 2, label: "Blue", hex: "#0d6efd" },
-  { id: 3, label: "Green", hex: "#198754" },
-  { id: 4, label: "Yellow", hex: "#ffc107" },
-  { id: 5, label: "Purple", hex: "#6f42c1" },
-];
-
-  useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const response = await getBranches();
-        const branches = response || [];
-        setCompanyOptions(branches.map((b: any) => ({ id: b.id, name: b.name })));
-      } catch (err) {
-        console.error("Error fetching branches:", err);
-      }
-    };
-    fetchBranches();
+  const resetForm = useCallback(() => {
+    setFormData(initialFormState);
+    setErrors({});
+    setIsSubmitted(false);
   }, []);
 
+  // Sync data on Edit
+
   useEffect(() => {
-    if (data) {
+    if (data && data.id) {
+      // Map from API keys (date_start/date_end) to Form keys (start_date/end_date)
       setFormData({
-        name: (data as any).name ?? "",
-        start_date: (data as any).start_date ? dayjs((data as any).start_date).format("YYYY-MM-DD") : "",
-        end_date: (data as any).end_date ? dayjs((data as any).end_date).format("YYYY-MM-DD") : "",
-        color: (data as any).color ?? "",
-        company: (data as any).company_id ?? 12,
+        name: data.name ?? "",
+        start_date: data.date_start
+          ? dayjs(data.date_start).format("YYYY-MM-DD")
+          : "",
+        end_date: data.date_end
+          ? dayjs(data.date_end).format("YYYY-MM-DD")
+          : "",
       });
     } else {
+      // This ensures if data becomes null, the form clears
       setFormData(initialFormState);
+      setIsSubmitted(false);
+      setErrors({});
     }
-  }, [data]);
+  }, [data]); // data is now a new reference every click because of { ...record }
 
-
-
-  // reset on modal close
+  // Handle Modal Close Cleanup
   useEffect(() => {
     const modalElement = document.getElementById("add_mandatory_days");
-    const handleModalClose = () => {
-      setValidated(false);
-      setFormData(initialFormState);
+    const handleHidden = () => {
+      resetForm();
+      if (onClose) onClose();
     };
-    if (modalElement) modalElement.addEventListener("hidden.bs.modal", handleModalClose);
-    return () => { if (modalElement) modalElement.removeEventListener("hidden.bs.modal", handleModalClose); };
-  }, []);
+    modalElement?.addEventListener("hidden.bs.modal", handleHidden);
+    return () =>
+      modalElement?.removeEventListener("hidden.bs.modal", handleHidden);
+  }, [onClose, resetForm]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const target = e.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-    const name = target.name;
-    const value = (target as HTMLInputElement).value;
-    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  const validate = () => {
+    let tempErrors: any = {};
+    if (!formData.name) tempErrors.name = "Name is required";
+    if (!formData.start_date) tempErrors.start_date = "Start date is required";
+    if (!formData.end_date) tempErrors.end_date = "End date is required";
+
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation();
-    setValidated(true);
-    const form = e.currentTarget;
-    if (form.checkValidity() === false) return;
+    setIsSubmitted(true);
+    if (!validate()) return;
 
-    const payload = {
-      name: formData.name,
-      start_date: formData.start_date,
-      end_date: formData.end_date,
-      color: Number(formData.color),
-    };
+    setLoading(true);
+    const payload = { ...formData };
 
     try {
-      if (data) {
-        await updateMandatoryDays(Number((data as any).id), payload);
+      if (data?.id) {
+        await updateMandatoryDays(Number(data.id), payload);
+        toast.success("Mandatory days updated successfully");
       } else {
         await createMandatoryDays(payload);
+        toast.success("Mandatory days created successfully");
       }
+
+      // Close modal using bootstrap data-attribute trigger if button exists
       const closeBtn = document.getElementById("close-btn-mandatory");
       closeBtn?.click();
       onSuccess();
     } catch (err) {
-      console.error(err);
-      alert("Error saving data.");
+      toast.error("Failed to save mandatory days");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="modal custom-modal fade" id="add_mandatory_days" role="dialog">
-      <div className="modal-dialog modal-dialog-centered modal-lg">
-        <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">{data ? "Edit Mandatory Days" : "Add Mandatory Days"}</h5>
-            <button type="button" className="btn-close" data-bs-dismiss="modal" id="close-btn-mandatory" aria-label="Close"><span aria-hidden="true">×</span></button>
-          </div>
-          <div className="modal-body">
-            <form className={`needs-validation ${validated ? "was-validated" : ""}`} noValidate onSubmit={handleSubmit}>
-              <div className="row">
-                <div className="col-md-12 mb-3">
-                  <label className="form-label">Name</label>
-                  <input type="text" name="name" className="form-control" value={formData.name ?? ""} onChange={handleChange} required />
-                  {validated && !(formData.name) && (
-                    <span className="text-danger small">Required</span>
-                  )}
-                </div>
-
-                {/* <div className="col-md-6 mb-3">
-                  <label className="form-label">Company</label>
-                  <select name="company" className="form-select" value={formData.company ?? ""} onChange={handleChange} required>
-                    <option value="">Select Company</option>
-                    {companyOptions.map((opt: any) => (
-                      <option key={opt.id} value={opt.id}>{opt.name}</option>
-                    ))}
-                  </select>
-                  {validated && !(formData.company) && (
-                    <span className="text-danger small">Required</span>
-                  )}
-                </div> */}
-
-                {/* color field */}
-                {/* <div className="col-md-6 mb-3">
-                  <label className="form-label">Color</label>
-                  <input type="number" name="color" className="form-control" value={formData.color ?? ""} onChange={handleChange} min="1" required />
-                  {validated && !(formData.color) && (
-                    <span className="text-danger small">Required</span>
-                  )}
-                </div> */}
-
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Start Date</label>
-                  <DatePicker
-                    className={`form-control w-100 ${validated && !formData.start_date ? "is-invalid" : ""}`}
-                    value={formData.start_date ? dayjs(formData.start_date, "YYYY-MM-DD") : null}
-                    onChange={(date) => setFormData({ ...formData, start_date: date ? date.format("YYYY-MM-DD") : "" })}
-                  />
-                  {validated && !(formData.start_date) && (
-                    <span className="text-danger small">Required</span>
-                  )}
-                </div>
-
-                
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Start Date</label>
-                  <DatePicker
-                    className={`form-control w-100 ${validated && !formData.start_date ? "is-invalid" : ""}`}
-                    value={formData.start_date ? dayjs(formData.start_date, "YYYY-MM-DD") : null}
-                    onChange={(date) => setFormData({ ...formData, start_date: date ? date.format("YYYY-MM-DD") : "" })}
-                  />
-                  {validated && !(formData.start_date) && (
-                    <span className="text-danger small">Required</span>
-                  )}
-                </div>
-
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">End Date</label>
-                  <DatePicker
-                    className={`form-control w-100 ${validated && !formData.end_date ? "is-invalid" : ""}`}
-                    value={formData.end_date ? dayjs(formData.end_date, "YYYY-MM-DD") : null}
-                    onChange={(date) => setFormData({ ...formData, end_date: date ? date.format("YYYY-MM-DD") : "" })}
-                  />
-                  {validated && !(formData.end_date) && (
-                    <span className="text-danger small">Required</span>
-                  )}
-                </div>
-
-
-                <div className="col-md-6 mb-3">
-  <label className="form-label">Color</label>
-
-  <select
-    name="color"
-    className="form-select"
-    value={formData.color}
-    onChange={handleChange}
-    required
-  >
-    <option value="">Select Color</option>
-
-    {COLOR_OPTIONS.map((color) => (
-      <option key={color.id} value={color.id}>
-        {color.label}
-      </option>
-    ))}
-  </select>
-
-  {validated && !formData.color && (
-    <span className="text-danger small">Required</span>
-  )}
-
-  {/* Color preview */}
-  {formData.color && (
     <div
-      className="mt-2"
-      style={{
-        width: "100%",
-        height: "30px",
-        borderRadius: "4px",
-        backgroundColor:
-          COLOR_OPTIONS.find(c => c.id === Number(formData.color))?.hex,
-      }}
-    />
-  )}
-</div>
-
-
-
-              </div>
-
-              <div className="modal-footer">
-                <button type="button" className="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" className="btn btn-primary">{data ? "Update" : "Save"}</button>
-              </div>
-            </form>
+      className="modal fade"
+      id="add_mandatory_days"
+      tabIndex={-1}
+      role="dialog"
+    >
+      <div className="modal-dialog modal-dialog-centered modal-md">
+        <div className="modal-content bg-white border-0 shadow-lg">
+          <div className="modal-header border-bottom bg-light py-2">
+            <h5 className="modal-title fw-bold fs-15">
+              <i className="ti ti-calendar-event me-2 text-primary"></i>
+              {data ? "Edit Mandatory Days" : "Add Mandatory Days"}
+            </h5>
+            <button
+              type="button"
+              className="btn-close"
+              data-bs-dismiss="modal"
+              id="close-btn-mandatory"
+            />
           </div>
+
+          <form
+            onSubmit={handleSubmit}
+            className="animate__animated animate__fadeIn"
+          >
+            <div className="modal-body p-4">
+              <h6 className="fw-bold text-primary mb-3 fs-14">
+                <i className="ti ti-info-circle me-2"></i> Event Information
+              </h6>
+
+              <div className="row g-3">
+                {/* Name Field */}
+                <div className="col-md-12">
+                  <label className="form-label fs-13 fw-bold">
+                    Name <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="e.g. Annual Audit Days"
+                    className={`form-control ${isSubmitted ? (errors.name ? "is-invalid" : "is-valid") : ""}`}
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                  />
+                  {isSubmitted && errors.name && (
+                    <div className="text-danger fs-11 mt-1">{errors.name}</div>
+                  )}
+                </div>
+
+                {/* Start Date */}
+                <div className="col-md-6">
+                  <label className="form-label fs-13 fw-bold">
+                    Start Date <span className="text-danger">*</span>
+                  </label>
+                  <DatePicker
+                    className={`form-control w-100 ${isSubmitted ? (errors.start_date ? "is-invalid border-danger" : "is-valid border-success") : ""}`}
+                    value={
+                      formData.start_date ? dayjs(formData.start_date) : null
+                    }
+                    format="YYYY-MM-DD"
+                    onChange={(date, dateStr) =>
+                      setFormData({ ...formData, start_date: dateStr })
+                    }
+                  />
+                  {isSubmitted && errors.start_date && (
+                    <div className="text-danger fs-11 mt-1">
+                      {errors.start_date}
+                    </div>
+                  )}
+                </div>
+
+                {/* End Date */}
+                <div className="col-md-6">
+                  <label className="form-label fs-13 fw-bold">
+                    End Date <span className="text-danger">*</span>
+                  </label>
+                  <DatePicker
+                    className={`form-control w-100 ${isSubmitted ? (errors.end_date ? "is-invalid border-danger" : "is-valid border-success") : ""}`}
+                    value={formData.end_date ? dayjs(formData.end_date) : null}
+                    format="YYYY-MM-DD"
+                    onChange={(date, dateStr) =>
+                      setFormData({ ...formData, end_date: dateStr })
+                    }
+                  />
+                  {isSubmitted && errors.end_date && (
+                    <div className="text-danger fs-11 mt-1">
+                      {errors.end_date}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer border-0 bg-light px-4 py-3 mt-3">
+              <button
+                type="button"
+                className="btn btn-white border px-4"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary px-5 shadow-sm"
+                disabled={loading}
+              >
+                {loading && (
+                  <span className="spinner-border spinner-border-sm me-2" />
+                )}
+                {data ? "Update Schedule" : "Save Schedule"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -241,3 +230,320 @@ const AddEditMandatoryDaysModal: React.FC<Props> = ({ onSuccess, data }) => {
 };
 
 export default AddEditMandatoryDaysModal;
+
+// import React, { useEffect, useState } from "react";
+// import {
+//   createMandatoryDays,
+//   updateMandatoryDays,
+//   getBranches,
+// } from "./mendetoryDaysServices";
+// import { DatePicker } from "antd";
+// import dayjs from "dayjs";
+
+// interface Props {
+//   onSuccess: () => void;
+//   data: any;
+// }
+
+// const AddEditMandatoryDaysModal: React.FC<Props> = ({ onSuccess, data }) => {
+//   const initialFormState = {
+//     name: "",
+//     start_date: "",
+//     end_date: "",
+//     color: "",
+//     company: "",
+//   };
+
+//   const [formData, setFormData] = useState<any>(initialFormState);
+//   const [validated, setValidated] = useState(false);
+//   const [companyOptions, setCompanyOptions] = useState<any[]>([]);
+
+//   const COLOR_OPTIONS = [
+//     { id: 1, label: "Red", hex: "#dc3545" },
+//     { id: 2, label: "Blue", hex: "#0d6efd" },
+//     { id: 3, label: "Green", hex: "#198754" },
+//     { id: 4, label: "Yellow", hex: "#ffc107" },
+//     { id: 5, label: "Purple", hex: "#6f42c1" },
+//   ];
+
+//   useEffect(() => {
+//     const fetchBranches = async () => {
+//       try {
+//         const response = await getBranches();
+//         const branches = response || [];
+//         setCompanyOptions(
+//           branches.map((b: any) => ({ id: b.id, name: b.name })),
+//         );
+//       } catch (err) {
+//         console.error("Error fetching branches:", err);
+//       }
+//     };
+//     fetchBranches();
+//   }, []);
+
+//   useEffect(() => {
+//     if (data) {
+//       setFormData({
+//         name: (data as any).name ?? "",
+//         start_date: (data as any).start_date
+//           ? dayjs((data as any).start_date).format("YYYY-MM-DD")
+//           : "",
+//         end_date: (data as any).end_date
+//           ? dayjs((data as any).end_date).format("YYYY-MM-DD")
+//           : "",
+//         color: (data as any).color ?? "",
+//         company: (data as any).company_id ?? 12,
+//       });
+//     } else {
+//       setFormData(initialFormState);
+//     }
+//   }, [data]);
+
+//   // reset on modal close
+//   useEffect(() => {
+//     const modalElement = document.getElementById("add_mandatory_days");
+//     const handleModalClose = () => {
+//       setValidated(false);
+//       setFormData(initialFormState);
+//     };
+//     if (modalElement)
+//       modalElement.addEventListener("hidden.bs.modal", handleModalClose);
+//     return () => {
+//       if (modalElement)
+//         modalElement.removeEventListener("hidden.bs.modal", handleModalClose);
+//     };
+//   }, []);
+
+//   const handleChange = (
+//     e: React.ChangeEvent<
+//       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+//     >,
+//   ) => {
+//     const target = e.target as
+//       | HTMLInputElement
+//       | HTMLSelectElement
+//       | HTMLTextAreaElement;
+//     const name = target.name;
+//     const value = (target as HTMLInputElement).value;
+//     setFormData((prev: any) => ({ ...prev, [name]: value }));
+//   };
+
+//   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+//     e.preventDefault();
+//     e.stopPropagation();
+//     setValidated(true);
+//     const form = e.currentTarget;
+//     if (form.checkValidity() === false) return;
+
+//     const payload = {
+//       name: formData.name,
+//       start_date: formData.start_date,
+//       end_date: formData.end_date,
+//       color: Number(formData.color),
+//     };
+
+//     try {
+//       if (data) {
+//         await updateMandatoryDays(Number((data as any).id), payload);
+//       } else {
+//         await createMandatoryDays(payload);
+//       }
+//       const closeBtn = document.getElementById("close-btn-mandatory");
+//       closeBtn?.click();
+//       onSuccess();
+//     } catch (err) {
+//       console.error(err);
+//       alert("Error saving data.");
+//     }
+//   };
+
+//   return (
+//     <div
+//       className="modal custom-modal fade"
+//       id="add_mandatory_days"
+//       role="dialog"
+//     >
+//       <div className="modal-dialog modal-dialog-centered modal-lg">
+//         <div className="modal-content">
+//           <div className="modal-header">
+//             <h5 className="modal-title">
+//               {data ? "Edit Mandatory Days" : "Add Mandatory Days"}
+//             </h5>
+//             <button
+//               type="button"
+//               className="btn-close"
+//               data-bs-dismiss="modal"
+//               id="close-btn-mandatory"
+//               aria-label="Close"
+//             >
+//               <span aria-hidden="true">×</span>
+//             </button>
+//           </div>
+//           <div className="modal-body">
+//             <form
+//               className={`needs-validation ${validated ? "was-validated" : ""}`}
+//               noValidate
+//               onSubmit={handleSubmit}
+//             >
+//               <div className="row">
+//                 <div className="col-md-12 mb-3">
+//                   <label className="form-label">Name</label>
+//                   <input
+//                     type="text"
+//                     name="name"
+//                     className="form-control"
+//                     value={formData.name ?? ""}
+//                     onChange={handleChange}
+//                     required
+//                   />
+//                   {validated && !formData.name && (
+//                     <span className="text-danger small">Required</span>
+//                   )}
+//                 </div>
+
+//                 {/* <div className="col-md-6 mb-3">
+//                   <label className="form-label">Company</label>
+//                   <select name="company" className="form-select" value={formData.company ?? ""} onChange={handleChange} required>
+//                     <option value="">Select Company</option>
+//                     {companyOptions.map((opt: any) => (
+//                       <option key={opt.id} value={opt.id}>{opt.name}</option>
+//                     ))}
+//                   </select>
+//                   {validated && !(formData.company) && (
+//                     <span className="text-danger small">Required</span>
+//                   )}
+//                 </div> */}
+
+//                 {/* color field */}
+//                 {/* <div className="col-md-6 mb-3">
+//                   <label className="form-label">Color</label>
+//                   <input type="number" name="color" className="form-control" value={formData.color ?? ""} onChange={handleChange} min="1" required />
+//                   {validated && !(formData.color) && (
+//                     <span className="text-danger small">Required</span>
+//                   )}
+//                 </div> */}
+
+//                 <div className="col-md-6 mb-3">
+//                   <label className="form-label">Start Date</label>
+//                   <DatePicker
+//                     className={`form-control w-100 ${validated && !formData.start_date ? "is-invalid" : ""}`}
+//                     value={
+//                       formData.start_date
+//                         ? dayjs(formData.start_date, "YYYY-MM-DD")
+//                         : null
+//                     }
+//                     onChange={(date) =>
+//                       setFormData({
+//                         ...formData,
+//                         start_date: date ? date.format("YYYY-MM-DD") : "",
+//                       })
+//                     }
+//                   />
+//                   {validated && !formData.start_date && (
+//                     <span className="text-danger small">Required</span>
+//                   )}
+//                 </div>
+
+//                 <div className="col-md-6 mb-3">
+//                   <label className="form-label">Start Date</label>
+//                   <DatePicker
+//                     className={`form-control w-100 ${validated && !formData.start_date ? "is-invalid" : ""}`}
+//                     value={
+//                       formData.start_date
+//                         ? dayjs(formData.start_date, "YYYY-MM-DD")
+//                         : null
+//                     }
+//                     onChange={(date) =>
+//                       setFormData({
+//                         ...formData,
+//                         start_date: date ? date.format("YYYY-MM-DD") : "",
+//                       })
+//                     }
+//                   />
+//                   {validated && !formData.start_date && (
+//                     <span className="text-danger small">Required</span>
+//                   )}
+//                 </div>
+
+//                 <div className="col-md-6 mb-3">
+//                   <label className="form-label">End Date</label>
+//                   <DatePicker
+//                     className={`form-control w-100 ${validated && !formData.end_date ? "is-invalid" : ""}`}
+//                     value={
+//                       formData.end_date
+//                         ? dayjs(formData.end_date, "YYYY-MM-DD")
+//                         : null
+//                     }
+//                     onChange={(date) =>
+//                       setFormData({
+//                         ...formData,
+//                         end_date: date ? date.format("YYYY-MM-DD") : "",
+//                       })
+//                     }
+//                   />
+//                   {validated && !formData.end_date && (
+//                     <span className="text-danger small">Required</span>
+//                   )}
+//                 </div>
+
+//                 <div className="col-md-6 mb-3">
+//                   <label className="form-label">Color</label>
+
+//                   <select
+//                     name="color"
+//                     className="form-select"
+//                     value={formData.color}
+//                     onChange={handleChange}
+//                     required
+//                   >
+//                     <option value="">Select Color</option>
+
+//                     {COLOR_OPTIONS.map((color) => (
+//                       <option key={color.id} value={color.id}>
+//                         {color.label}
+//                       </option>
+//                     ))}
+//                   </select>
+
+//                   {validated && !formData.color && (
+//                     <span className="text-danger small">Required</span>
+//                   )}
+
+//                   {/* Color preview */}
+//                   {formData.color && (
+//                     <div
+//                       className="mt-2"
+//                       style={{
+//                         width: "100%",
+//                         height: "30px",
+//                         borderRadius: "4px",
+//                         backgroundColor: COLOR_OPTIONS.find(
+//                           (c) => c.id === Number(formData.color),
+//                         )?.hex,
+//                       }}
+//                     />
+//                   )}
+//                 </div>
+//               </div>
+
+//               <div className="modal-footer">
+//                 <button
+//                   type="button"
+//                   className="btn btn-light"
+//                   data-bs-dismiss="modal"
+//                 >
+//                   Cancel
+//                 </button>
+//                 <button type="submit" className="btn btn-primary">
+//                   {data ? "Update" : "Save"}
+//                 </button>
+//               </div>
+//             </form>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default AddEditMandatoryDaysModal;

@@ -58,21 +58,24 @@ const AddEditPublicHolidayModal: React.FC<Props> = ({ onSuccess, data }) => {
   }, []);
 
   // 2. Populate Form on Edit
+
   useEffect(() => {
     if (data) {
       setFormData({
         name: (data as any).name ?? "",
+        // Use dayjs to parse the ISO string from API
         start_date: (data as any).date_from
           ? dayjs((data as any).date_from).format("YYYY-MM-DD")
           : null,
         end_date: (data as any).date_to
           ? dayjs((data as any).date_to).format("YYYY-MM-DD")
           : null,
+        // UPDATED: Access the ID directly as an integer/string, not an array
         calendar: (data as any).calendar_id
-          ? String((data as any).calendar_id[0])
+          ? String((data as any).calendar_id)
           : "",
         work_entry_type: (data as any).work_entry_type_id
-          ? String((data as any).work_entry_type_id[0])
+          ? String((data as any).work_entry_type_id)
           : "",
       });
     } else {

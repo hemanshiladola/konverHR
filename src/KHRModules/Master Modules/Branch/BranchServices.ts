@@ -21,8 +21,8 @@ const getUserId = () => {
 export const createBranch = async (payload: any) => {
   const userId = getUserId() || 2;
 
-  return await axios.post(
-    `http://178.236.185.232:9090//api/res_branch/create?user_id=${userId}`,
+  return await Instance.post(
+    `/api/res_branch/create?user_id=${userId}`,
     payload,
   );
 };

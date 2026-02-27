@@ -7,7 +7,8 @@ import moment from "moment";
 import { Link } from "react-router-dom";
 
 import {
-  getAllMandatoryDays,deleteMandatoryDays
+  getAllMandatoryDays,
+  deleteMandatoryDays,
 } from "./mendetoryDaysServices";
 
 const MendetoryDaysKHR = () => {
@@ -15,92 +16,162 @@ const MendetoryDaysKHR = () => {
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [data, setData] = useState<any[]>([]);
 
+  // const columns: any[] = [
+  //   {
+  //     title: "Name",
+  //     dataIndex: "name",
+  //     render: (val: any) => <span>{val ? String(val) : "-"}</span>,
+  //     sorter: (a: any, b: any) =>
+  //       String(a?.name ?? "").localeCompare(String(b?.name ?? "")),
+  //   },
+  //   {
+  //     title: "Start Date",
+  //     dataIndex: "start_date",
+  //     render: (val: any) => (
+  //       <span>{val ? moment(val).format("DD/MM/YYYY") : "-"}</span>
+  //     ),
+  //     sorter: (a: any, b: any) =>
+  //       moment(a?.start_date).valueOf() - moment(b?.start_date).valueOf(),
+  //   },
+  //   {
+  //     title: "End Date",
+  //     dataIndex: "end_date",
+  //     render: (val: any) => (
+  //       <span>{val ? moment(val).format("DD/MM/YYYY") : "-"}</span>
+  //     ),
+  //     sorter: (a: any, b: any) =>
+  //       moment(a?.end_date).valueOf() - moment(b?.end_date).valueOf(),
+  //   },
+  //   // {
+  //   //   title: "Color",
+  //   //   dataIndex: "color",
+  //   //   render: (val: any) => <span>{val ? String(val) : "-"}</span>,
+  //   //   sorter: (a: any, b: any) => (a?.color ?? 0) - (b?.color ?? 0),
+  //   // },
+  //   // {
+  //   //   title: "Client",
+  //   //   dataIndex: "client_id",
+  //   //   render: (val: any) => (
+  //   //     <span>{Array.isArray(val) && val[1] ? String(val[1]) : "-"}</span>
+  //   //   ),
+  //   //   sorter: (a: any, b: any) => {
+  //   //     const A = Array.isArray(a?.client_id)
+  //   //       ? String(a.client_id[1] ?? "")
+  //   //       : "";
+  //   //     const B = Array.isArray(b?.client_id)
+  //   //       ? String(b.client_id[1] ?? "")
+  //   //       : "";
+  //   //     return A.localeCompare(B);
+  //   //   },
+  //   // },
+  //   // {
+  //   //   title: "Company",
+  //   //   dataIndex: "company_id",
+  //   //   render: (val: any) => (
+  //   //     <span>{Array.isArray(val) && val[1] ? String(val[1]) : "-"}</span>
+  //   //   ),
+  //   //   sorter: (a: any, b: any) => {
+  //   //     const A = Array.isArray(a?.company_id)
+  //   //       ? String(a.company_id[1] ?? "")
+  //   //       : "";
+  //   //     const B = Array.isArray(b?.company_id)
+  //   //       ? String(b.company_id[1] ?? "")
+  //   //       : "";
+  //   //     return A.localeCompare(B);
+  //   //   },
+  //   // },
+  //   {
+  //     title: "Actions",
+  //     dataIndex: "id",
+  //     render: (_: any, record: any) => (
+  //       <div className="action-icon d-inline-flex">
+  //         <Link
+  //           to="#"
+  //           className="me-2"
+  //           data-bs-toggle="modal"
+  //           data-bs-target="#add_mandatory_days"
+  //           onClick={() => {
+  //             setSelectedPolicy(record);
+  //             const jq = (window as any).jQuery || (window as any).$;
+  //             if (
+  //               jq &&
+  //               typeof jq === "function" &&
+  //               jq("#add_mandatory_days").modal
+  //             ) {
+  //               try {
+  //                 jq("#add_mandatory_days").modal("show");
+  //               } catch (e) {
+  //                 // ignore if modal call fails
+  //               }
+  //             }
+  //           }}
+  //         >
+  //           <i className="ti ti-edit text-blue" />
+  //         </Link>
+  //         <Link to="#" onClick={() => handleDelete(record.id!)}>
+  //           <i className="ti ti-trash text-danger" />
+  //         </Link>
+  //       </div>
+  //     ),
+  //   },
+  // ];
+
   const columns: any[] = [
     {
       title: "Name",
       dataIndex: "name",
       render: (val: any) => <span>{val ? String(val) : "-"}</span>,
-      sorter: (a: any, b: any) => String(a?.name ?? "").localeCompare(String(b?.name ?? "")),
+      sorter: (a: any, b: any) =>
+        String(a?.name ?? "").localeCompare(String(b?.name ?? "")),
     },
     {
       title: "Start Date",
-      dataIndex: "start_date",
-      render: (val: any) => <span>{val ? moment(val).format("DD/MM/YYYY") : "-"}</span>,
-      sorter: (a: any, b: any) => moment(a?.start_date).valueOf() - moment(b?.start_date).valueOf(),
+      dataIndex: "date_start", // Changed from start_date
+      render: (val: any) => (
+        <span>{val ? moment(val).format("DD/MM/YYYY") : "-"}</span>
+      ),
+      sorter: (a: any, b: any) =>
+        moment(a?.date_start).valueOf() - moment(b?.date_start).valueOf(),
     },
     {
       title: "End Date",
-      dataIndex: "end_date",
-      render: (val: any) => <span>{val ? moment(val).format("DD/MM/YYYY") : "-"}</span>,
-      sorter: (a: any, b: any) => moment(a?.end_date).valueOf() - moment(b?.end_date).valueOf(),
+      dataIndex: "date_end", // Changed from end_date
+      render: (val: any) => (
+        <span>{val ? moment(val).format("DD/MM/YYYY") : "-"}</span>
+      ),
+      sorter: (a: any, b: any) =>
+        moment(a?.date_end).valueOf() - moment(b?.date_end).valueOf(),
     },
     {
-      title: "Color",
-      dataIndex: "color",
-      render: (val: any) => <span>{val ? String(val) : "-"}</span>,
-      sorter: (a: any, b: any) => (a?.color ?? 0) - (b?.color ?? 0),
+      title: "Actions",
+      dataIndex: "id",
+      render: (_: any, record: any) => (
+        <div className="action-icon d-inline-flex">
+          <Link
+            to="#"
+            className="me-2"
+            data-bs-toggle="modal"
+            data-bs-target="#add_mandatory_days"
+            // onClick={() => setSelectedPolicy(record)}
+            onClick={() => setSelectedPolicy({ ...record })} // Create a new object copy
+          >
+            <i className="ti ti-edit text-blue" />
+          </Link>
+          <Link to="#" onClick={() => handleDelete(record.id!)}>
+            <i className="ti ti-trash text-danger" />
+          </Link>
+        </div>
+      ),
     },
-    {
-      title: "Client",
-      dataIndex: "client_id",
-      render: (val: any) => <span>{Array.isArray(val) && val[1] ? String(val[1]) : "-"}</span>,
-      sorter: (a: any, b: any) => {
-        const A = Array.isArray(a?.client_id) ? String(a.client_id[1] ?? "") : "";
-        const B = Array.isArray(b?.client_id) ? String(b.client_id[1] ?? "") : "";
-        return A.localeCompare(B);
-      },
-    },
-    {
-      title: "Company",
-      dataIndex: "company_id",
-      render: (val: any) => <span>{Array.isArray(val) && val[1] ? String(val[1]) : "-"}</span>,
-      sorter: (a: any, b: any) => {
-        const A = Array.isArray(a?.company_id) ? String(a.company_id[1] ?? "") : "";
-        const B = Array.isArray(b?.company_id) ? String(b.company_id[1] ?? "") : "";
-        return A.localeCompare(B);
-      },
-    },
-    {
-          title: "Actions",
-          dataIndex: "id",
-          render: (_: any, record: any) => (
-            <div className="action-icon d-inline-flex">
-              <Link
-                to="#"
-                className="me-2"
-                data-bs-toggle="modal"
-                data-bs-target="#add_mandatory_days"
-  onClick={() => {
-              setSelectedPolicy(record);
-              const jq = (window as any).jQuery || (window as any).$;
-              if (jq && typeof jq === "function" && jq("#add_mandatory_days").modal) {
-                try {
-                  jq("#add_mandatory_days").modal("show");
-                } catch (e) {
-                  // ignore if modal call fails
-                }
-              }
-            }}              >
-                <i className="ti ti-edit text-blue" />
-              </Link>
-              <Link to="#" 
-              onClick={() => 
-                handleDelete(record.id!)}
-                >
-                <i className="ti ti-trash text-danger" />
-              </Link>
-            </div>
-          ),
-        },
   ];
 
   const fetchData = async () => {
     try {
       const response = await getAllMandatoryDays();
-      const days = response.data.data || response.data || [];
+      const days = response.data?.data || response.data || [];
       setData(days);
     } catch (error) {
-      console.error('Error fetching mandatory days:', error);
+      console.error("Error fetching mandatory days:", error);
       setData([]);
     }
   };
@@ -113,7 +184,7 @@ const MendetoryDaysKHR = () => {
     if (window.confirm("Are you sure you want to delete this mandatory day?")) {
       try {
         await deleteMandatoryDays(id);
-        console.log("done here")
+        console.log("done here");
         fetchData(); // Refresh the list
       } catch (error) {
         console.error("Error deleting mandatory day:", error);

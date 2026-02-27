@@ -28,9 +28,19 @@ const DatatableKHR = <T extends object>({
 }: GenericTableProps<T>) => {
   const [activeStatus, setActiveStatus] = useState<string>("All");
   const [sortOption, setSortOption] = useState<string>("Newest");
+  const [searchText, setSearchText] = useState<string>(""); // New Search State
 
   const processedData = useMemo(() => {
     let filtered = [...data];
+
+    // 1. Search Logic
+    if (searchText) {
+      filtered = filtered.filter((item) =>
+        Object.values(item).some((field) =>
+          String(field).toLowerCase().includes(searchText.toLowerCase()),
+        ),
+      );
+    }
 
     // 1. Filter by Status
     if (showStatusFilter && activeStatus !== "All") {
@@ -72,92 +82,68 @@ const DatatableKHR = <T extends object>({
     statusKey,
     dateKey,
     textKey,
+    searchText,
   ]);
 
   return (
-    <div className="card">
-      <div className="card-header d-flex align-items-center justify-content-end flex-wrap row-gap-3">
+    <div className="card shadow-sm border-0">
+      <div className="card-header d-flex align-items-center justify-content-end bg-white py-3">
+        {" "}
         {/* <h5>{title}</h5> */}
         <div className="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
-          {/* Status Filter */}
-          {/* {showStatusFilter && (
-            <div className="dropdown me-3">
-              <button
-                type="button"
-                className="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown"
-              >
-                <i className="ti ti-file-export me-1" />
-                {activeStatus === "All" ? "Status" : activeStatus}
-              </button>
-              <ul className="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <button
-                    onClick={() => setActiveStatus("All")}
-                    className="dropdown-item rounded-1"
-                  >
-                    All
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setActiveStatus("Active")}
-                    className="dropdown-item rounded-1"
-                  >
-                    Active
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setActiveStatus("Inactive")}
-                    className="dropdown-item rounded-1"
-                  >
-                    Inactive
-                  </button>
-                </li>
-              </ul>
+          <div className="d-flex align-items-center flex-wrap gap-2">
+            <div className="position-relative">
+              <input
+                type="text"
+                className="form-control "
+                placeholder="Search..."
+                style={{ width: "200px", paddingLeft: "30px" }}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+              />
+              <i className="ti ti-search position-absolute top-50 start-0 translate-middle-y ms-2 text-muted"></i>
             </div>
-          )} */}
 
-          {/* Sort Filter */}
-          {showSortFilter && (
-            <div className="dropdown">
-              <button
-                type="button"
-                className="dropdown-toggle btn btn-white d-inline-flex align-items-center"
-                data-bs-toggle="dropdown"
-              >
-                <i className="ti ti-file-export me-1" />
-                Sort By : {sortOption}
-              </button>
-              <ul className="dropdown-menu dropdown-menu-end p-3">
-                <li>
-                  <button
-                    onClick={() => setSortOption("Newest")}
-                    className="dropdown-item rounded-1"
-                  >
-                    Recently Added
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setSortOption("Ascending")}
-                    className="dropdown-item rounded-1"
-                  >
-                    Ascending
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => setSortOption("Descending")}
-                    className="dropdown-item rounded-1"
-                  >
-                    Descending
-                  </button>
-                </li>
-              </ul>
-            </div>
-          )}
+            {/* Sort Filter */}
+            {showSortFilter && (
+              <div className="dropdown">
+                <button
+                  type="button"
+                  className="dropdown-toggle btn btn-white d-inline-flex align-items-center"
+                  data-bs-toggle="dropdown"
+                >
+                  <i className="ti ti-file-export me-1" />
+                  Sort By : {sortOption}
+                </button>
+                <ul className="dropdown-menu dropdown-menu-end p-3">
+                  <li>
+                    <button
+                      onClick={() => setSortOption("Newest")}
+                      className="dropdown-item rounded-1"
+                    >
+                      Recently Added
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => setSortOption("Ascending")}
+                      className="dropdown-item rounded-1"
+                    >
+                      Ascending
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => setSortOption("Descending")}
+                      className="dropdown-item rounded-1"
+                    >
+                      Descending
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="card-body p-0">

@@ -69,7 +69,7 @@ const getUserId = () => {
 export const getLeaveDashboard =
   async (): Promise<LeaveDashboardResponse | null> => {
     try {
-      const response = await Instance.get("/api/admin/leave-dashboard", {
+      const response = await Instance.get("/api/admin/leave", {
         params: { user_id: getUserId() },
       });
       return response.data;
