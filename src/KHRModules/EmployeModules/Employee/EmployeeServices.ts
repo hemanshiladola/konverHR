@@ -186,7 +186,7 @@ export const getWorkLocations = async () => {
 };
 
 export const getReportingManagers = async () => {
-  const response = await Instance.get("/employee/employees-basic-info", {
+  const response = await Instance.get("/api/employees/basic-info", {
     params: { user_id: getUserId() },
   });
   return response.data.data || [];

@@ -88,8 +88,8 @@ const AddEditEmployeeCalendarsKHRModal: React.FC<Props> = ({
       // 6. Create Payload with specific format "DD/MM/YYYY HH:mm:ss"
       const payload: CreateEventPayload = {
         name: name,
-        start: startDateTime.format("DD/MM/YYYY HH:mm:ss"),
-        stop: endDateTime.format("DD/MM/YYYY HH:mm:ss"),
+        start: startDateTime.format("YYYY-MM-DD HH:mm:ss"),
+        stop: endDateTime.format("YYYY-MM-DD HH:mm:ss"),
         location: location,
         duration: Number(durationHours.toFixed(2)), // e.g., 1.5
         description: description,
