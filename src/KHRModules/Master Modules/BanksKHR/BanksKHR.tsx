@@ -21,7 +21,7 @@ const BanksKHR = () => {
   const [selectedBank, setSelectedBank] = useState<Bank | null>(null);
 
   // Group by functionality
-  const [groupBy, setGroupBy] = useState<string>('none');
+  const [groupBy, setGroupBy] = useState<string>("none");
   const [groupedData, setGroupedData] = useState<GroupedData[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -71,94 +71,168 @@ const BanksKHR = () => {
 
   // Group by functionality
   const groupByOptions = [
-    { value: 'none', label: 'No Grouping' },
-    { value: 'bank_type', label: 'Group by Bank Type' },
-    { value: 'code_availability', label: 'Group by Code Availability' },
-    { value: 'regional_classification', label: 'Group by Regional Classification' }
+    { value: "none", label: "No Grouping" },
+    { value: "bank_type", label: "Group by Bank Type" },
+    { value: "code_availability", label: "Group by Code Availability" },
+    {
+      value: "regional_classification",
+      label: "Group by Regional Classification",
+    },
   ];
-
-
 
   const getBankType = (name: string) => {
     const lowerName = name.toLowerCase();
-    if (lowerName.includes('state bank') || lowerName.includes('sbi') || lowerName.includes('public sector')) return 'Public Sector Banks';
-    if (lowerName.includes('hdfc') || lowerName.includes('icici') || lowerName.includes('axis') || lowerName.includes('kotak') || lowerName.includes('private')) return 'Private Sector Banks';
-    if (lowerName.includes('cooperative') || lowerName.includes('urban') || lowerName.includes('rural') || lowerName.includes('district')) return 'Cooperative Banks';
-    if (lowerName.includes('regional') || lowerName.includes('gramin') || lowerName.includes('local')) return 'Regional Rural Banks';
-    if (lowerName.includes('foreign') || lowerName.includes('international') || lowerName.includes('global')) return 'Foreign Banks';
-    if (lowerName.includes('payment') || lowerName.includes('wallet') || lowerName.includes('digital')) return 'Payment Banks';
-    if (lowerName.includes('small finance') || lowerName.includes('microfinance') || lowerName.includes('micro')) return 'Small Finance Banks';
-    return 'Other Banks';
+    if (
+      lowerName.includes("state bank") ||
+      lowerName.includes("sbi") ||
+      lowerName.includes("public sector")
+    )
+      return "Public Sector Banks";
+    if (
+      lowerName.includes("hdfc") ||
+      lowerName.includes("icici") ||
+      lowerName.includes("axis") ||
+      lowerName.includes("kotak") ||
+      lowerName.includes("private")
+    )
+      return "Private Sector Banks";
+    if (
+      lowerName.includes("cooperative") ||
+      lowerName.includes("urban") ||
+      lowerName.includes("rural") ||
+      lowerName.includes("district")
+    )
+      return "Cooperative Banks";
+    if (
+      lowerName.includes("regional") ||
+      lowerName.includes("gramin") ||
+      lowerName.includes("local")
+    )
+      return "Regional Rural Banks";
+    if (
+      lowerName.includes("foreign") ||
+      lowerName.includes("international") ||
+      lowerName.includes("global")
+    )
+      return "Foreign Banks";
+    if (
+      lowerName.includes("payment") ||
+      lowerName.includes("wallet") ||
+      lowerName.includes("digital")
+    )
+      return "Payment Banks";
+    if (
+      lowerName.includes("small finance") ||
+      lowerName.includes("microfinance") ||
+      lowerName.includes("micro")
+    )
+      return "Small Finance Banks";
+    return "Other Banks";
   };
 
   const getCodeAvailability = (bank: Bank) => {
-    const hasSwift = bank.swift_code && bank.swift_code !== '-';
-    const hasMicr = bank.micr_code && bank.micr_code !== '-';
-    const hasBic = bank.bic && bank.bic !== '-';
-    
+    const hasSwift = bank.swift_code && bank.swift_code !== "-";
+    const hasMicr = bank.micr_code && bank.micr_code !== "-";
+    const hasBic = bank.bic && bank.bic !== "-";
+
     const codeCount = [hasSwift, hasMicr, hasBic].filter(Boolean).length;
-    
-    if (codeCount === 3) return 'Complete Codes (All 3)';
-    if (codeCount === 2) return 'Partial Codes (2 of 3)';
-    if (codeCount === 1) return 'Minimal Codes (1 of 3)';
-    return 'No Codes Available';
+
+    if (codeCount === 3) return "Complete Codes (All 3)";
+    if (codeCount === 2) return "Partial Codes (2 of 3)";
+    if (codeCount === 1) return "Minimal Codes (1 of 3)";
+    return "No Codes Available";
   };
 
   const getContactStatus = (bank: Bank) => {
-    const hasPhone = bank.phone && bank.phone !== '-';
-    const hasEmail = bank.email && bank.email !== '-';
-    
-    if (hasPhone && hasEmail) return 'Complete Contact Info';
-    if (hasPhone || hasEmail) return 'Partial Contact Info';
-    return 'No Contact Info';
+    const hasPhone = bank.phone && bank.phone !== "-";
+    const hasEmail = bank.email && bank.email !== "-";
+
+    if (hasPhone && hasEmail) return "Complete Contact Info";
+    if (hasPhone || hasEmail) return "Partial Contact Info";
+    return "No Contact Info";
   };
 
   const getNameLength = (text: string) => {
     const length = text.length;
-    if (length <= 15) return 'Short Names (≤15 chars)';
-    if (length <= 30) return 'Medium Names (16-30 chars)';
-    if (length <= 45) return 'Long Names (31-45 chars)';
-    return 'Very Long Names (45+ chars)';
+    if (length <= 15) return "Short Names (≤15 chars)";
+    if (length <= 30) return "Medium Names (16-30 chars)";
+    if (length <= 45) return "Long Names (31-45 chars)";
+    return "Very Long Names (45+ chars)";
   };
 
   const getRegionalClassification = (name: string) => {
     const lowerName = name.toLowerCase();
-    console.log(lowerName,"lowername");
-    
-    if (lowerName.includes('national') || lowerName.includes('india') || lowerName.includes('bharti') || lowerName.includes('all india')) return 'National Banks';
-    if (lowerName.includes('mumbai') || lowerName.includes('maharashtra') || lowerName.includes('western')) return 'Western Region';
-    if (lowerName.includes('delhi') || lowerName.includes('punjab') || lowerName.includes('haryana') || lowerName.includes('northern')) return 'Northern Region';
-    if (lowerName.includes('bangalore') || lowerName.includes('chennai') || lowerName.includes('karnataka') || lowerName.includes('tamil') || lowerName.includes('southern')) return 'Southern Region';
-    if (lowerName.includes('kolkata') || lowerName.includes('bengal') || lowerName.includes('assam') || lowerName.includes('eastern')) return 'Eastern Region';
-    if (lowerName.includes('rajasthan') || lowerName.includes('gujarat') || lowerName.includes('madhya') || lowerName.includes('central')) return 'Central Region';
-    return 'Multi-Regional Banks';
+    console.log(lowerName, "lowername");
+
+    if (
+      lowerName.includes("national") ||
+      lowerName.includes("india") ||
+      lowerName.includes("bharti") ||
+      lowerName.includes("all india")
+    )
+      return "National Banks";
+    if (
+      lowerName.includes("mumbai") ||
+      lowerName.includes("maharashtra") ||
+      lowerName.includes("western")
+    )
+      return "Western Region";
+    if (
+      lowerName.includes("delhi") ||
+      lowerName.includes("punjab") ||
+      lowerName.includes("haryana") ||
+      lowerName.includes("northern")
+    )
+      return "Northern Region";
+    if (
+      lowerName.includes("bangalore") ||
+      lowerName.includes("chennai") ||
+      lowerName.includes("karnataka") ||
+      lowerName.includes("tamil") ||
+      lowerName.includes("southern")
+    )
+      return "Southern Region";
+    if (
+      lowerName.includes("kolkata") ||
+      lowerName.includes("bengal") ||
+      lowerName.includes("assam") ||
+      lowerName.includes("eastern")
+    )
+      return "Eastern Region";
+    if (
+      lowerName.includes("rajasthan") ||
+      lowerName.includes("gujarat") ||
+      lowerName.includes("madhya") ||
+      lowerName.includes("central")
+    )
+      return "Central Region";
+    return "Multi-Regional Banks";
   };
-  
 
   const groupDataByField = (data: Bank[], field: string): GroupedData[] => {
-    if (field === 'none') return [];
+    if (field === "none") return [];
 
     const grouped = data.reduce((acc: any, item) => {
-      let groupKey = '';
-      
+      let groupKey = "";
+
       switch (field) {
-        case 'bank_type':
+        case "bank_type":
           groupKey = getBankType(item.name);
           break;
-        case 'code_availability':
+        case "code_availability":
           groupKey = getCodeAvailability(item);
           break;
-        case 'contact_status':
+        case "contact_status":
           groupKey = getContactStatus(item);
           break;
-        case 'name_length':
+        case "name_length":
           groupKey = getNameLength(item.name);
           break;
-        case 'regional_classification':
+        case "regional_classification":
           groupKey = getRegionalClassification(item.name);
           break;
         default:
-          groupKey = 'All Banks';
+          groupKey = "All Banks";
       }
 
       if (!acc[groupKey]) {
@@ -171,12 +245,14 @@ const BanksKHR = () => {
     // Sort groups alphabetically
     return Object.entries(grouped)
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([groupName, items]: [string, any]): GroupedData => ({
-        groupName,
-        items,
-        count: items.length,
-        isGroup: true
-      }));
+      .map(
+        ([groupName, items]: [string, any]): GroupedData => ({
+          groupName,
+          items,
+          count: items.length,
+          isGroup: true,
+        }),
+      );
   };
 
   const toggleGroupExpansion = (groupName: string) => {
@@ -191,7 +267,7 @@ const BanksKHR = () => {
 
   const toggleAllGroups = (expand: boolean) => {
     if (expand) {
-      setExpandedGroups(new Set(groupedData.map(group => group.groupName)));
+      setExpandedGroups(new Set(groupedData.map((group) => group.groupName)));
     } else {
       setExpandedGroups(new Set());
     }
@@ -199,7 +275,7 @@ const BanksKHR = () => {
 
   const handleGroupByChange = (value: string) => {
     setGroupBy(value);
-    if (value === 'none') {
+    if (value === "none") {
       setGroupedData([]);
       setExpandedGroups(new Set());
     } else {
@@ -214,48 +290,52 @@ const BanksKHR = () => {
 
   // Update grouped data when main data changes
   useEffect(() => {
-    if (data.length > 0 && groupBy !== 'none') {
+    if (data.length > 0 && groupBy !== "none") {
       handleGroupByChange(groupBy);
     }
   }, [data]);
 
   const renderGroupedTable = () => {
-    if (groupBy === 'none') {
+    if (groupBy === "none") {
       return <DatatableKHR data={data} columns={columns} selection={true} />;
     }
 
     return (
       <div className="grouped-table">
         {groupedData.map((group: GroupedData, groupIndex: number) => (
-          <div 
-            key={`group-${groupIndex}-${group.groupName}`} 
-            className="group-section mb-4" 
+          <div
+            key={`group-${groupIndex}-${group.groupName}`}
+            className="group-section mb-4"
             style={{
-              border: '1px solid #e9ecef',
-              borderRadius: '8px',
-              overflow: 'hidden'
+              border: "1px solid #e9ecef",
+              borderRadius: "8px",
+              overflow: "hidden",
             }}
           >
             {/* Group Header */}
-            <div 
+            <div
               className="group-header bg-light p-3 border rounded cursor-pointer d-flex justify-content-between align-items-center"
               onClick={() => toggleGroupExpansion(group.groupName)}
-              style={{ 
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                border: '1px solid #e9ecef'
+              style={{
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                border: "1px solid #e9ecef",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8f9fa';
+                e.currentTarget.style.backgroundColor = "#f8f9fa";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8f9fa';
+                e.currentTarget.style.backgroundColor = "#f8f9fa";
               }}
             >
               <div className="d-flex align-items-center">
-                <i className={`ti ${expandedGroups.has(group.groupName) ? 'ti-chevron-down' : 'ti-chevron-right'} me-2`}></i>
+                <i
+                  className={`ti ${expandedGroups.has(group.groupName) ? "ti-chevron-down" : "ti-chevron-right"} me-2`}
+                ></i>
                 <h6 className="mb-0 fw-bold">{group.groupName}</h6>
-                <span className="badge badge-primary ms-2">{group.count} banks</span>
+                <span className="badge badge-primary ms-2">
+                  {group.count} banks
+                </span>
               </div>
               <div className="group-stats">
                 <div className="d-flex gap-3">
@@ -263,34 +343,59 @@ const BanksKHR = () => {
                     <i className="ti ti-building-bank me-1"></i>
                     Total: <strong>{group.count}</strong>
                   </small>
-                  {groupBy === 'code_availability' && (
+                  {groupBy === "code_availability" && (
                     <small className="text-info">
                       <i className="ti ti-code me-1"></i>
-                      With Codes: <strong>{group.items.filter(item => 
-                        (item.swift_code && item.swift_code !== '-') || 
-                        (item.micr_code && item.micr_code !== '-') || 
-                        (item.bic && item.bic !== '-')
-                      ).length}</strong>
+                      With Codes:{" "}
+                      <strong>
+                        {
+                          group.items.filter(
+                            (item) =>
+                              (item.swift_code && item.swift_code !== "-") ||
+                              (item.micr_code && item.micr_code !== "-") ||
+                              (item.bic && item.bic !== "-"),
+                          ).length
+                        }
+                      </strong>
                     </small>
                   )}
-                  {groupBy === 'contact_status' && (
+                  {groupBy === "contact_status" && (
                     <small className="text-success">
                       <i className="ti ti-phone me-1"></i>
-                      With Contact: <strong>{group.items.filter(item => 
-                        (item.phone && item.phone !== '-') || 
-                        (item.email && item.email !== '-')
-                      ).length}</strong>
+                      With Contact:{" "}
+                      <strong>
+                        {
+                          group.items.filter(
+                            (item) =>
+                              (item.phone && item.phone !== "-") ||
+                              (item.email && item.email !== "-"),
+                          ).length
+                        }
+                      </strong>
                     </small>
                   )}
-                  {groupBy === 'name_length' && (
+                  {groupBy === "name_length" && (
                     <small className="text-warning">
                       <i className="ti ti-ruler me-1"></i>
-                      Avg Length: <strong>{Math.round(group.items.reduce((sum, item) => sum + item.name.length, 0) / group.count)} chars</strong>
+                      Avg Length:{" "}
+                      <strong>
+                        {Math.round(
+                          group.items.reduce(
+                            (sum, item) => sum + item.name.length,
+                            0,
+                          ) / group.count,
+                        )}{" "}
+                        chars
+                      </strong>
                     </small>
                   )}
                   <small className="text-secondary">
                     <i className="ti ti-list me-1"></i>
-                    Sample: <strong>{group.items[0]?.name.substring(0, 15)}{group.items[0]?.name.length > 15 ? '...' : ''}</strong>
+                    Sample:{" "}
+                    <strong>
+                      {group.items[0]?.name.substring(0, 15)}
+                      {group.items[0]?.name.length > 15 ? "..." : ""}
+                    </strong>
                   </small>
                 </div>
               </div>
@@ -298,10 +403,13 @@ const BanksKHR = () => {
 
             {/* Group Content */}
             {expandedGroups.has(group.groupName) && (
-              <div className="group-content mt-2" style={{ borderTop: '1px solid #e9ecef' }}>
-                <DatatableKHR 
-                  data={group.items} 
-                  columns={columns} 
+              <div
+                className="group-content mt-2"
+                style={{ borderTop: "1px solid #e9ecef" }}
+              >
+                <DatatableKHR
+                  data={group.items}
+                  columns={columns}
                   selection={true}
                 />
               </div>
@@ -397,16 +505,19 @@ const BanksKHR = () => {
                       data-bs-toggle="dropdown"
                     >
                       <i className="ti ti-layout-grid me-1" />
-                      {groupByOptions.find(opt => opt.value === groupBy)?.label || 'Group By'}
+                      {groupByOptions.find((opt) => opt.value === groupBy)
+                        ?.label || "Group By"}
                     </button>
                     <ul className="dropdown-menu dropdown-menu-end">
                       {groupByOptions.map((option) => (
                         <li key={option.value}>
                           <button
-                            className={`dropdown-item ${groupBy === option.value ? 'active' : ''}`}
+                            className={`dropdown-item ${groupBy === option.value ? "active" : ""}`}
                             onClick={() => handleGroupByChange(option.value)}
                           >
-                            <i className={`ti ${groupBy === option.value ? 'ti-check' : 'ti-point'} me-2`} />
+                            <i
+                              className={`ti ${groupBy === option.value ? "ti-check" : "ti-point"} me-2`}
+                            />
                             {option.label}
                           </button>
                         </li>
@@ -418,57 +529,49 @@ const BanksKHR = () => {
             />
           </div>
 
-          <div className="card">
-            <div className="card-body p-0">
-              {loading ? (
-                <div className="text-center p-5">
-                  <div
-                    className="spinner-border text-primary"
-                    role="status"
-                  ></div>
-                  <div className="mt-2">Fetching Bank Records...</div>
-                </div>
-              ) : (
-                <>
-                  {/* Group By Info */}
-                  {groupBy !== 'none' && (
-                    <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
-                      <div>
-                        <i className="ti ti-info-circle me-2"></i>
-                        <strong>Grouped by:</strong> {groupByOptions.find(opt => opt.value === groupBy)?.label}
-                        <span className="ms-2">
-                          ({groupedData.length} groups, {data.length} total banks)
-                        </span>
-                      </div>
-                      <div className="btn-group btn-group-sm">
-                        <button 
-                          className="btn btn-outline-primary btn-sm"
-                          onClick={() => toggleAllGroups(true)}
-                          title="Expand All Groups"
-                        >
-                          <i className="ti ti-chevrons-down me-1"></i>
-                          Expand All
-                        </button>
-                        <button 
-                          className="btn btn-outline-secondary btn-sm"
-                          onClick={() => toggleAllGroups(false)}
-                          title="Collapse All Groups"
-                        >
-                          <i className="ti ti-chevrons-up me-1"></i>
-                          Collapse All
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Render Table or Grouped Table */}
-                  <div className="p-3">
-                    {renderGroupedTable()}
-                  </div>
-                </>
-              )}
+          {loading ? (
+            <div className="text-center p-5">
+              <div className="spinner-border text-primary" role="status"></div>
+              <div className="mt-2">Fetching Bank Records...</div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Group By Info */}
+              {groupBy !== "none" && (
+                <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
+                  <div>
+                    <i className="ti ti-info-circle me-2"></i>
+                    <strong>Grouped by:</strong>{" "}
+                    {groupByOptions.find((opt) => opt.value === groupBy)?.label}
+                    <span className="ms-2">
+                      ({groupedData.length} groups, {data.length} total banks)
+                    </span>
+                  </div>
+                  <div className="btn-group btn-group-sm">
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={() => toggleAllGroups(true)}
+                      title="Expand All Groups"
+                    >
+                      <i className="ti ti-chevrons-down me-1"></i>
+                      Expand All
+                    </button>
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => toggleAllGroups(false)}
+                      title="Collapse All Groups"
+                    >
+                      <i className="ti ti-chevrons-up me-1"></i>
+                      Collapse All
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Render Table or Grouped Table */}
+              <div className="">{renderGroupedTable()}</div>
+            </>
+          )}
         </div>
       </div>
 

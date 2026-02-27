@@ -498,60 +498,52 @@ const HRContractTypeKHR = () => {
             }
           />
         </div>
-        <div className="card shadow-sm">
-          <div className="card-body p-0">
-            {loading ? (
-              <div className="text-center p-4">
-                <div
-                  className="spinner-border text-primary"
-                  role="status"
-                ></div>
-              </div>
-            ) : (
-              <>
-                {/* Group By Info */}
-                {groupBy !== "none" && (
-                  <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
-                    <div>
-                      <i className="ti ti-info-circle me-2"></i>
-                      <strong>Grouped by:</strong>{" "}
-                      {
-                        groupByOptions.find((opt) => opt.value === groupBy)
-                          ?.label
-                      }
-                      <span className="ms-2">
-                        ({groupedData.length} groups, {data.length} total
-                        contract types)
-                      </span>
-                    </div>
-                    <div className="btn-group btn-group-sm">
-                      <button
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={() => toggleAllGroups(true)}
-                        title="Expand All Groups"
-                      >
-                        <i className="ti ti-chevrons-down me-1"></i>
-                        Expand All
-                      </button>
-                      <button
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => toggleAllGroups(false)}
-                        title="Collapse All Groups"
-                      >
-                        <i className="ti ti-chevrons-up me-1"></i>
-                        Collapse All
-                      </button>
-                    </div>
-                  </div>
-                )}
 
-                {/* Render Table or Grouped Table */}
-                <div className="p-3">{renderGroupedTable()}</div>
-              </>
-            )}
+        {loading ? (
+          <div className="text-center p-4">
+            <div className="spinner-border text-primary" role="status"></div>
           </div>
-        </div>
+        ) : (
+          <>
+            {/* Group By Info */}
+            {groupBy !== "none" && (
+              <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
+                <div>
+                  <i className="ti ti-info-circle me-2"></i>
+                  <strong>Grouped by:</strong>{" "}
+                  {groupByOptions.find((opt) => opt.value === groupBy)?.label}
+                  <span className="ms-2">
+                    ({groupedData.length} groups, {data.length} total contract
+                    types)
+                  </span>
+                </div>
+                <div className="btn-group btn-group-sm">
+                  <button
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => toggleAllGroups(true)}
+                    title="Expand All Groups"
+                  >
+                    <i className="ti ti-chevrons-down me-1"></i>
+                    Expand All
+                  </button>
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => toggleAllGroups(false)}
+                    title="Collapse All Groups"
+                  >
+                    <i className="ti ti-chevrons-up me-1"></i>
+                    Collapse All
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Render Table or Grouped Table */}
+            <div className="">{renderGroupedTable()}</div>
+          </>
+        )}
       </div>
+
       <AddEditHRContractTypeModal onSuccess={fetchData} data={selectedItem} />
     </div>
   );

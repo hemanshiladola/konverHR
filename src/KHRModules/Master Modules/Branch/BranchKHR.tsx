@@ -156,8 +156,8 @@ const BranchKHR = () => {
               modalTarget="#add_branch_modal"
             />
           </div>
-          <div className="card border-0 shadow-sm">
-            <div className="card-body">
+          <div className=" border-0 shadow-sm">
+            <div className="">
               {loading ? (
                 <div className="text-center p-4">Loading branches...</div>
               ) : (

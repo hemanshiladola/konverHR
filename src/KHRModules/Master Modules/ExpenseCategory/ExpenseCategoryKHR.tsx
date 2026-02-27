@@ -163,24 +163,16 @@ const ExpenseCategoryKHR = () => {
               />
             </div>
 
-            <div className="card shadow-sm mb-3">
-              <div className="card-body p-0">
-                {loading ? (
-                  <div className="text-center p-5">
-                    <div
-                      className="spinner-border text-primary"
-                      role="status"
-                    ></div>
-                  </div>
-                ) : (
-                  <DatatableKHR
-                    columns={columns}
-                    data={data}
-                    selection={true}
-                  />
-                )}
+            {loading ? (
+              <div className="text-center p-5">
+                <div
+                  className="spinner-border text-primary"
+                  role="status"
+                ></div>
               </div>
-            </div>
+            ) : (
+              <DatatableKHR columns={columns} data={data} selection={true} />
+            )}
           </div>
         </div>
 

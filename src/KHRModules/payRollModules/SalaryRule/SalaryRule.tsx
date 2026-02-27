@@ -121,27 +121,25 @@ const SalaryRule = () => {
           />
         </div>
 
-        <div className="card shadow-sm border-0">
-          <div className="card-body">
-            {loading ? (
-              <div className="text-center p-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <div className="mt-2 text-muted fs-13">
-                  Loading Salary Rules...
-                </div>
-              </div>
-            ) : (
-              <DatatableKHR
-                data={data}
-                columns={columns}
-                selection={true}
-                textKey="name"
-              />
-            )}
+        {/* <div className="card shadow-sm border-0">
+          <div className="card-body"> */}
+        {loading ? (
+          <div className="text-center p-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <div className="mt-2 text-muted fs-13">Loading Salary Rules...</div>
           </div>
-        </div>
+        ) : (
+          <DatatableKHR
+            data={data}
+            columns={columns}
+            selection={true}
+            textKey="name"
+          />
+        )}
+        {/* </div>
+        </div> */}
 
         <AddEditSalaryRuleModal
           onSuccess={fetchData}

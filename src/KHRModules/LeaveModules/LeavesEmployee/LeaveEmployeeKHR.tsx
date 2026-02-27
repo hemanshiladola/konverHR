@@ -219,8 +219,8 @@ const LeaveEmployeeKHR = () => {
           })}
         </div>
 
-        <div className="card mt-4">
-          <div className="card-body">
+        <div className="mt-4">
+          <div className="">
             <DatatableKHR data={data} columns={columns} selection={true} />
           </div>
         </div>

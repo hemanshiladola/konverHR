@@ -270,32 +270,30 @@ const ExpenseKHR = () => {
             />
           </div>
 
-          <div className="card mb-3">
+          {/* <div className="card mb-3">
             <div className="card-body">
-              <h5 className="card-title mb-3">Expense List</h5>
+              <h5 className="card-title mb-3">Expense List</h5> */}
 
-              {/* --- LOADER LOGIC ADDED HERE --- */}
-              {loading ? (
-                <div className="d-flex flex-column align-items-center justify-content-center p-5">
-                  <div
-                    className="spinner-border text-primary"
-                    role="status"
-                    style={{ width: "3rem", height: "3rem" }}
-                  >
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                  <p className="mt-3 text-muted fw-medium">
-                    Loading Expenses...
-                  </p>
-                </div>
-              ) : (
-                <DatatableKHR columns={columns} data={data} />
-              )}
-              {/* ------------------------------- */}
+          {/* --- LOADER LOGIC ADDED HERE --- */}
+          {loading ? (
+            <div className="d-flex flex-column align-items-center justify-content-center p-5">
+              <div
+                className="spinner-border text-primary"
+                role="status"
+                style={{ width: "3rem", height: "3rem" }}
+              >
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="mt-3 text-muted fw-medium">Loading Expenses...</p>
             </div>
-          </div>
+          ) : (
+            <DatatableKHR columns={columns} data={data} />
+          )}
+          {/* ------------------------------- */}
         </div>
       </div>
+      {/* </div>
+      </div> */}
 
       <AddEditExpenseKHRModal
         onSuccess={fetchData}

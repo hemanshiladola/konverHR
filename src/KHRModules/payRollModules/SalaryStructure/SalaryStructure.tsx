@@ -142,22 +142,19 @@ const SalaryStructure = () => {
             />
           </div>
 
-          <div className="card">
-            <div className="card-body p-0">
-              {loading ? (
-                <div className="text-center p-5">
-                  <div
-                    className="spinner-border text-primary"
-                    role="status"
-                  ></div>
-                  <div className="mt-2">Fetching Records...</div>
-                </div>
-              ) : (
-                <DatatableKHR data={data} columns={columns} selection={true} />
-              )}
+          {/* <div className="card">
+            <div className="card-body p-0"> */}
+          {loading ? (
+            <div className="text-center p-5">
+              <div className="spinner-border text-primary" role="status"></div>
+              <div className="mt-2">Fetching Records...</div>
             </div>
-          </div>
+          ) : (
+            <DatatableKHR data={data} columns={columns} selection={true} />
+          )}
         </div>
+        {/* </div>
+        </div> */}
       </div>
 
       <AddEditSalaryStructureModal

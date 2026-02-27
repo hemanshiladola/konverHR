@@ -29,7 +29,7 @@ const AttendancePolicy = () => {
     useState<AttendancePolicyType | null>(null);
 
   // Group by functionality
-  const [groupBy, setGroupBy] = useState<string>('none');
+  const [groupBy, setGroupBy] = useState<string>("none");
   const [groupedData, setGroupedData] = useState<GroupedData[]>([]);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -88,16 +88,16 @@ const AttendancePolicy = () => {
 
   // Group by functionality
   const groupByOptions = [
-    { value: 'none', label: 'No Grouping' },
-    { value: 'type', label: 'Group by Type' },
-    { value: 'absent_condition', label: 'Group by Absent Condition' },
-    { value: 'grace_time', label: 'Group by Grace Time' },
-    { value: 'created_month', label: 'Group by Created Month' }
+    { value: "none", label: "No Grouping" },
+    { value: "type", label: "Group by Type" },
+    { value: "absent_condition", label: "Group by Absent Condition" },
+    { value: "grace_time", label: "Group by Grace Time" },
+    { value: "created_month", label: "Group by Created Month" },
   ];
 
   const getCreatedMonth = (date: string) => {
     if (!date || date === "-") return "Unknown";
-    return moment(date).format('MMMM YYYY');
+    return moment(date).format("MMMM YYYY");
   };
 
   const getGraceTimeCategory = (minutes: number) => {
@@ -108,27 +108,32 @@ const AttendancePolicy = () => {
     return "30+ Minutes";
   };
 
-  const groupDataByField = (data: AttendancePolicyType[], field: string): GroupedData[] => {
-    if (field === 'none') return [];
+  const groupDataByField = (
+    data: AttendancePolicyType[],
+    field: string,
+  ): GroupedData[] => {
+    if (field === "none") return [];
 
     const grouped = data.reduce((acc: any, item) => {
-      let groupKey = '';
-      
+      let groupKey = "";
+
       switch (field) {
-        case 'type':
+        case "type":
           groupKey = item.type.charAt(0).toUpperCase() + item.type.slice(1);
           break;
-        case 'absent_condition':
-          groupKey = item.absent_if.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        case "absent_condition":
+          groupKey = item.absent_if
+            .replace(/_/g, " ")
+            .replace(/\b\w/g, (l) => l.toUpperCase());
           break;
-        case 'grace_time':
+        case "grace_time":
           groupKey = getGraceTimeCategory(item.grace_minutes);
           break;
-        case 'created_month':
+        case "created_month":
           groupKey = getCreatedMonth(item.created_date || "-");
           break;
         default:
-          groupKey = 'All Policies';
+          groupKey = "All Policies";
       }
 
       if (!acc[groupKey]) {
@@ -138,12 +143,14 @@ const AttendancePolicy = () => {
       return acc;
     }, {});
 
-    return Object.entries(grouped).map(([groupName, items]: [string, any]): GroupedData => ({
-      groupName,
-      items,
-      count: items.length,
-      isGroup: true
-    }));
+    return Object.entries(grouped).map(
+      ([groupName, items]: [string, any]): GroupedData => ({
+        groupName,
+        items,
+        count: items.length,
+        isGroup: true,
+      }),
+    );
   };
 
   const toggleGroupExpansion = (groupName: string) => {
@@ -158,7 +165,7 @@ const AttendancePolicy = () => {
 
   const toggleAllGroups = (expand: boolean) => {
     if (expand) {
-      setExpandedGroups(new Set(groupedData.map(group => group.groupName)));
+      setExpandedGroups(new Set(groupedData.map((group) => group.groupName)));
     } else {
       setExpandedGroups(new Set());
     }
@@ -166,7 +173,7 @@ const AttendancePolicy = () => {
 
   const handleGroupByChange = (value: string) => {
     setGroupBy(value);
-    if (value === 'none') {
+    if (value === "none") {
       setGroupedData([]);
       setExpandedGroups(new Set());
     } else {
@@ -187,42 +194,53 @@ const AttendancePolicy = () => {
   }, [data, groupBy]);
 
   const renderGroupedTable = () => {
-    if (groupBy === 'none') {
-      return <DatatableKHR data={data} columns={columns} selection={true} textKey="name" />;
+    if (groupBy === "none") {
+      return (
+        <DatatableKHR
+          data={data}
+          columns={columns}
+          selection={true}
+          textKey="name"
+        />
+      );
     }
 
     return (
       <div className="grouped-table">
         {groupedData.map((group: GroupedData, groupIndex: number) => (
-          <div 
-            key={`group-${groupIndex}-${group.groupName}`} 
-            className="group-section mb-4" 
+          <div
+            key={`group-${groupIndex}-${group.groupName}`}
+            className="group-section mb-4"
             style={{
-              border: '1px solid #e9ecef',
-              borderRadius: '8px',
-              overflow: 'hidden'
+              border: "1px solid #e9ecef",
+              borderRadius: "8px",
+              overflow: "hidden",
             }}
           >
             {/* Group Header */}
-            <div 
+            <div
               className="group-header bg-light p-3 border rounded cursor-pointer d-flex justify-content-between align-items-center"
               onClick={() => toggleGroupExpansion(group.groupName)}
-              style={{ 
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                border: '1px solid #e9ecef'
+              style={{
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                border: "1px solid #e9ecef",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8f9fa';
+                e.currentTarget.style.backgroundColor = "#f8f9fa";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#f8f9fa';
+                e.currentTarget.style.backgroundColor = "#f8f9fa";
               }}
             >
               <div className="d-flex align-items-center">
-                <i className={`ti ${expandedGroups.has(group.groupName) ? 'ti-chevron-down' : 'ti-chevron-right'} me-2`}></i>
+                <i
+                  className={`ti ${expandedGroups.has(group.groupName) ? "ti-chevron-down" : "ti-chevron-right"} me-2`}
+                ></i>
                 <h6 className="mb-0 fw-bold">{group.groupName}</h6>
-                <span className="badge badge-primary ms-2">{group.count} policies</span>
+                <span className="badge badge-primary ms-2">
+                  {group.count} policies
+                </span>
               </div>
               <div className="group-stats">
                 <div className="d-flex gap-3">
@@ -232,16 +250,41 @@ const AttendancePolicy = () => {
                   </small>
                   <small className="text-info">
                     <i className="ti ti-settings me-1"></i>
-                    Regular: <strong>{group.items.filter((item: AttendancePolicyType) => item.type === 'regular').length}</strong>
+                    Regular:{" "}
+                    <strong>
+                      {
+                        group.items.filter(
+                          (item: AttendancePolicyType) =>
+                            item.type === "regular",
+                        ).length
+                      }
+                    </strong>
                   </small>
                   <small className="text-warning">
                     <i className="ti ti-clock me-1"></i>
-                    Flexible: <strong>{group.items.filter((item: AttendancePolicyType) => item.type === 'flexible').length}</strong>
+                    Flexible:{" "}
+                    <strong>
+                      {
+                        group.items.filter(
+                          (item: AttendancePolicyType) =>
+                            item.type === "flexible",
+                        ).length
+                      }
+                    </strong>
                   </small>
-                  {groupBy === 'grace_time' && (
+                  {groupBy === "grace_time" && (
                     <small className="text-success">
                       <i className="ti ti-hourglass me-1"></i>
-                      Avg Grace: <strong>{Math.round(group.items.reduce((sum, item) => sum + item.grace_minutes, 0) / group.count)}min</strong>
+                      Avg Grace:{" "}
+                      <strong>
+                        {Math.round(
+                          group.items.reduce(
+                            (sum, item) => sum + item.grace_minutes,
+                            0,
+                          ) / group.count,
+                        )}
+                        min
+                      </strong>
                     </small>
                   )}
                 </div>
@@ -250,10 +293,13 @@ const AttendancePolicy = () => {
 
             {/* Group Content */}
             {expandedGroups.has(group.groupName) && (
-              <div className="group-content mt-2" style={{ borderTop: '1px solid #e9ecef' }}>
-                <DatatableKHR 
-                  data={group.items} 
-                  columns={columns} 
+              <div
+                className="group-content mt-2"
+                style={{ borderTop: "1px solid #e9ecef" }}
+              >
+                <DatatableKHR
+                  data={group.items}
+                  columns={columns}
                   selection={true}
                   textKey="name"
                 />
@@ -327,8 +373,11 @@ const AttendancePolicy = () => {
 
   return (
     <>
-      <div className="main-wrapper">
-        <div className="page-wrapper">
+      <div className="main-wrapper min-vh-100 d-flex flex-column">
+        <div
+          className="page-wrapper flex-grow-1 d-flex flex-column"
+          style={{ minHeight: "100vh" }}
+        >
           <div className="content">
             <div onClick={() => setSelectedPolicy(null)}>
               <CommonHeader
@@ -347,16 +396,19 @@ const AttendancePolicy = () => {
                         data-bs-toggle="dropdown"
                       >
                         <i className="ti ti-layout-grid me-1" />
-                        {groupByOptions.find(opt => opt.value === groupBy)?.label || 'Group By'}
+                        {groupByOptions.find((opt) => opt.value === groupBy)
+                          ?.label || "Group By"}
                       </button>
                       <ul className="dropdown-menu dropdown-menu-end">
                         {groupByOptions.map((option) => (
                           <li key={option.value}>
                             <button
-                              className={`dropdown-item ${groupBy === option.value ? 'active' : ''}`}
+                              className={`dropdown-item ${groupBy === option.value ? "active" : ""}`}
                               onClick={() => handleGroupByChange(option.value)}
                             >
-                              <i className={`ti ${groupBy === option.value ? 'ti-check' : 'ti-point'} me-2`} />
+                              <i
+                                className={`ti ${groupBy === option.value ? "ti-check" : "ti-point"} me-2`}
+                              />
                               {option.label}
                             </button>
                           </li>
@@ -367,59 +419,60 @@ const AttendancePolicy = () => {
                 }
               />
             </div>
-            <div className="card shadow-sm">
-              <div className="card-body p-0">
-                {loading ? (
-                  <div className="text-center p-5">
-                    <div
-                      className="spinner-border text-primary"
-                      role="status"
-                    ></div>
-                    <div className="mt-2">Loading Policies...</div>
-                  </div>
-                ) : (
-                  <>
-                    {/* Group By Info */}
-                    {groupBy !== 'none' && (
-                      <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
-                        <div>
-                          <i className="ti ti-info-circle me-2"></i>
-                          <strong>Grouped by:</strong> {groupByOptions.find(opt => opt.value === groupBy)?.label}
-                          <span className="ms-2">
-                            ({groupedData.length} groups, {data.length} total policies)
-                          </span>
-                        </div>
-                        <div className="btn-group btn-group-sm">
-                          <button 
-                            className="btn btn-outline-primary btn-sm"
-                            onClick={() => toggleAllGroups(true)}
-                            title="Expand All Groups"
-                          >
-                            <i className="ti ti-chevrons-down me-1"></i>
-                            Expand All
-                          </button>
-                          <button 
-                            className="btn btn-outline-secondary btn-sm"
-                            onClick={() => toggleAllGroups(false)}
-                            title="Collapse All Groups"
-                          >
-                            <i className="ti ti-chevrons-up me-1"></i>
-                            Collapse All
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Render Table or Grouped Table */}
-                    <div className="p-3">
-                      {renderGroupedTable()}
-                    </div>
-                  </>
-                )}
+
+            {loading ? (
+              <div className="text-center p-5">
+                <div
+                  className="spinner-border text-primary"
+                  role="status"
+                ></div>
+                <div className="mt-2">Loading Policies...</div>
               </div>
-            </div>
+            ) : (
+              <>
+                {/* Group By Info */}
+                {groupBy !== "none" && (
+                  <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
+                    <div>
+                      <i className="ti ti-info-circle me-2"></i>
+                      <strong>Grouped by:</strong>{" "}
+                      {
+                        groupByOptions.find((opt) => opt.value === groupBy)
+                          ?.label
+                      }
+                      <span className="ms-2">
+                        ({groupedData.length} groups, {data.length} total
+                        policies)
+                      </span>
+                    </div>
+                    <div className="btn-group btn-group-sm">
+                      <button
+                        className="btn btn-outline-primary btn-sm"
+                        onClick={() => toggleAllGroups(true)}
+                        title="Expand All Groups"
+                      >
+                        <i className="ti ti-chevrons-down me-1"></i>
+                        Expand All
+                      </button>
+                      <button
+                        className="btn btn-outline-secondary btn-sm"
+                        onClick={() => toggleAllGroups(false)}
+                        title="Collapse All Groups"
+                      >
+                        <i className="ti ti-chevrons-up me-1"></i>
+                        Collapse All
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Render Table or Grouped Table */}
+                <div className="">{renderGroupedTable()}</div>
+              </>
+            )}
           </div>
         </div>
+
         <AddEditAttendancePolicyModal
           onSuccess={fetchData}
           data={selectedPolicy}

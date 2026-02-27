@@ -1153,89 +1153,71 @@ const AdminAttandanceKHR = () => {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="card">
-            <div className="card-body p-0">
-              {" "}
-              {isAttendancesGetApiFetching ? (
-                <div className="text-center p-5">
-                  <div
-                    className="spinner-border text-primary"
-                    role="status"
-                  ></div>
-                  <div className="mt-2">
-                    Loading All Employees Attendence...
+          </div>{" "}
+          {isAttendancesGetApiFetching ? (
+            <div className="text-center p-5">
+              <div className="spinner-border text-primary" role="status"></div>
+              <div className="mt-2">Loading All Employees Attendence...</div>
+            </div>
+          ) : (
+            <>
+              {/* Group By Info */}
+              {groupBy !== "none" && (
+                <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
+                  <div>
+                    <i className="ti ti-info-circle me-2"></i>
+                    <strong>Grouped by:</strong>{" "}
+                    {groupByOptions.find((opt) => opt.value === groupBy)?.label}
+                    <span className="ms-2">
+                      ({groupedData.length} groups, {data.length} total records)
+                    </span>
+                    {selectedEmployeeId && (
+                      <span className="ms-2 badge badge-secondary">
+                        <i className="ti ti-user me-1"></i>
+                        Employee:{" "}
+                        {
+                          employees.find(
+                            (emp) => emp.id.toString() === selectedEmployeeId,
+                          )?.name
+                        }
+                      </span>
+                    )}
+                    {["last_month", "last_3_months", "last_6_months"].includes(
+                      groupBy,
+                    ) && (
+                      <span className="ms-2 badge badge-info">
+                        <i className="ti ti-calendar me-1"></i>
+                        {groupBy === "last_month" && "Previous Month Only"}
+                        {groupBy === "last_3_months" && "Previous 3 Months"}
+                        {groupBy === "last_6_months" && "Previous 6 Months"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="btn-group btn-group-sm">
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      onClick={() => toggleAllGroups(true)}
+                      title="Expand All Groups"
+                    >
+                      <i className="ti ti-chevrons-down me-1"></i>
+                      Expand All
+                    </button>
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => toggleAllGroups(false)}
+                      title="Collapse All Groups"
+                    >
+                      <i className="ti ti-chevrons-up me-1"></i>
+                      Collapse All
+                    </button>
                   </div>
                 </div>
-              ) : (
-                <>
-                  {/* Group By Info */}
-                  {groupBy !== "none" && (
-                    <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
-                      <div>
-                        <i className="ti ti-info-circle me-2"></i>
-                        <strong>Grouped by:</strong>{" "}
-                        {
-                          groupByOptions.find((opt) => opt.value === groupBy)
-                            ?.label
-                        }
-                        <span className="ms-2">
-                          ({groupedData.length} groups, {data.length} total
-                          records)
-                        </span>
-                        {selectedEmployeeId && (
-                          <span className="ms-2 badge badge-secondary">
-                            <i className="ti ti-user me-1"></i>
-                            Employee:{" "}
-                            {
-                              employees.find(
-                                (emp) =>
-                                  emp.id.toString() === selectedEmployeeId,
-                              )?.name
-                            }
-                          </span>
-                        )}
-                        {[
-                          "last_month",
-                          "last_3_months",
-                          "last_6_months",
-                        ].includes(groupBy) && (
-                          <span className="ms-2 badge badge-info">
-                            <i className="ti ti-calendar me-1"></i>
-                            {groupBy === "last_month" && "Previous Month Only"}
-                            {groupBy === "last_3_months" && "Previous 3 Months"}
-                            {groupBy === "last_6_months" && "Previous 6 Months"}
-                          </span>
-                        )}
-                      </div>
-                      <div className="btn-group btn-group-sm">
-                        <button
-                          className="btn btn-outline-primary btn-sm"
-                          onClick={() => toggleAllGroups(true)}
-                          title="Expand All Groups"
-                        >
-                          <i className="ti ti-chevrons-down me-1"></i>
-                          Expand All
-                        </button>
-                        <button
-                          className="btn btn-outline-secondary btn-sm"
-                          onClick={() => toggleAllGroups(false)}
-                          title="Collapse All Groups"
-                        >
-                          <i className="ti ti-chevrons-up me-1"></i>
-                          Collapse All
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Render Table or Grouped Table */}
-                  <div className="p-3">{renderGroupedTable()}</div>
-                </>
               )}
-            </div>
-          </div>
+
+              {/* Render Table or Grouped Table */}
+              <div className="">{renderGroupedTable()}</div>
+            </>
+          )}
         </div>
       </div>
 

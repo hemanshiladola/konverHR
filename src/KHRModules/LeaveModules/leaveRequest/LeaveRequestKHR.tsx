@@ -197,15 +197,15 @@ const LeaveRequestKHR = () => {
               />
             </div>
 
-            <div className="card mb-3">
-              <div className="card-body">
-                <h5 className="card-title">Leave List</h5>
-                <div className="mt-3">
-                  <DatatableKHR columns={columns} data={data} />
-                </div>
-              </div>
+            {/* <div className="card mb-3">
+              <div className="card-body"> */}
+
+            <div className="mt-3">
+              <DatatableKHR columns={columns} data={data} />
             </div>
           </div>
+          {/* </div>
+          </div> */}
         </div>
         <AddEditLeaveRequestModal onSuccess={fetchData} data={selectedPolicy} />
       </div>

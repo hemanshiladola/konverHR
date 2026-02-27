@@ -517,62 +517,55 @@ const SkillKHR = () => {
             }
           />
         </div>
-        <div className="card shadow-sm border-0">
-          <div className="card-body p-0">
-            {loading ? (
-              <div className="text-center p-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+
+        {loading ? (
+          <div className="text-center p-5">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <div className="mt-2 text-muted fw-semibold">Loading Skills...</div>
+          </div>
+        ) : (
+          <>
+            {/* Group By Info */}
+            {groupBy !== "none" && (
+              <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
+                <div>
+                  <i className="ti ti-info-circle me-2"></i>
+                  <strong>Grouped by:</strong>{" "}
+                  {groupByOptions.find((opt) => opt.value === groupBy)?.label}
+                  <span className="ms-2">
+                    ({groupedData.length} groups, {data.length} total skill
+                    types)
+                  </span>
                 </div>
-                <div className="mt-2 text-muted fw-semibold">
-                  Loading Skills...
+                <div className="btn-group btn-group-sm">
+                  <button
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => toggleAllGroups(true)}
+                    title="Expand All Groups"
+                  >
+                    <i className="ti ti-chevrons-down me-1"></i>
+                    Expand All
+                  </button>
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => toggleAllGroups(false)}
+                    title="Collapse All Groups"
+                  >
+                    <i className="ti ti-chevrons-up me-1"></i>
+                    Collapse All
+                  </button>
                 </div>
               </div>
-            ) : (
-              <>
-                {/* Group By Info */}
-                {groupBy !== "none" && (
-                  <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
-                    <div>
-                      <i className="ti ti-info-circle me-2"></i>
-                      <strong>Grouped by:</strong>{" "}
-                      {
-                        groupByOptions.find((opt) => opt.value === groupBy)
-                          ?.label
-                      }
-                      <span className="ms-2">
-                        ({groupedData.length} groups, {data.length} total skill
-                        types)
-                      </span>
-                    </div>
-                    <div className="btn-group btn-group-sm">
-                      <button
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={() => toggleAllGroups(true)}
-                        title="Expand All Groups"
-                      >
-                        <i className="ti ti-chevrons-down me-1"></i>
-                        Expand All
-                      </button>
-                      <button
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => toggleAllGroups(false)}
-                        title="Collapse All Groups"
-                      >
-                        <i className="ti ti-chevrons-up me-1"></i>
-                        Collapse All
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Render Table or Grouped Table */}
-                <div className="p-3">{renderGroupedTable()}</div>
-              </>
             )}
-          </div>
-        </div>
+
+            {/* Render Table or Grouped Table */}
+            <div className="">{renderGroupedTable()}</div>
+          </>
+        )}
       </div>
+
       <AddEditSkillModal
         onSuccess={fetchData}
         data={selectedSkill}

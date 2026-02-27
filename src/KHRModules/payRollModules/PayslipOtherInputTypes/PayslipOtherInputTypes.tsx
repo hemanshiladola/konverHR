@@ -99,26 +99,23 @@ const PayslipOtherInputTypes = () => {
             modalTarget="#add_input_type_modal"
           />
         </div>
-        <div className="card shadow-sm border-0">
-          <div className="card-body">
-            {loading ? (
-              <div className="text-center p-5">
-                <div
-                  className="spinner-border text-primary"
-                  role="status"
-                ></div>
-                <div className="mt-2 text-muted fs-13">Loading...</div>
-              </div>
-            ) : (
-              <DatatableKHR
-                data={data}
-                columns={columns}
-                selection={true}
-                textKey="name"
-              />
-            )}
+        {/* <div className="card shadow-sm border-0">
+          <div className="card-body"> */}
+        {loading ? (
+          <div className="text-center p-5">
+            <div className="spinner-border text-primary" role="status"></div>
+            <div className="mt-2 text-muted fs-13">Loading...</div>
           </div>
-        </div>
+        ) : (
+          <DatatableKHR
+            data={data}
+            columns={columns}
+            selection={true}
+            textKey="name"
+          />
+        )}
+        {/* </div>
+        </div> */}
         <AddEditPayslipOtherInputTypesModal
           onSuccess={fetchData}
           data={selectedType}

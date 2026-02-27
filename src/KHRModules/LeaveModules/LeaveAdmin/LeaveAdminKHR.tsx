@@ -48,7 +48,7 @@ interface DashboardResponse {
 const LeaveAdminKHR = () => {
   const routes = all_routes;
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(
-    null
+    null,
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<TabType>("total_present_employee");
@@ -254,7 +254,7 @@ const LeaveAdminKHR = () => {
   const getCardStyle = (
     tab: TabType,
     gradient: string,
-    borderColor: string
+    borderColor: string,
   ) => {
     const isActive = activeTab === tab;
     return {
@@ -303,7 +303,7 @@ const LeaveAdminKHR = () => {
               style={getCardStyle(
                 "total_present_employee",
                 "linear-gradient(135deg, #23bdb8 0%, #43e794 100%)",
-                "#168b87"
+                "#168b87",
               )}
             >
               <div style={{ position: "relative", zIndex: 2 }}>
@@ -334,7 +334,7 @@ const LeaveAdminKHR = () => {
               style={getCardStyle(
                 "planned_leaves",
                 "linear-gradient(135deg, #2196F3 0%, #00BCD4 100%)",
-                "#0d47a1"
+                "#0d47a1",
               )}
             >
               <div style={{ position: "relative", zIndex: 2 }}>
@@ -365,7 +365,7 @@ const LeaveAdminKHR = () => {
               style={getCardStyle(
                 "unplanned_leaves",
                 "linear-gradient(135deg, #FF5252 0%, #FF1744 100%)",
-                "#b71c1c"
+                "#b71c1c",
               )}
             >
               <div style={{ position: "relative", zIndex: 2 }}>
@@ -396,7 +396,7 @@ const LeaveAdminKHR = () => {
               style={getCardStyle(
                 "pending_requests",
                 "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                "#4527a0"
+                "#4527a0",
               )}
             >
               <div style={{ position: "relative", zIndex: 2 }}>
@@ -421,11 +421,8 @@ const LeaveAdminKHR = () => {
         </div>
 
         {/* --- DETAILS TABLE --- */}
-        <div
-          className="card shadow-sm border-0"
-          style={{ borderRadius: "12px" }}
-        >
-          <div className="card-header bg-white border-bottom pt-4 pb-3">
+        <div className=" shadow-sm border-0" style={{ borderRadius: "12px" }}>
+          <div className="card-header bg-white border-bottom pt-4 px-4 pb-3">
             <div className="d-flex align-items-center justify-content-between">
               <div>
                 <h5 className="card-title fw-bold text-dark mb-1">
@@ -464,24 +461,21 @@ const LeaveAdminKHR = () => {
               </span>
             </div>
           </div>
-          <div className="card-body p-0">
-            {loading ? (
-              <div className="d-flex justify-content-center align-items-center p-5">
-                <div
-                  className="spinner-border text-primary"
-                  role="status"
-                ></div>
-              </div>
-            ) : (
-              <DatatableKHR
-                data={getCurrentTableData()}
-                columns={getColumns()}
-                selection={false}
-              />
-            )}
-          </div>
+          {/* <div className="card-body p-0"> */}
+          {loading ? (
+            <div className="d-flex justify-content-center align-items-center p-5">
+              <div className="spinner-border text-primary" role="status"></div>
+            </div>
+          ) : (
+            <DatatableKHR
+              data={getCurrentTableData()}
+              columns={getColumns()}
+              selection={false}
+            />
+          )}
         </div>
       </div>
+      {/* </div> */}
     </div>
   );
 };

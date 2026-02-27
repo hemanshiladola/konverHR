@@ -27,21 +27,21 @@ const rawSidebarData = [
     roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only Section
     dot: true,
     submenuItems: [
-      {
-        label: "Dashboard",
-        link: "index",
-        submenu: true,
-        showSubRoute: false,
-        icon: "smart-home",
-        base: "dashboard",
-        materialicons: "start",
-        dot: false,
-        submenuItems: [
-          // { label: "Attendence Policy", link: routes.AttendancePolicyKHR },
-          { label: "Admin Dashboard", link: routes.adminDashboard },
-          { label: "Employee Dashboard", link: routes.employeeDashboard },
-        ],
-      },
+      // {
+      //   label: "Dashboard",
+      //   link: "index",
+      //   submenu: true,
+      //   showSubRoute: false,
+      //   icon: "smart-home",
+      //   base: "dashboard",
+      //   materialicons: "start",
+      //   dot: false,
+      //   submenuItems: [
+      //     // { label: "Attendence Policy", link: routes.AttendancePolicyKHR },
+      //     { label: "Admin Dashboard", link: routes.adminDashboard },
+      //     { label: "Employee Dashboard", link: routes.employeeDashboard },
+      //   ],
+      // },
       {
         label: "Masters",
         link: "apps",

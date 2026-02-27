@@ -850,6 +850,8 @@ bg-light {
 }
 
 .page-wrapper {
+  flex: 1;
+  min-height: 100vh;
   -webkit-transition: all 0.5s ease;
   -ms-transition: all 0.5s ease;
   transition: all 0.5s ease;
@@ -12509,6 +12511,7 @@ button:focus {
 }
 .main-chat-blk .main-wrapper {
   height: 100vh;
+  min-height: 100vh;
   overflow: hidden;
 }
 .main-chat-blk .main-wrapper .content {
@@ -22163,6 +22166,7 @@ table .edit-delete-action.data {
 .card {
   margin-bottom: 24px;
   background-color: #fff;
+  min-height: 76vh;
   transition: all 0.5s ease-in-out;
   position: relative;
   border-radius: 5px;

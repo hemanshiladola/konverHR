@@ -60,11 +60,13 @@ const SalaryRuleCategoryKHR = () => {
     if (window.confirm("Are you sure you want to delete this category?")) {
       try {
         const response = await deleteSalaryRuleCategory(id);
-        const message = response.data?.message || "Category deleted successfully";
+        const message =
+          response.data?.message || "Category deleted successfully";
         toast.success(message);
         fetchData();
       } catch (error: any) {
-        const errorMsg = error.response?.data?.message || "Failed to delete category";
+        const errorMsg =
+          error.response?.data?.message || "Failed to delete category";
         toast.error(errorMsg);
       }
     }
@@ -84,7 +86,9 @@ const SalaryRuleCategoryKHR = () => {
       dataIndex: "parent_id",
       render: (parentId: number) => {
         if (!parentId) return <span className="text-muted">-</span>;
-        const parentCategory = data.find(item => Number(item.id) === parentId);
+        const parentCategory = data.find(
+          (item) => Number(item.id) === parentId,
+        );
         return (
           <span className="fs-14 text-primary">
             {parentCategory?.name || `ID: ${parentId}`}
@@ -98,7 +102,11 @@ const SalaryRuleCategoryKHR = () => {
       dataIndex: "note",
       render: (text: string) => (
         <span className="fs-13 text-muted">
-          {text ? (text.length > 50 ? `${text.substring(0, 50)}...` : text) : "-"}
+          {text
+            ? text.length > 50
+              ? `${text.substring(0, 50)}...`
+              : text
+            : "-"}
         </span>
       ),
     },
@@ -154,31 +162,31 @@ const SalaryRuleCategoryKHR = () => {
               modalTarget="#add_salary_rule_cat_modal"
             />
           </div>
-
+          {/* 
           <div className="card">
-            <div className="card-body p-0">
-              {loading ? (
-                <div className="text-center p-5">
-                  <div
-                    className="spinner-border text-primary"
-                    role="status"
-                  ></div>
-                  <div className="mt-2">Loading Categories...</div>
-                </div>
-              ) : (
-                <DatatableKHR
-                  data={data}
-                  columns={columns}
-                  selection={true}
-                  textKey="name"
-                />
-              )}
+            <div className="card-body p-0"> */}
+          {loading ? (
+            <div className="text-center p-5">
+              <div className="spinner-border text-primary" role="status"></div>
+              <div className="mt-2">Loading Categories...</div>
             </div>
-          </div>
+          ) : (
+            <DatatableKHR
+              data={data}
+              columns={columns}
+              selection={true}
+              textKey="name"
+            />
+          )}
         </div>
+        {/* </div>
+        </div> */}
       </div>
 
-      <AddEditSalaryRuleCategory onSuccess={fetchData} data={selectedCategory} />
+      <AddEditSalaryRuleCategory
+        onSuccess={fetchData}
+        data={selectedCategory}
+      />
     </>
   );
 };

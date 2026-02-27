@@ -503,59 +503,53 @@ const JobPosition = () => {
             }
           />
         </div>
-        <div className="card">
-          <div className="card-body">
-            {loading ? (
-              <div className="text-center p-4">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+
+        {loading ? (
+          <div className="text-center p-4">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Group By Info */}
+            {groupBy !== "none" && (
+              <div className="alert alert-info mb-3 d-flex justify-content-between align-items-center">
+                <div>
+                  <i className="ti ti-info-circle me-2"></i>
+                  <strong>Grouped by:</strong>{" "}
+                  {groupByOptions.find((opt) => opt.value === groupBy)?.label}
+                  <span className="ms-2">
+                    ({groupedData.length} groups, {data.length} total positions)
+                  </span>
+                </div>
+                <div className="btn-group btn-group-sm">
+                  <button
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => toggleAllGroups(true)}
+                    title="Expand All Groups"
+                  >
+                    <i className="ti ti-chevrons-down me-1"></i>
+                    Expand All
+                  </button>
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={() => toggleAllGroups(false)}
+                    title="Collapse All Groups"
+                  >
+                    <i className="ti ti-chevrons-up me-1"></i>
+                    Collapse All
+                  </button>
                 </div>
               </div>
-            ) : (
-              <>
-                {/* Group By Info */}
-                {groupBy !== "none" && (
-                  <div className="alert alert-info mb-3 d-flex justify-content-between align-items-center">
-                    <div>
-                      <i className="ti ti-info-circle me-2"></i>
-                      <strong>Grouped by:</strong>{" "}
-                      {
-                        groupByOptions.find((opt) => opt.value === groupBy)
-                          ?.label
-                      }
-                      <span className="ms-2">
-                        ({groupedData.length} groups, {data.length} total
-                        positions)
-                      </span>
-                    </div>
-                    <div className="btn-group btn-group-sm">
-                      <button
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={() => toggleAllGroups(true)}
-                        title="Expand All Groups"
-                      >
-                        <i className="ti ti-chevrons-down me-1"></i>
-                        Expand All
-                      </button>
-                      <button
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => toggleAllGroups(false)}
-                        title="Collapse All Groups"
-                      >
-                        <i className="ti ti-chevrons-up me-1"></i>
-                        Collapse All
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Render Table or Grouped Table */}
-                {renderGroupedTable()}
-              </>
             )}
-          </div>
-        </div>
+
+            {/* Render Table or Grouped Table */}
+            {renderGroupedTable()}
+          </>
+        )}
       </div>
+
       <AddEditJobPositionModal
         onSuccess={fetchData}
         data={selectedJob}

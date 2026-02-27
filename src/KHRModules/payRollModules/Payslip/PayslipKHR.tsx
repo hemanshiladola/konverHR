@@ -116,11 +116,11 @@ const PayslipKHR = () => {
           routes={all_routes}
         />
 
-        <div className="card mt-4 shadow-sm border-0">
-          <div className="card-body p-0">
-            <DatatableKHR data={payslips} columns={columns} />
-          </div>
-        </div>
+        {/* <div className="card mt-4 shadow-sm border-0">
+          <div className="card-body p-0"> */}
+        <DatatableKHR data={payslips} columns={columns} />
+        {/* </div>
+        </div> */}
 
         <AddEditPayslipModal
           onSuccess={fetchPayslips}

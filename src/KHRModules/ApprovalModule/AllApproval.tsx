@@ -306,34 +306,32 @@ const AllApproval = () => {
             modalTarget=""
           />
 
-          <div className="card mb-3 border-0 shadow-sm">
-            <div className="card-body">
-              {/* --- TABS --- */}
-              <ul className="nav nav-tabs nav-tabs-solid nav-justified mb-3">
-                {["All", "Attendance Regularization", "Leave", "Expense"].map(
-                  (tab) => (
-                    <li className="nav-item" key={tab}>
-                      <a
-                        className={`nav-link ${activeTab === tab ? "active" : ""}`}
-                        onClick={() => setActiveTab(tab)}
-                        href="#"
-                      >
-                        {tab === "Attendance Regularization"
-                          ? "Attendance"
-                          : tab}
-                      </a>
-                    </li>
-                  ),
-                )}
-              </ul>
+          {/* <div className="card mb-3 border-0 shadow-sm">
+            <div className="card-body"> */}
+          {/* --- TABS --- */}
+          <ul className="nav nav-tabs nav-tabs-solid nav-justified mb-3">
+            {["All", "Attendance Regularization", "Leave", "Expense"].map(
+              (tab) => (
+                <li className="nav-item" key={tab}>
+                  <a
+                    className={`nav-link ${activeTab === tab ? "active" : ""}`}
+                    onClick={() => setActiveTab(tab)}
+                    href="#"
+                  >
+                    {tab === "Attendance Regularization" ? "Attendance" : tab}
+                  </a>
+                </li>
+              ),
+            )}
+          </ul>
 
-              <div className="mt-3">
-                <DatatableKHR columns={columns} data={filteredData} />
-              </div>
-            </div>
+          <div className="mt-3">
+            <DatatableKHR columns={columns} data={filteredData} />
           </div>
         </div>
       </div>
+      {/* </div>
+      </div> */}
 
       {/* --- REJECT MODAL --- */}
       {showRejectModal && (
