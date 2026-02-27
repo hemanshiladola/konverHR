@@ -1,7 +1,7 @@
 services:
   konvertHR-saas-frontend:
-    image: konverthr-saas-frontend
-    container_name: konvertHR-saas-frontend-container
+    image: oddo-konverthr-frontend
+    container_name: oddoo-konverthr-frontend-container
     # env_file:
     #   - .env.development
     build: .
