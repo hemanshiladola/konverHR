@@ -345,7 +345,7 @@ export const getTimezones = async () => {
 
 export const addEmployee = async (payload: any) => {
   const userId = getUserId() || 219;
-  return await Instance.post(`/employee/create/employee`, payload, {
+  return await Instance.post(`/api/employee/create`, payload, {
     params: { user_id: userId },
   });
 };
@@ -360,8 +360,8 @@ import { toast } from "react-toastify";
 
 export const updateEmployee = async (id: string, data: any) => {
   const payload = { ...data }; // your request body
-  return await Instance.put(`/employee/${id}`, payload, {
-    params: { user_id: getUserId() }, // query params
+  return await Instance.put(`/api/update_employee/`, payload, {
+    params: { user_id: getUserId(), emp_id: id }, // query params
   });
 };
 
