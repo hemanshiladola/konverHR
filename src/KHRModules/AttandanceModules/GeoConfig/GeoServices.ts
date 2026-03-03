@@ -82,7 +82,7 @@ export const getGeoConfigs = async (): Promise<APIGeoConfig[]> => {
 export const addGeoConfig = async (data: any) => {
   const { user_id } = getAuthDetails();
   return await Instance.post(
-    `/api/create/geoLocation?user_id=${user_id}`,
+    `/api/create/geolocation?user_id=${user_id}`,
     data,
   );
 };
@@ -91,7 +91,7 @@ export const addGeoConfig = async (data: any) => {
 ===================== */
 export const updateGeoConfig = async (id: string, data: any) => {
   const { user_id } = getAuthDetails();
-  return await Instance.put(`/api/geoLocation/${id}?user_id=${user_id}`, data);
+  return await Instance.put(`/api/geolocation/${id}?user_id=${user_id}`, data);
 };
 /* =====================
    DELETE GEO CONFIG
@@ -99,7 +99,7 @@ export const updateGeoConfig = async (id: string, data: any) => {
 export const deleteGeoConfig = async (id: string) => {
   const { user_id } = getAuthDetails();
 
-  return await Instance.delete(`/api/geoLocation/${id}`, {
+  return await Instance.delete(`/api/geolocation/${id}`, {
     params: { user_id },
   });
 };

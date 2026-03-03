@@ -320,6 +320,7 @@ import {
   PayslipOtherInputTypes,
   BranchKHR,
   PayslipKHR,
+  ResetPasswordInternal,
 
   // BanksAccountKHR,
 } from "./lazyRoutes";
@@ -330,6 +331,7 @@ import { Offcanvas, Spinner } from "react-bootstrap";
 import { Video } from "react-feather";
 import EmployeeContractKHR from "@/KHRModules/EmployeeContract/EmployeeContractKHR";
 import SalaryRuleKHR from "@/KHRModules/payRollModules/SalaryRule/SalaryRule";
+import ForgotPasswordInternal from "@/feature-module/auth/forgotPassword/forgotPasswordInternal";
 
 const routes = all_routes;
 
@@ -364,6 +366,26 @@ export const publicRoutes = [
   {
     path: routes.dealsDashboard,
     element: <DealsDashboard />,
+    route: Route,
+  },
+  {
+    path: routes.resetPassword,
+    element: <ResetPassword />,
+    route: Route,
+  },
+  {
+    path: routes.forgotPassword,
+    element: <ForgotPassword />,
+    route: Route,
+  },
+  {
+    path: routes.emailVerification,
+    element: <EmailVerification />,
+    route: Route,
+  },
+  {
+    path: routes.lockScreen,
+    element: <LockScreen />,
     route: Route,
   },
   {
@@ -767,6 +789,7 @@ export const publicRoutes = [
     element: <Rating />,
     route: Route,
   },
+
   {
     path: routes.textEditor,
     element: <TextEditor />,
@@ -1841,6 +1864,17 @@ export const publicRoutes = [
     route: Route,
   },
   {
+    path: routes.internalforgotPassword,
+    element: <ForgotPasswordInternal />,
+    route: Route,
+  },
+  {
+    path: routes.internalResetPassword,
+    element: <ResetPasswordInternal />,
+    route: Route,
+  },
+
+  {
     path: routes.AttendancePolicyKHR,
     element: <AttendancePolicyKHR />,
     route: Route,
@@ -2048,7 +2082,7 @@ export const authRoutes = [
   },
   {
     path: routes.resetPassword,
-    element: <ResetPassword standalone={true} />,
+    element: <ResetPassword />,
     route: Route,
   },
   {

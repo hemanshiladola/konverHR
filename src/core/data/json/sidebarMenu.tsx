@@ -320,14 +320,14 @@ const rawSidebarData = [
     submenuItems: [
       {
         label: "Forgot Password",
-        link: routes.forgotPassword,
+        link: routes.internalforgotPassword,
         icon: "help-triangle",
         showSubRoute: false,
         submenu: false,
       },
       {
         label: "Reset Password",
-        link: routes.resetPassword,
+        link: routes.internalResetPassword,
         icon: "restore",
         showSubRoute: false,
         submenu: false,

@@ -173,7 +173,7 @@ export const getDesignations = async (departmentId?: string) => {
     params.department_id = departmentId;
   }
 
-  const response = await Instance.get("/api/job/list", { params });
+  const response = await Instance.get("/api/job_position", { params });
   return response.data.data || [];
 };
 

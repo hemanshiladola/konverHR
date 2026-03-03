@@ -170,6 +170,10 @@ export const ForgotPassword3 = createLazyComponent(
   () => import("../feature-module/auth/forgotPassword/forgotPassword-3"),
   <LoadingSpinner text="Loading forgot password..." />,
 );
+export const InternalForgotPassword = createLazyComponent(
+  () => import("../feature-module/auth/forgotPassword/forgotPasswordInternal"),
+  <LoadingSpinner text="Loading forgot password..." />,
+);
 export const ResetPasswordSuccess = createLazyComponent(
   () =>
     import("../feature-module/auth/resetPasswordSuccess/resetPasswordSuccess"),
@@ -183,6 +187,10 @@ export const ResetPasswordSuccess2 = createLazyComponent(
 export const ResetPasswordSuccess3 = createLazyComponent(
   () =>
     import("../feature-module/auth/resetPasswordSuccess/resetPasswordSuccess-3"),
+  <LoadingSpinner text="Loading success page..." />,
+);
+export const ResetPasswordInternal = createLazyComponent(
+  () => import("../feature-module/auth/resetPassword/resetPasswordInternal"),
   <LoadingSpinner text="Loading success page..." />,
 );
 export const LockScreen = createLazyComponent(

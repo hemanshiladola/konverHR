@@ -38,6 +38,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   onClose,
   data,
 }) => {
+  console.log("MODAL COMPONENT RENDERED"); // This MUST show when you click 'Add' or 'Edit'
   const [activeTab, setActiveTab] = useState("legal");
   const [validated, setValidated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -1266,57 +1267,168 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     loadBankingData();
   }, []);
 
+  // useEffect(() => {
+  //   const fetchEmploymentData = async () => {
+  //     try {
+  //       const [
+  //         bTypes,
+  //         bLocs,
+  //         deptsRes,
+  //         // jobs,
+  //         wLocs,
+  //         empList,
+  //       ] = await Promise.all([
+  //         // getBusinessTypes(), // /employee/business-types
+  //         // getBusinessLocations(), // /employee/business-locations
+  //         // getDepartments(), // /api/department
+  //         // // getDesignations(), // /api/job/list
+  //         // getWorkLocations(), // /api/work-location
+  //         // getReportingManagers(), // /employee/employees
+  //         getBusinessTypes().catch(() => ({ data: [] })),
+  //         getBusinessLocations().catch(() => ({ data: [] })),
+  //         getDepartments(), // This is the one we are debugging
+  //         getWorkLocations().catch(() => ({ data: [] })),
+  //         getReportingManagers(),
+  //       ]);
+
+  //       // 🟢 CRITICAL FIX: Access the .data property before mapping
+  //       // We use (res.data || res) to handle both formats
+  //       console.log("RAW DEPT RESPONSE:", deptsRes);
+  //       console.log("RAW MANAGER RESPONSE:", empList);
+
+  //       const finalDepts = (deptsRes?.data || deptsRes || []).map((i: any) => ({
+  //         value: String(i.id),
+  //         label: i.name,
+  //       }));
+
+  //       const finalManagers = (empList?.data || empList || []).map(
+  //         (i: any) => ({
+  //           value: String(i.id),
+  //           label: i.name,
+  //         }),
+  //       );
+
+  //       console.log("FORMATTED DEPTS FOR SELECT:", finalDepts);
+  //       console.log("FORMATTED MANAGERS FOR SELECT:", finalManagers);
+
+  //       setDepartments(finalDepts);
+  //       setManagers(finalManagers);
+  //       // const deptArray =
+  //       //   deptsRes?.data || (Array.isArray(deptsRes) ? deptsRes : []);
+  //       // setDepartments(
+  //       //   deptArray.map((i: any) => ({
+  //       //     value: String(i.id),
+  //       //     label: i.name,
+  //       //   })),
+  //       // );
+  //       // const managerArray =
+  //       //   empList?.data || (Array.isArray(empList) ? empList : []);
+  //       // setManagers(
+  //       //   managerArray.map((i: any) => ({
+  //       //     value: String(i.id),
+  //       //     label: i.name,
+  //       //   })),
+  //       // );
+  //       setBusinessTypes(
+  //         bTypes.map((i: any) => ({ value: i.id.toString(), label: i.name })),
+  //       );
+  //       setBusinessLocations(
+  //         bLocs.map((i: any) => ({ value: i.id.toString(), label: i.name })),
+  //       );
+  //       // setDepartments(
+  //       //   deptsRes.map((i: any) => ({
+  //       //     value: i.id.toString(),
+  //       //     label: i.name,
+  //       //   })),
+  //       // );
+  //       // setDesignations(
+  //       //   jobs.map((i: any) => ({
+  //       //     value: String(i.job_id || i.id),
+  //       //     label: i.name,
+  //       //   })),
+  //       // );
+  //       setWorkLocations(
+  //         wLocs.map((i: any) => ({ value: i.id.toString(), label: i.name })),
+  //       );
+
+  //       // const managerOptions = empList.map((i: any) => ({
+  //       //   value: i.id.toString(),
+  //       //   label: i.name,
+  //       // }));
+  //       // setManagers(managerOptions);
+  //     } catch (error) {
+  //       console.error("Error loading employment dependencies:", error);
+  //     }
+  //   };
+
+  //   // if (activeTab === "employment") fetchEmploymentData();
+  // }, []);
+
+  // Inside AddEditEmployeeModal.tsx
+  // Find the useEffect around line 680 (the one with getDepartments)
+
   useEffect(() => {
     const fetchEmploymentData = async () => {
       try {
-        const [
-          bTypes,
-          bLocs,
-          depts,
-          // jobs,
-          wLocs,
-          empList,
-        ] = await Promise.all([
-          getBusinessTypes(), // /employee/business-types
-          getBusinessLocations(), // /employee/business-locations
-          getDepartments(), // /api/department
-          // getDesignations(), // /api/job/list
-          getWorkLocations(), // /api/work-location
-          getReportingManagers(), // /employee/employees
+        const [bTypes, bLocs, deptsRes, wLocs, empList] = await Promise.all([
+          getBusinessTypes().catch((e) => {
+            console.error("bTypes error", e);
+            return [];
+          }),
+          getBusinessLocations().catch((e) => {
+            console.error("bLocs error", e);
+            return [];
+          }),
+          getDepartments(), // This is the one we need
+          getWorkLocations().catch((e) => {
+            console.error("wLocs error", e);
+            return [];
+          }),
+          getReportingManagers(), // This is the other one we need
         ]);
 
-        setBusinessTypes(
-          bTypes.map((i: any) => ({ value: i.id.toString(), label: i.name })),
-        );
-        setBusinessLocations(
-          bLocs.map((i: any) => ({ value: i.id.toString(), label: i.name })),
-        );
-        setDepartments(
-          depts.map((i: any) => ({ value: i.id.toString(), label: i.name })),
-        );
-        // setDesignations(
-        //   jobs.map((i: any) => ({
-        //     value: String(i.job_id || i.id),
-        //     label: i.name,
-        //   })),
-        // );
-        setWorkLocations(
-          wLocs.map((i: any) => ({ value: i.id.toString(), label: i.name })),
-        );
-
-        const managerOptions = empList.map((i: any) => ({
-          value: i.id.toString(),
+        const finalDepts = (deptsRes?.data || deptsRes || []).map((i: any) => ({
+          value: String(i.id),
           label: i.name,
         }));
-        setManagers(managerOptions);
+
+        const finalManagers = (empList?.data || empList || []).map(
+          (i: any) => ({
+            value: String(i.id),
+            label: i.name,
+          }),
+        );
+
+        setDepartments(finalDepts);
+        setManagers(finalManagers);
+
+        // Mapping for others...
+        setBusinessTypes(
+          (bTypes?.data || bTypes || []).map((i: any) => ({
+            value: String(i.id),
+            label: i.name,
+          })),
+        );
+        setBusinessLocations(
+          (bLocs?.data || bLocs || []).map((i: any) => ({
+            value: String(i.id),
+            label: i.name,
+          })),
+        );
+        setWorkLocations(
+          (wLocs?.data || wLocs || []).map((i: any) => ({
+            value: String(i.id),
+            label: i.name,
+          })),
+        );
       } catch (error) {
-        console.error("Error loading employment dependencies:", error);
+        console.error("CRITICAL DEBUG: Promise.all failed entirely", error);
       }
     };
 
-    if (activeTab === "employment") fetchEmploymentData();
-  }, [activeTab]);
-
+    // 🟢 REMOVED the "if (activeTab === 'employment')" check
+    fetchEmploymentData();
+  }, [data]); // 🟢 Runs whenever the modal data changes (opens)
   const loadFilteredDesignations = async (deptId: string) => {
     try {
       const jobs = await getDesignations(deptId);
@@ -4266,9 +4378,10 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                             </label>
                             <div>
                               <CommonSelect
+                                key={`dept-list-${departments.length}`}
                                 options={departments}
                                 placeholder="Select Department"
-                                defaultValue={departments.find(
+                                value={departments.find(
                                   (o) =>
                                     o.value === String(formData.department_id),
                                 )}
