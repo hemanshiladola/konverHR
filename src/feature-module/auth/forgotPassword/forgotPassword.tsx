@@ -11,6 +11,7 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string }>({});
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -18,14 +19,18 @@ const ForgotPassword = () => {
 
   const handleSendMail = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    setErrors({});
     if (!email) {
-      toast.error("⚠️ Please enter your email.");
+      const msg = "⚠️ Please enter your email.";
+      setErrors({ email: msg });
+      toast.error(msg);
       return;
     }
 
     if (!validateEmail(email)) {
-      toast.error("Invalid email format.");
+      const msg = "Invalid email format.";
+      setErrors({ email: msg });
+      toast.error(msg);
       return;
     }
 
@@ -123,17 +128,29 @@ const ForgotPassword = () => {
                           you instructions to reset your password.
                         </p>
                       </div>
-                      <div className="mb-3">
-                        <label className="form-label" htmlFor="email">
-                          Email Address
-                        </label>
-                        <div className="input-group">
+                      <div className="mb-2">
+                        <div className="d-flex justify-content-between align-items-center mb-1">
+                          <label className="form-label" htmlFor="email">
+                            Email Address
+                          </label>
+                          <div className="text-muted fs-11">
+                            {email.length} / 100 characters
+                          </div>
+                        </div>
+                        <div
+                          className={`input-group ${errors.email ? "is-invalid" : ""}`}
+                        >
+                          {" "}
                           <input
                             id="email"
                             type="email"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="form-control border-end-0"
+                            maxLength={100}
+                            onChange={(e) => {
+                              setEmail(e.target.value);
+                              if (errors.email) setErrors({}); // Clear error on type
+                            }}
+                            className={`form-control border-end-0 ${errors.email ? "is-invalid" : ""}`}
                             required
                             placeholder="Enter your email"
                             autoComplete="email"
@@ -141,6 +158,11 @@ const ForgotPassword = () => {
                           <span className="input-group-text border-start-0">
                             <i className="ti ti-mail" />
                           </span>
+                          {errors.email && (
+                            <div className="invalid-feedback d-block text-start">
+                              {errors.email}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="mb-3">
@@ -174,7 +196,7 @@ const ForgotPassword = () => {
                     </div>
                     <div className="mt-5 pb-4 text-center">
                       <p className="mb-0 text-gray-9">
-                        Copyright © 2026 - Konverthr All Rights Reserved{" "}
+                        Copyright © 2026 - Kavach All Rights Reserved{" "}
                       </p>
                     </div>
                   </div>

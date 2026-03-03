@@ -116,7 +116,7 @@ export const AttendancesGetApi = createAsyncThunk(
           "Content-Type": "application/json",
           authorization: `${localStorage.getItem("authToken")}`,
         },
-        url: `/api/admin/attendance`,
+        url: `/api/admin/attendances`,
         params,
       });
       if (result.data) {

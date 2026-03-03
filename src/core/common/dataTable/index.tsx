@@ -3,11 +3,17 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Table } from "antd";
 import type { DatatableProps } from "../../data/types";
 
+// Extend the props to include pageSize
+interface ExtendedDatatableProps<T extends object> extends DatatableProps<T> {
+  pageSize?: number;
+}
+
 function Datatable<T extends object = object>({
   columns,
   dataSource,
   Selection,
-}: DatatableProps<T>) {
+  pageSize = 10,
+}: ExtendedDatatableProps<T>) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selections, setSelections] = useState<boolean>(true);
   // const [searchText, setSearchText] = useState<string>("");
@@ -23,6 +29,10 @@ function Datatable<T extends object = object>({
   //   );
   // }, [dataSource, searchText]);
 
+  useEffect(() => {
+    setSelections(Selection ?? true);
+  }, [Selection]);
+
   // Memoize the row selection configuration
   const rowSelection = useMemo(
     () => ({
@@ -33,18 +43,18 @@ function Datatable<T extends object = object>({
   );
 
   // Memoize pagination configuration
+  // Added pageSize as a dependency so the table updates when the dropdown changes
   const paginationConfig = useMemo(
     () => ({
       locale: { items_per_page: "" },
       nextIcon: <i className="ti ti-chevron-right" />,
       prevIcon: <i className="ti ti-chevron-left" />,
-      defaultPageSize: 10,
-      showSizeChanger: true,
-      pageSizeOptions: ["10", "20", "30"],
+      pageSize: pageSize,
+      showSizeChanger: false, // We hide the AntD default because we added a custom one in the header
       showTotal: (total: number, range: [number, number]) =>
         `Showing ${range[0]} - ${range[1]} of ${total} entries`,
     }),
-    [],
+    [pageSize],
   );
 
   // Memoize pagination config with selection
@@ -69,10 +79,6 @@ function Datatable<T extends object = object>({
   //   },
   //   [handleSearch],
   // );
-
-  useEffect(() => {
-    setSelections(Selection ?? true);
-  }, [Selection]);
 
   // Update filtered data when search text changes
   // useEffect(() => {
@@ -138,6 +144,7 @@ function Datatable<T extends object = object>({
           // Use dataSource directly (it's already filtered/sorted by DatatableKHR)
           dataSource={dataSource}
           pagination={paginationConfig}
+          scroll={{ y: "calc(100vh - 340px)" }}
         />
       </div>
     </>

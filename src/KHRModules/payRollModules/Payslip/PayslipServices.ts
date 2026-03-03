@@ -21,7 +21,7 @@ export const getPayslipRuns = async () => {
 
 // --- PAYSLIP ACTIONS ---
 export const getPayslips = async () => {
-  const response = await Instance.get("/api/payslip", {
+  const response = await Instance.get("/api/hr/payslips/client", {
     params: { user_id: getUserId() },
   });
   return response.data.data || [];
@@ -29,14 +29,14 @@ export const getPayslips = async () => {
 
 export const createPayslip = async (payload: any) => {
   return await Instance.post(
-    `api/create/paySlip?user_id=${getUserId()}`,
+    `api/create_and_genrate_payslip?user_id=${getUserId()}`,
     payload,
   );
 };
 
 export const computePayslip = async (id: number) => {
   return await Instance.post(
-    `api/compute/payslip/${id}?user_id=${getUserId()}`,
+    `api/compute_payslip/${id}?user_id=${getUserId()}`,
   );
 };
 

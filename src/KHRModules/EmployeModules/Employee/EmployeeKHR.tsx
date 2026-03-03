@@ -18,6 +18,7 @@ const EmployeeKHR = () => {
   // ✅ Filter States
   const [searchText, setSearchText] = useState("");
   const [filterDept, setFilterDept] = useState("");
+  const [filterStatus, setFilterStatus] = useState(""); // ✅ Added Status Filter State
 
   // const fetchEmployees = async () => {
   //   setLoading(true);
@@ -76,8 +77,12 @@ const EmployeeKHR = () => {
         : String(emp.department_id || "");
       const deptMatch = filterDept === "" || deptValue === filterDept;
 
+      const empStatus = String(emp.status || "active").toLowerCase();
+      const statusMatch =
+        filterStatus === "" || empStatus === filterStatus.toLowerCase();
+
       // 2. If the search box is empty, just return the department filter result
-      if (!searchLower) return deptMatch;
+      if (!searchLower) return deptMatch && statusMatch;
 
       // 3. Perform a deep scan across all employee card properties
       const matchesSearch = Object.values(emp).some((value) => {
@@ -104,7 +109,7 @@ const EmployeeKHR = () => {
     });
 
     setFilteredEmployees(filtered);
-  }, [searchText, filterDept, employees]);
+  }, [searchText, filterDept, filterStatus, employees]);
 
   const handleDeleteEmployee = async (id: number) => {
     if (!window.confirm("Are you sure you want to delete this employee?"))
@@ -288,12 +293,24 @@ const EmployeeKHR = () => {
                   ))}
                 </select>
               </div>
+              <div className="col-md-3">
+                <select
+                  className="form-select"
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                >
+                  <option value="">All Employees</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
               <div className="col-md-auto ms-auto">
                 <button
                   className="btn btn-light"
                   onClick={() => {
                     setSearchText("");
                     setFilterDept("");
+                    setFilterStatus("");
                   }}
                 >
                   <i className="ti ti-refresh me-1"></i> Reset

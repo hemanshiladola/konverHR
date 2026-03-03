@@ -222,6 +222,8 @@ const LeaveAllocationKHR = () => {
     {
       title: "Employee",
       dataIndex: "employee_name",
+      width: 220,
+      ellipsis: true,
       render: (text: string) => (
         <span className="fw-medium text-dark">{text}</span>
       ),

@@ -27,21 +27,31 @@ const rawSidebarData = [
     roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only Section
     dot: true,
     submenuItems: [
-      // {
-      //   label: "Dashboard",
-      //   link: "index",
-      //   submenu: true,
-      //   showSubRoute: false,
-      //   icon: "smart-home",
-      //   base: "dashboard",
-      //   materialicons: "start",
-      //   dot: false,
-      //   submenuItems: [
-      //     // { label: "Attendence Policy", link: routes.AttendancePolicyKHR },
-      //     { label: "Admin Dashboard", link: routes.adminDashboard },
-      //     { label: "Employee Dashboard", link: routes.employeeDashboard },
-      //   ],
-      // },
+      {
+        label: "Dashboard",
+        link: "index",
+        submenu: true,
+        showSubRoute: false,
+        icon: "smart-home",
+        base: "dashboard",
+        materialicons: "start",
+        dot: false,
+        submenuItems: [
+          // { label: "Attendence Policy", link: routes.AttendancePolicyKHR },
+          { label: "Admin Dashboard", link: routes.adminDashboard },
+          { label: "Employee Dashboard", link: routes.employeeDashboard },
+        ],
+      },
+    ],
+  },
+  {
+    tittle: "Configuration",
+    icon: "airplay",
+    showAsTab: true,
+    separateRoute: false,
+    roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only Section
+    dot: true,
+    submenuItems: [
       {
         label: "Masters",
         link: "apps",
@@ -51,25 +61,95 @@ const rawSidebarData = [
         base: "application",
         materialicons: "dashboard",
         submenuItems: [
-          { label: "Attendence Policy", link: routes.AttendancePolicyKHR },
-          { label: "Regularization Category", link: routes.regCategoryKHR },
-          { label: "Department", link: routes.departmentsKHR },
-          { label: "Designation", link: routes.jobPositionsKHR },
-          { label: "Branch", link: routes.branchKHR },
-          { label: "Work Location", link: routes.workLocationKHR },
-          { label: "Working Schedule", link: routes.workingScheduleKHR },
-          { label: "Work Entry Type", link: routes.workEntryTypeKHR },
-          { label: "Skills", link: routes.skillsKHR },
-          { label: "Industries", link: routes.industriesKHR },
-          { label: "Bank", link: routes.banksKHR },
+          {
+            label: "Attendance Settings",
+            link: "#",
+            submenu: true,
+            icon: "calendar-event",
+            submenuItems: [
+              { label: "Attendance Policy", link: routes.AttendancePolicyKHR },
+              { label: "Regularization Category", link: routes.regCategoryKHR },
+              { label: "Working Schedule", link: routes.workingScheduleKHR },
+              { label: "Work Entry Type", link: routes.workEntryTypeKHR },
+            ],
+          },
+          {
+            label: "Organization",
+            link: "#",
+            submenu: true,
+            icon: "building-community",
+            submenuItems: [
+              { label: "Department", link: routes.departmentsKHR },
+              { label: "Designation", link: routes.jobPositionsKHR },
+              { label: "Branch", link: routes.branchKHR },
+              { label: "Work Location", link: routes.workLocationKHR },
+            ],
+          },
+          {
+            label: "Professional Setup",
+            link: "#",
+            submenu: true,
+            icon: "user-cog",
+            submenuItems: [
+              { label: "Skills", link: routes.skillsKHR },
+              { label: "Industries", link: routes.industriesKHR },
+              { label: "HR Contract Type", link: routes.hrContractTypeKHR },
+            ],
+          },
+          {
+            label: "Leave Configuration",
+            link: "#",
+            submenu: true,
+            icon: "wallet",
+            submenuItems: [
+              {
+                label: "Leave Types",
+                link: routes.leaveTypesKHR,
+                // roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+              },
+              { label: "Accrual Plan", link: routes.accruralPlanKHR },
+              {
+                label: "Public Holiday",
+                link: routes.publicHolidayKHR,
+                // roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+              },
+              {
+                label: "Mandatory Days",
+                link: routes.mendetoryDaysKHR,
+                // roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+              },
+            ],
+          },
+          {
+            label: "Finance & Admin",
+            link: "#",
+            submenu: true,
+            icon: "wallet",
+            submenuItems: [
+              { label: "Bank", link: routes.banksKHR },
+              { label: "Expense Category", link: routes.expenseCategoryKHR },
+            ],
+          },
+          // { label: "Attendence Policy", link: routes.AttendancePolicyKHR },
+          // { label: "Regularization Category", link: routes.regCategoryKHR },
+          // { label: "Department", link: routes.departmentsKHR },
+          // { label: "Designation", link: routes.jobPositionsKHR },
+          // { label: "Branch", link: routes.branchKHR },
+          // { label: "Work Location", link: routes.workLocationKHR },
+          // { label: "Working Schedule", link: routes.workingScheduleKHR },
+          // { label: "Work Entry Type", link: routes.workEntryTypeKHR },
+          // { label: "Skills", link: routes.skillsKHR },
+          // { label: "Industries", link: routes.industriesKHR },
+          // { label: "Bank", link: routes.banksKHR },
           // { label: "Bank Account", link: routes.banksAccountKHR },
-          { label: "HR Contract Type ", link: routes.hrContractTypeKHR },
-          { label: "Expense Category", link: routes.expenseCategoryKHR },
-          { label: "Accrural Plan", link: routes.accruralPlanKHR },
+          // { label: "HR Contract Type ", link: routes.hrContractTypeKHR },
+          // { label: "Expense Category", link: routes.expenseCategoryKHR },
+          // { label: "Accrural Plan", link: routes.accruralPlanKHR },
         ],
       },
     ],
   },
+
   {
     tittle: "HRM",
     icon: "airplay",
@@ -90,7 +170,23 @@ const rawSidebarData = [
           { label: "Employees", link: routes.employeeKHR },
           { label: "Contracts", link: routes.employeeContractKHR },
           { label: "Expense", link: routes.expenseKHR },
+          { label: "Work Site Location", link: routes.geoKHR },
+
           // { label: "Calander", link: routes.employeeCalenderKHR },
+          // {
+          //   label: "Work Site Setup",
+          //   link: "index",
+          //   submenu: true,
+          //   showSubRoute: false,
+          //   icon: "location-pin",
+          //   base: "dashboard",
+          //   materialicons: "start",
+          //   dot: false,
+          //   roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
+          //   submenuItems: [
+          //     { label: "Geo Configurations", link: routes.geoKHR },
+          //   ],
+          // },
         ],
       },
       {
@@ -105,14 +201,14 @@ const rawSidebarData = [
         roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
         submenuItems: [
           {
-            label: "Admin Attendance",
+            label: "Attendance Master",
             link: routes.attendanceAdminKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
+            roles: [ROLES.ADMIN], // 🔥 Admin Only
           },
           {
             label: "Employees Attendance",
             link: routes.attendaceEmployeeKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // Both
+            roles: [ROLES.EMPLOYEE], // Both
           },
         ],
       },
@@ -127,40 +223,40 @@ const rawSidebarData = [
         dot: false,
         submenuItems: [
           {
-            label: "Leaves (Admin)",
+            label: "Leaves Master",
             link: routes.leaveAdminKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
+            roles: [ROLES.ADMIN], // 🔥 Admin Only
           },
           {
-            label: "Leaves (Employee)",
+            label: "My Leaves",
             link: routes.leaveEmployeeKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+            roles: [ROLES.EMPLOYEE],
           },
-          {
-            label: "Leave Allocation",
-            link: routes.leaveAllocationKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
-          },
+          // {
+          //   label: "Leave Allocation",
+          //   link: routes.leaveAllocationKHR,
+          //   roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+          // },
           {
             label: "Leave Request",
             link: routes.leaveRequestKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+            roles: [ROLES.EMPLOYEE],
           },
-          {
-            label: "Leave Types",
-            link: routes.leaveTypesKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
-          },
-          {
-            label: "Public Holiday",
-            link: routes.publicHolidayKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
-          },
-          {
-            label: "Mandatory Days",
-            link: routes.mendetoryDaysKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
-          },
+          // {
+          //   label: "Leave Types",
+          //   link: routes.leaveTypesKHR,
+          //   roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+          // },
+          // {
+          //   label: "Public Holiday",
+          //   link: routes.publicHolidayKHR,
+          //   roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+          // },
+          // {
+          //   label: "Mandatory Days",
+          //   link: routes.mendetoryDaysKHR,
+          //   roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+          // },
         ],
       },
       {
@@ -173,35 +269,24 @@ const rawSidebarData = [
         materialicons: "start",
         dot: false,
         submenuItems: [
-          {
-            label: "Salary Structure Types",
-            link: routes.salaryStructureTypeKHR,
-          },
-          { label: "Salary Rule Category", link: routes.SalaryRuleCategoryKHR },
-          { label: "Salary Structure", link: routes.salaryStructureKHR },
-          { label: "Salary Rules", link: routes.SalaryRuleKHR },
-          {
-            label: "Payslip Other Input Type",
-            link: routes.payslipOtherInputTypeKHR,
-          },
+          // {
+          //   label: "Salary Structure Types",
+          //   link: routes.salaryStructureTypeKHR,
+          // },
+          // { label: "Salary Rule Category", link: routes.SalaryRuleCategoryKHR },
+          // { label: "Salary Structure", link: routes.salaryStructureKHR },
+          // { label: "Salary Rules", link: routes.SalaryRuleKHR },
+          // {
+          //   label: "Payslip Other Input Type",
+          //   link: routes.payslipOtherInputTypeKHR,
+          // },
           {
             label: "Payslip",
             link: routes.payslipKHR,
           },
         ],
       },
-      {
-        label: "Work Site Setup",
-        link: "index",
-        submenu: true,
-        showSubRoute: false,
-        icon: "location-pin",
-        base: "dashboard",
-        materialicons: "start",
-        dot: false,
-        roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
-        submenuItems: [{ label: "Geo Configurations", link: routes.geoKHR }],
-      },
+
       {
         label: "Approval",
         link: routes.approvalKHR,
@@ -211,6 +296,7 @@ const rawSidebarData = [
       },
     ],
   },
+
   {
     tittle: "Calendar",
     icon: "airplay",
@@ -224,6 +310,57 @@ const rawSidebarData = [
         icon: "calendar",
         showSubRoute: false,
         roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+      },
+    ],
+  },
+  {
+    tittle: "Authentication",
+    showAsTab: false,
+    separateRoute: false,
+    submenuItems: [
+      {
+        label: "Forgot Password",
+        link: routes.forgotPassword,
+        icon: "help-triangle",
+        showSubRoute: false,
+        submenu: false,
+      },
+      {
+        label: "Reset Password",
+        link: routes.resetPassword,
+        icon: "restore",
+        showSubRoute: false,
+        submenu: false,
+      },
+      {
+        label: "Email Verification",
+        link: routes.emailVerification,
+        icon: "mail-exclamation",
+        showSubRoute: false,
+        submenu: false,
+      },
+      {
+        label: "Lock Screen",
+        link: routes.lockScreen,
+        icon: "lock-square",
+        showSubRoute: false,
+        submenu: false,
+      },
+    ],
+  },
+  {
+    tittle: "Setting",
+    icon: "settings",
+    showAsTab: true,
+    separateRoute: false,
+    submenuItems: [
+      {
+        label: "Edit Profile",
+        link: routes.employeeCalenderKHR,
+        submenu: false,
+        icon: "profile",
+        showSubRoute: false,
+        roles: [ROLES.ADMIN],
         base: "form-horizontal",
       },
     ],

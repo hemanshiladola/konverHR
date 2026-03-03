@@ -129,6 +129,7 @@ export interface DatatableProps<T extends object = TableData> {
   columns: ColumnType<T>[];
   dataSource: T[];
   Selection?: boolean;
+  
 }
 
 // ============================================================================

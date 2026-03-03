@@ -781,6 +781,8 @@ const AdminAttandanceKHR = () => {
     {
       title: "Employee",
       dataIndex: "Employee",
+      width: 150,
+      ellipsis: true,
       render: (_text: string, record: AttendanceAdminData) => (
         <div className="d-flex align-items-center file-name-icon">
           <div className="ms-2">
@@ -1157,13 +1159,13 @@ const AdminAttandanceKHR = () => {
           {isAttendancesGetApiFetching ? (
             <div className="text-center p-5">
               <div className="spinner-border text-primary" role="status"></div>
-              <div className="mt-2">Loading All Employees Attendence...</div>
+              <div className="mt-2  ">Loading All Employees Attendence...</div>
             </div>
           ) : (
             <>
               {/* Group By Info */}
               {groupBy !== "none" && (
-                <div className="alert alert-info m-3 mb-0 d-flex justify-content-between align-items-center">
+                <div className="alert alert-info my-3 mb-2 d-flex justify-content-between align-items-center">
                   <div>
                     <i className="ti ti-info-circle me-2"></i>
                     <strong>Grouped by:</strong>{" "}

@@ -17,7 +17,7 @@ const getFreshToken = async () => {
       "https://odooapi.konverthr.com//api/auth",
       // "http://odooprod.konverthr.com//api/auth",
       {
-        user_name: "jhon",
+        user_name: "dhaval",
       },
     );
 

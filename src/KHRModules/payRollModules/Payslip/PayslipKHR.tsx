@@ -20,10 +20,21 @@ const PayslipKHR = () => {
   const fetchPayslips = async () => {
     setLoading(true);
     try {
-      const data = await getPayslips();
-      setPayslips(data);
+      const response: any = await getPayslips();
+      // Your API returns data inside a 'data' array
+      const rawArray = response?.data || response || [];
+
+      const mappedData = rawArray.map((item: any) => ({
+        ...item,
+        id: item.payslip_id,
+        key: String(item.payslip_id),
+        // Use the computed name or fallback to the Reference Number
+        display_name: item.number || `Draft Slip #${item.payslip_id}`,
+      }));
+
+      setPayslips(mappedData);
     } catch (error) {
-      console.error(error);
+      toast.error("Failed to fetch payslips");
     } finally {
       setLoading(false);
     }
@@ -54,51 +65,150 @@ const PayslipKHR = () => {
     }
   };
 
+  // const columns = [
+  //   { title: "Reference", dataIndex: "name", sorter: true },
+  //   {
+  //     title: "Employee",
+  //     dataIndex: "employee_id",
+  //     render: (emp: any) => (Array.isArray(emp) ? emp[1] : emp),
+  //   },
+  //   // { title: "ID Card", dataIndex: "employee_code" },
+  //   { title: "Date From", dataIndex: "date_from" },
+  //   { title: "Date To", dataIndex: "date_to" },
+  //   {
+  //     title: "Status",
+  //     render: (record: any) => (
+  //       <span
+  //         className={`badge rounded-pill bg-soft-${record.status === "paid" ? "success" : "primary"}`}
+  //       >
+  //         {record.status?.toUpperCase() || "DRAFT"}
+  //       </span>
+  //     ),
+  //   },
+  //   {
+  //     title: "Action",
+  //     render: (record: any) => (
+  //       <div className="d-flex gap-2">
+  //         <button
+  //           className="btn btn-sm btn-soft-info"
+  //           onClick={() => handleProcessAction(record.id, "compute")}
+  //           title="Compute"
+  //         >
+  //           <i className="ti ti-calculator"></i>
+  //         </button>
+  //         <button
+  //           className="btn btn-sm btn-soft-warning"
+  //           onClick={() => handleProcessAction(record.id, "confirm")}
+  //           title="Confirm"
+  //         >
+  //           <i className="ti ti-check"></i>
+  //         </button>
+  //         <button
+  //           className="btn btn-sm btn-soft-success"
+  //           onClick={() => handleProcessAction(record.id, "paid")}
+  //           title="Mark Paid"
+  //         >
+  //           <i className="ti ti-currency-dollar"></i>
+  //         </button>
+  //       </div>
+  //     ),
+  //   },
+  // ];
+
   const columns = [
-    { title: "Reference", dataIndex: "name", sorter: true },
+    {
+      title: "Reference",
+      dataIndex: "display_name",
+      render: (text: string, record: any) => (
+        <div>
+          <span className="fw-bold text-dark">{text}</span>
+          {record.currency && (
+            <small className="text-muted ms-1">({record.currency})</small>
+          )}
+        </div>
+      ),
+      sorter: (a: any, b: any) =>
+        String(a.number).localeCompare(String(b.number)),
+    },
     {
       title: "Employee",
-      dataIndex: "employee_id",
-      render: (emp: any) => (Array.isArray(emp) ? emp[1] : emp),
+      dataIndex: "employee_name",
+      sorter: (a: any, b: any) =>
+        a.employee_name.localeCompare(b.employee_name),
     },
-    // { title: "ID Card", dataIndex: "employee_code" },
-    { title: "Date From", dataIndex: "date_from" },
-    { title: "Date To", dataIndex: "date_to" },
     {
-      title: "Status",
+      title: "Period",
       render: (record: any) => (
-        <span
-          className={`badge rounded-pill bg-soft-${record.status === "paid" ? "success" : "primary"}`}
-        >
-          {record.status?.toUpperCase() || "DRAFT"}
+        <span className="fs-12">
+          {record.date_from}{" "}
+          <i className="ti ti-arrow-right mx-1 text-muted"></i> {record.date_to}
         </span>
       ),
+    },
+    {
+      title: "Net Wage",
+      dataIndex: "net_wage",
+      render: (wage: number, record: any) => (
+        <span className="fw-bold text-primary">
+          {record.currency === "INR" ? "₹" : ""}
+          {wage?.toLocaleString() || "0.00"}
+        </span>
+      ),
+    },
+    {
+      title: "Status",
+      dataIndex: "state",
+      render: (state: string) => {
+        const colors: any = {
+          draft: "bg-soft-secondary text-secondary border-secondary",
+          verify: "bg-soft-warning text-warning border-warning",
+          done: "bg-soft-info text-info border-info",
+          paid: "bg-soft-success text-success border-success",
+          cancel: "bg-soft-danger text-danger border-danger",
+        };
+        return (
+          <span
+            className={`badge border px-2 py-1 fs-11 fw-bold text-uppercase ${colors[state] || "bg-soft-primary"}`}
+          >
+            {state}
+          </span>
+        );
+      },
     },
     {
       title: "Action",
       render: (record: any) => (
         <div className="d-flex gap-2">
-          <button
-            className="btn btn-sm btn-soft-info"
-            onClick={() => handleProcessAction(record.id, "compute")}
-            title="Compute"
-          >
-            <i className="ti ti-calculator"></i>
-          </button>
-          <button
-            className="btn btn-sm btn-soft-warning"
-            onClick={() => handleProcessAction(record.id, "confirm")}
-            title="Confirm"
-          >
-            <i className="ti ti-check"></i>
-          </button>
-          <button
-            className="btn btn-sm btn-soft-success"
-            onClick={() => handleProcessAction(record.id, "paid")}
-            title="Mark Paid"
-          >
-            <i className="ti ti-currency-dollar"></i>
-          </button>
+          {/* Only show Compute for Draft/Verify */}
+          {(record.state === "draft" || record.state === "verify") && (
+            <button
+              className="btn btn-sm btn-outline-info"
+              onClick={() => handleProcessAction(record.id, "compute")}
+              title="Compute Sheet"
+            >
+              <i className="ti ti-calculator"></i>
+            </button>
+          )}
+          {/* Only show Confirm for Draft/Verify */}
+          {record.state === "draft" && (
+            <button
+              className="btn btn-sm btn-outline-warning"
+              onClick={() => handleProcessAction(record.id, "confirm")}
+              title="Confirm"
+            >
+              <i className="ti ti-check"></i>
+            </button>
+          )}
+          {/* Only show Pay for Done */}
+          {record.state === "done" && (
+            <button
+              className="btn btn-sm btn-outline-success"
+              onClick={() => handleProcessAction(record.id, "paid")}
+              title="Mark as Paid"
+            >
+              <i className="ti ti-currency-dollar"></i>
+            </button>
+          )}
         </div>
       ),
     },

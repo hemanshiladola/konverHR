@@ -47,11 +47,24 @@ const Login = () => {
       }
     }
 
+    // --- Strong Password Validation ---
+    // Regex Breakdown:
+    // (?=.*[a-z])   : Must contain at least one lowercase letter
+    // (?=.*[A-Z])   : Must contain at least one uppercase letter
+    // (?=.*\d)      : Must contain at least one number
+    // (?=.*[@$!%*?&]): Must contain at least one special character
+    // {8,}          : Must be at least 8 characters long
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
     if (!password) {
       newErrors.password = "Password is required.";
       isValid = false;
+    } else if (!passwordRegex.test(password)) {
+      newErrors.password =
+        "Must be 8+ chars with uppercase, number, and symbol (@$!%...).";
+      isValid = false;
     }
-
     setErrors(newErrors);
     return isValid;
   };
@@ -201,7 +214,12 @@ const Login = () => {
                     </div>
 
                     <div className="mb-3">
-                      <label className="form-label">Email Address</label>
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <label className="form-label">Email Address</label>
+                        <div className="text-muted fs-11">
+                          {email.length} / 100 characters
+                        </div>
+                      </div>
                       <div
                         className={`input-group ${errors.email ? "is-invalid" : ""}`}
                       >
@@ -210,6 +228,7 @@ const Login = () => {
                           className={`form-control border-end-0 ${errors.email ? "is-invalid" : ""}`}
                           required
                           value={email}
+                          maxLength={100}
                           onChange={(e) => {
                             setEmail(e.target.value);
                             if (errors.email)
@@ -217,6 +236,7 @@ const Login = () => {
                           }}
                           placeholder="Enter your email"
                         />
+
                         <span className="input-group-text border-start-0 bg-transparent">
                           <i className="ti ti-mail" />
                         </span>
@@ -229,7 +249,13 @@ const Login = () => {
                     </div>
 
                     <div className="mb-3">
-                      <label className="form-label">Password</label>
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <label className="form-label mb-0">Password</label>
+                        <div className="text-muted fs-11">
+                          {password.length} / 32 characters
+                        </div>
+                      </div>
+
                       <div
                         className={`input-group pass-group ${errors.password ? "is-invalid" : ""}`}
                       >
@@ -238,8 +264,8 @@ const Login = () => {
                             passwordVisibility.password ? "text" : "password"
                           }
                           className={`pass-input form-control border-end-0 ${errors.password ? "is-invalid" : ""}`}
-                          required
                           value={password}
+                          maxLength={32}
                           onChange={(e) => {
                             setPassword(e.target.value);
                             if (errors.password)
@@ -255,12 +281,75 @@ const Login = () => {
                             className={`ti ${passwordVisibility.password ? "ti-eye" : "ti-eye-off"}`}
                           />
                         </span>
-                        {errors.password && (
-                          <div className="invalid-feedback d-block text-start">
-                            {errors.password}
-                          </div>
-                        )}
                       </div>
+
+                      {/* Password Strength Meter (Visual Bar) */}
+                      {/* {password.length > 0 && (
+                        <div
+                          className="progress mt-2"
+                          style={{ height: "3px" }}
+                        >
+                          <div
+                            className={`progress-bar ${
+                              password.length < 5
+                                ? "bg-danger"
+                                : password.length < 8
+                                  ? "bg-warning"
+                                  : "bg-success"
+                            }`}
+                            role="progressbar"
+                            style={{
+                              width: `${Math.min((password.length / 8) * 100, 100)}%`,
+                              transition: "width 0.3s ease",
+                            }}
+                          ></div>
+                        </div>
+                      )} */}
+
+                      {/* Requirement Tracker */}
+                      {/* <div className="mt-2 p-2 bg-light rounded border border-dashed">
+                        <div className="d-flex flex-wrap gap-2">
+                          <span
+                            className={`badge rounded-pill fs-10 px-2 py-1 ${password.length >= 8 ? "bg-soft-success text-success border border-success" : "bg-soft-secondary text-muted border"}`}
+                          >
+                            <i
+                              className={`ti ${password.length >= 8 ? "ti-circle-check" : "ti-circle"} me-1`}
+                            ></i>{" "}
+                            8+ Chars
+                          </span>
+                          <span
+                            className={`badge rounded-pill fs-10 px-2 py-1 ${/[A-Z]/.test(password) ? "bg-soft-success text-success border border-success" : "bg-soft-secondary text-muted border"}`}
+                          >
+                            <i
+                              className={`ti ${/[A-Z]/.test(password) ? "ti-circle-check" : "ti-circle"} me-1`}
+                            ></i>{" "}
+                            1 Uppercase
+                          </span>
+                          <span
+                            className={`badge rounded-pill fs-10 px-2 py-1 ${/[0-9]/.test(password) ? "bg-soft-success text-success border border-success" : "bg-soft-secondary text-muted border"}`}
+                          >
+                            <i
+                              className={`ti ${/[0-9]/.test(password) ? "ti-circle-check" : "ti-circle"} me-1`}
+                            ></i>{" "}
+                            1 Number
+                          </span>
+                          <span
+                            className={`badge rounded-pill fs-10 px-2 py-1 ${/[@$!%*?&]/.test(password) ? "bg-soft-success text-success border border-success" : "bg-soft-secondary text-muted border"}`}
+                          >
+                            <i
+                              className={`ti ${/[@$!%*?&]/.test(password) ? "ti-circle-check" : "ti-circle"} me-1`}
+                            ></i>{" "}
+                            Symbol (@#$...)
+                          </span>
+                        </div>
+                      </div> */}
+
+                      {errors.password && (
+                        <div className="text-danger fs-11 mt-1 animate__animated animate__shakeX">
+                          <i className="ti ti-info-circle me-1"></i>{" "}
+                          {errors.password}
+                        </div>
+                      )}
                     </div>
 
                     <div className="d-flex align-items-center justify-content-end mb-4">
@@ -298,7 +387,9 @@ const Login = () => {
               </div>
 
               <div className="p-4 text-center">
-                <p className="mb-0 text-muted">Copyright © 2026 - Kavach</p>
+                <p className="mb-0 text-muted">
+                  Copyright © 2026 - Kavach All Rights Reserved
+                </p>
               </div>
             </div>
           </div>

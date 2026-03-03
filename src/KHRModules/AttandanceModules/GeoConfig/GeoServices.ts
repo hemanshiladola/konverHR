@@ -63,7 +63,7 @@ export const getGeoConfigs = async (): Promise<APIGeoConfig[]> => {
   try {
     const { user_id } = getAuthDetails();
 
-    const response = await Instance.get("/api/geoLocation", {
+    const response = await Instance.get("/api/geolocation", {
       params: {
         user_id,
       },
@@ -83,7 +83,7 @@ export const addGeoConfig = async (data: any) => {
   const { user_id } = getAuthDetails();
   return await Instance.post(
     `/api/create/geoLocation?user_id=${user_id}`,
-    data
+    data,
   );
 };
 /* =====================

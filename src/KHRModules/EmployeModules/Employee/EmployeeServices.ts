@@ -1,4 +1,3 @@
-import InstanceSecond from "@/api/axiosInstanceSecond";
 import Instance from "../../../api/axiosInstance";
 
 export interface Employee {

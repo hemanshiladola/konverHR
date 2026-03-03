@@ -100,6 +100,7 @@ const LeaveRequestKHR = () => {
     {
       title: "Employee Name",
       dataIndex: "employee_name",
+      ellipsis: true,
       sorter: (a: any, b: any) =>
         String(a.employee_name || "").localeCompare(
           String(b.employee_name || ""),

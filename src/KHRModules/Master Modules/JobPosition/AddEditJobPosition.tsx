@@ -99,7 +99,7 @@ const AddEditJobPositionModal: React.FC<Props> = ({
     if (data) {
       // Helper to safely extract ID from various formats
       const getVal = (val: any) => {
-        if (!val) return "";
+        if (!val|| val === false) return "";
         if (Array.isArray(val)) return String(val[0]);
         if (typeof val === "object" && val.id) return String(val.id);
         return String(val);

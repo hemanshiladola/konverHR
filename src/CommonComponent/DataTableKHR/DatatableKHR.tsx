@@ -29,6 +29,7 @@ const DatatableKHR = <T extends object>({
   const [activeStatus, setActiveStatus] = useState<string>("All");
   const [sortOption, setSortOption] = useState<string>("Newest");
   const [searchText, setSearchText] = useState<string>(""); // New Search State
+  const [pageSize, setPageSize] = useState<number>(10);
 
   const processedData = useMemo(() => {
     let filtered = [...data];
@@ -92,6 +93,27 @@ const DatatableKHR = <T extends object>({
         {/* <h5>{title}</h5> */}
         <div className="d-flex my-xl-auto right-content align-items-center flex-wrap row-gap-3">
           <div className="d-flex align-items-center flex-wrap gap-2">
+            <div className="dropdown">
+              <button
+                className="btn btn-white btn-sm border dropdown-toggle d-inline-flex align-items-center"
+                data-bs-toggle="dropdown"
+              >
+                Show: {pageSize}
+              </button>
+              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                {[10, 25, 50, 100].map((size) => (
+                  <li key={size}>
+                    <button
+                      className={`dropdown-item fs-13 ${pageSize === size ? "active" : ""}`}
+                      onClick={() => setPageSize(size)}
+                    >
+                      {size} per page
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <div className="position-relative">
               <input
                 type="text"
@@ -151,6 +173,7 @@ const DatatableKHR = <T extends object>({
           dataSource={processedData}
           columns={columns}
           Selection={selection}
+          pageSize={pageSize}
         />
       </div>
     </div>

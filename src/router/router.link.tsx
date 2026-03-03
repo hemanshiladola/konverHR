@@ -767,7 +767,6 @@ export const publicRoutes = [
     element: <Rating />,
     route: Route,
   },
-
   {
     path: routes.textEditor,
     element: <TextEditor />,
@@ -2049,7 +2048,7 @@ export const authRoutes = [
   },
   {
     path: routes.resetPassword,
-    element: <ResetPassword />,
+    element: <ResetPassword standalone={true} />,
     route: Route,
   },
   {

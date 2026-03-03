@@ -3,11 +3,12 @@ import { Link, useLocation } from "react-router-dom";
 import ImageWithBasePath from "../imageWithBasePath";
 import "../../../assets/icon/tabler-icons/webfont/tabler-icons.css";
 import { setExpandMenu } from "../../data/redux/sidebarSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setDataLayout } from "../../data/redux/themeSettingSlice";
 import { SidebarDataTest } from "../../data/json/sidebarMenu";
 import { all_routes } from "../../../router/all_routes";
 import type { AppDispatch } from "../../data/redux/store";
+import { OverlayTrigger, Tooltip } from "react-bootstrap"; // Add this
 
 // Define flexible types for sidebar data
 interface SidebarMenuItem {
@@ -83,6 +84,16 @@ const Sidebar = React.memo(() => {
       }
     },
     [toggleSidebar, handleLayoutChange],
+  );
+
+  const renderTooltip = (text: string) => (props: any) => (
+    <Tooltip
+      id={`tooltip-${text.replace(/\s+/g, "-").toLowerCase()}`}
+      className="tooltip-dark"
+      {...props}
+    >
+      {text}
+    </Tooltip>
   );
 
   // Memoize the layout class getter
@@ -310,52 +321,59 @@ const Sidebar = React.memo(() => {
 
                               return (
                                 <li className="submenu" key={`title-${i}`}>
-                                  <Link
-                                    to={data?.submenu ? "#" : data?.link}
-                                    onClick={() =>
-                                      handleClick(
-                                        data?.label,
-                                        data?.themeSetting || false,
-                                        getLayoutClass(data?.label),
-                                      )
-                                    }
-                                    className={`${
-                                      subOpen === data?.label ? "subdrop" : ""
-                                    } ${
-                                      data?.links?.includes(Location.pathname)
-                                        ? "active"
-                                        : ""
-                                    } ${
-                                      data?.submenuItems
-                                        ?.map(
-                                          (link: SidebarMenuItem) => link?.link,
-                                        )
-                                        .includes(Location.pathname) ||
-                                      data?.link === Location.pathname
-                                        ? "active"
-                                        : ""
-                                    }`}
+                                  <OverlayTrigger
+                                    placement="top"
+                                    overlay={renderTooltip(data?.label)}
+                                    delay={{ show: 200, hide: 0 }}
                                   >
-                                    <i className={`ti ti-${data.icon}`}></i>
-                                    <span className="menu-label">
-                                      {data?.label}
-                                    </span>
-                                    {data?.dot && (
-                                      <span className="badge badge-danger fs-10 fw-medium text-white p-1 ms-2">
-                                        Hot
-                                      </span>
-                                    )}
-                                    {data?.changeLogVersion && (
-                                      <span className="badge bg-pink badge-xs text-white fs-10 ms-s">
-                                        v1.5.7
-                                      </span>
-                                    )}
-                                    <span
-                                      className={
-                                        data?.submenu ? "menu-arrow" : ""
+                                    <Link
+                                      to={data?.submenu ? "#" : data?.link}
+                                      onClick={() =>
+                                        handleClick(
+                                          data?.label,
+                                          data?.themeSetting || false,
+                                          getLayoutClass(data?.label),
+                                        )
                                       }
-                                    />
-                                  </Link>
+                                      className={`${
+                                        subOpen === data?.label ? "subdrop" : ""
+                                      } ${
+                                        data?.links?.includes(Location.pathname)
+                                          ? "active"
+                                          : ""
+                                      } ${
+                                        data?.submenuItems
+                                          ?.map(
+                                            (link: SidebarMenuItem) =>
+                                              link?.link,
+                                          )
+                                          .includes(Location.pathname) ||
+                                        data?.link === Location.pathname
+                                          ? "active"
+                                          : ""
+                                      }`}
+                                    >
+                                      <i className={`ti ti-${data.icon}`}></i>
+                                      <span className="menu-label">
+                                        {data?.label}
+                                      </span>
+                                      {data?.dot && (
+                                        <span className="badge badge-danger fs-10 fw-medium text-white p-1 ms-2">
+                                          Hot
+                                        </span>
+                                      )}
+                                      {data?.changeLogVersion && (
+                                        <span className="badge bg-pink badge-xs text-white fs-10 ms-s">
+                                          v1.5.7
+                                        </span>
+                                      )}
+                                      <span
+                                        className={
+                                          data?.submenu ? "menu-arrow" : ""
+                                        }
+                                      />
+                                    </Link>
+                                  </OverlayTrigger>
                                   {data?.submenu !== false &&
                                     subOpen === data?.label && (
                                       <ul
@@ -379,44 +397,54 @@ const Sidebar = React.memo(() => {
                                               }
                                               key={`item-${j}`}
                                             >
-                                              <Link
-                                                to={
-                                                  item?.submenu
-                                                    ? "#"
-                                                    : item?.link
-                                                }
-                                                onClick={() =>
-                                                  item?.submenu &&
-                                                  toggleSubsidebar(item?.label)
-                                                }
-                                                className={`${
-                                                  subsidebar === item?.label
-                                                    ? "subdrop"
-                                                    : ""
-                                                } ${
-                                                  item?.link ===
-                                                  Location.pathname
-                                                    ? "active"
-                                                    : ""
-                                                }`}
-                                              >
-                                                <i
-                                                  className={`ti ti-${item.icon}`}
-                                                ></i>
-                                                <span>{item?.label}</span>
-                                                {item?.dot && (
-                                                  <span className="badge badge-danger fs-10 fw-medium text-white p-1">
-                                                    Hot
-                                                  </span>
+                                              <OverlayTrigger
+                                                placement="top"
+                                                overlay={renderTooltip(
+                                                  item?.label,
                                                 )}
-                                                <span
-                                                  className={
+                                                delay={{ show: 200, hide: 0 }}
+                                              >
+                                                <Link
+                                                  to={
                                                     item?.submenu
-                                                      ? "menu-arrow"
-                                                      : ""
+                                                      ? "#"
+                                                      : item?.link
                                                   }
-                                                />
-                                              </Link>
+                                                  onClick={() =>
+                                                    item?.submenu &&
+                                                    toggleSubsidebar(
+                                                      item?.label,
+                                                    )
+                                                  }
+                                                  className={`${
+                                                    subsidebar === item?.label
+                                                      ? "subdrop"
+                                                      : ""
+                                                  } ${
+                                                    item?.link ===
+                                                    Location.pathname
+                                                      ? "active"
+                                                      : ""
+                                                  }`}
+                                                >
+                                                  <i
+                                                    className={`ti ti-${item.icon}`}
+                                                  ></i>
+                                                  <span>{item?.label}</span>
+                                                  {item?.dot && (
+                                                    <span className="badge badge-danger fs-10 fw-medium text-white p-1">
+                                                      Hot
+                                                    </span>
+                                                  )}
+                                                  <span
+                                                    className={
+                                                      item?.submenu
+                                                        ? "menu-arrow"
+                                                        : ""
+                                                    }
+                                                  />
+                                                </Link>
+                                              </OverlayTrigger>
                                               {item?.submenu !== false &&
                                                 subsidebar === item?.label && (
                                                   <ul
@@ -436,22 +464,33 @@ const Sidebar = React.memo(() => {
                                                         <li
                                                           key={`subitem-${k}`}
                                                         >
-                                                          <Link
-                                                            to={subItem?.link}
-                                                            className={
-                                                              subItem?.link ===
-                                                              Location.pathname
-                                                                ? "active"
-                                                                : ""
-                                                            }
+                                                          <OverlayTrigger
+                                                            placement="top"
+                                                            overlay={renderTooltip(
+                                                              subItem?.label,
+                                                            )}
+                                                            delay={{
+                                                              show: 200,
+                                                              hide: 0,
+                                                            }}
                                                           >
-                                                            <i
-                                                              className={`ti ti-${subItem.icon}`}
-                                                            ></i>
-                                                            <span>
-                                                              {subItem?.label}
-                                                            </span>
-                                                          </Link>
+                                                            <Link
+                                                              to={subItem?.link}
+                                                              className={
+                                                                subItem?.link ===
+                                                                Location.pathname
+                                                                  ? "active"
+                                                                  : ""
+                                                              }
+                                                            >
+                                                              <i
+                                                                className={`ti ti-${subItem.icon}`}
+                                                              ></i>
+                                                              <span>
+                                                                {subItem?.label}
+                                                              </span>
+                                                            </Link>
+                                                          </OverlayTrigger>
                                                         </li>
                                                       ),
                                                     )}

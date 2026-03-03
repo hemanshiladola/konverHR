@@ -180,13 +180,18 @@ const AddEditBranchModal = ({ data, onSuccess }: any) => {
         ? await UpdateBrnach(payload)
         : await createBranch(payload);
 
+      const successMsg =
+        response?.data?.message ||
+        (data?.id ? "Branch Updated" : "Branch Created");
       if (response) {
-        toast.success(data?.id ? "Branch Updated" : "Branch Created");
+        toast.success(successMsg);
         onSuccess();
         document.getElementById("close-branch-modal")?.click();
       }
     } catch (err: any) {
-      toast.error("Error saving branch");
+      const errorMsg =
+        err?.response?.data?.message || err?.message || "Error saving branch";
+      toast.error(errorMsg);
     }
   };
 
