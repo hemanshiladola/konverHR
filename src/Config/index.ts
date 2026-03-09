@@ -3,7 +3,7 @@
 // const BASE_URL_ALL = "https://konverthrnode.onrender.com/";
 // const BASE_URL_LOGIN = "https://konverthrnode.onrender.com/";
 // const BASE_URL_ALL = "https://odooapi.konverthr.com/";
-const BASE_URL_ALL = "http://odooprod.konverthr.com/";
+const BASE_URL_ALL = "https://odooprod.konverthr.com/";
 
 const CONFIG = {
   BASE_URL_ALL,
