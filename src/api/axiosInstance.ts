@@ -2,7 +2,7 @@ import axios from "axios";
 
 const Instance = axios.create({
   // baseURL: "https://odooapi.konverthr.com/",
-  baseURL: "http://odooprod.konverthr.com/",
+  baseURL: "https://odooprod.konverthr.com/",
 
   headers: {
     "Content-Type": "application/json",
