@@ -325,13 +325,13 @@ const WorkEntryType = () => {
         <span className="badge badge-pill bg-light text-dark">{text}</span>
       ),
     },
-    {
-      title: "Color",
-      dataIndex: "color",
-      render: (color: number) => (
-        <span className="badge bg-primary rounded-circle p-2">{color}</span>
-      ),
-    },
+    // {
+    //   title: "Color",
+    //   dataIndex: "color",
+    //   render: (color: number) => (
+    //     <span className="badge bg-primary rounded-circle p-2">{color}</span>
+    //   ),
+    // },
     {
       title: "Unforeseen",
       dataIndex: "is_unforeseen",

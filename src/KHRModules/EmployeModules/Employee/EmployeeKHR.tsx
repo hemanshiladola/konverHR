@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { all_routes } from "@/router/all_routes";
 import EmployeeCard from "./EmployeeCard";
 import DatatableKHR from "@/CommonComponent/DataTableKHR/DatatableKHR";
+import ArchiveEmployeeModal from "./ArchiveEmployeeModal";
 
 const EmployeeKHR = () => {
   const routes = all_routes;
@@ -14,6 +15,7 @@ const EmployeeKHR = () => {
   const [loading, setLoading] = useState(true);
   const [editData, setEditData] = useState<any>(null);
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
+  const [archiveId, setArchiveId] = useState<number | null>(null);
 
   // ✅ Filter States
   const [searchText, setSearchText] = useState("");
@@ -111,15 +113,12 @@ const EmployeeKHR = () => {
     setFilteredEmployees(filtered);
   }, [searchText, filterDept, filterStatus, employees]);
 
-  const handleDeleteEmployee = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this employee?"))
-      return;
-    try {
-      await deleteEmployee(id.toString());
-      toast.success("Employee deleted successfully");
-      fetchEmployees();
-    } catch (error) {
-      toast.error("Failed to delete employee");
+  const handleDeleteEmployee = (id: number) => {
+    setArchiveId(id);
+    const modalElement = document.getElementById("archive_employee_modal");
+    if (modalElement) {
+      const modal = new (window as any).bootstrap.Modal(modalElement);
+      modal.show();
     }
   };
 
@@ -351,8 +350,8 @@ const EmployeeKHR = () => {
                 )}
               </div>
             ) : (
-              <div className="card shadow-sm border-0">
-                <div className="card-body p-0">
+              <div className=" shadow-sm border-0">
+                <div className="">
                   <DatatableKHR
                     data={filteredEmployees} // ✅ Use filtered data
                     columns={columns}
@@ -364,6 +363,14 @@ const EmployeeKHR = () => {
           </>
         )}
 
+        <ArchiveEmployeeModal
+          employeeId={archiveId}
+          onSuccess={() => {
+            fetchEmployees();
+            setArchiveId(null);
+          }}
+          onClose={() => setArchiveId(null)}
+        />
         <AddEditEmployeeModal
           data={editData}
           onSuccess={() => {

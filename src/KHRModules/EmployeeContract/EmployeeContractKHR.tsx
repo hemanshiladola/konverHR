@@ -387,8 +387,6 @@ const EmployeeContractKHR = () => {
     {
       title: "Contract Name",
       dataIndex: "name",
-      width: 220,
-      ellipsis: true,
       render: (text: string) => (
         <span className="fs-14 fw-medium text-dark">{text}</span>
       ),
@@ -397,8 +395,6 @@ const EmployeeContractKHR = () => {
     {
       title: "Employee",
       dataIndex: "employee_name",
-      width: 220,
-      ellipsis: true,
       render: (text: string, record: Contract) => (
         <div>
           <div className="fw-medium">{text}</div>

@@ -350,8 +350,26 @@ export const addEmployee = async (payload: any) => {
   });
 };
 
-import axios from "axios";
-import { toast } from "react-toastify";
+export const getDepartureReasons = async () => {
+  const userId = localStorage.getItem("user_id");
+  const res = await Instance.get(`/api/departure_reason?user_id=${userId}`);
+  // Based on your previous patterns, we assume it's in res.data.data
+  return res.data?.data || res.data || [];
+};
+
+export const archiveEmployee = async (
+  id: string,
+  payload: {
+    departure_reason_id: number;
+    departure_date: string;
+    departure_description: string;
+  },
+) => {
+  const res = await Instance.post(`/api/archive_employee/${id}`, payload, {
+    params: { user_id: getUserId() },
+  });
+  return res.data;
+};
 
 // export const addEmployee = async (payload: any) => {
 //   const userId = getUserId() || 2;

@@ -19,11 +19,22 @@ import {
   updateState,
 } from "@/Store/Reducers/TBSlice";
 import { useAppDispatch } from "@/Store/hooks";
+import {
+  getDepartmentRangeCount,
+  getEmployeeTypePercentage,
+} from "./AdminDashboardService";
 
 const AdminDashboard = () => {
   const routes = all_routes;
 
   const [isTodo, setIsTodo] = useState([false, false, false]);
+  const [deptApiData, setDeptApiData] = useState<any[]>([]);
+  const [selectedRange, setSelectedRange] = useState<
+    "this_month" | "this_week" | "last_week" | "today"
+  >("this_week");
+  const [isDeptLoading, setIsDeptLoading] = useState(true);
+  const [statusApiData, setStatusApiData] = useState<any>(null);
+  const [loadingStatus, setLoadingStatus] = useState(true);
   const userName = localStorage.getItem("full_name") || "John Doe";
   const dispatch = useAppDispatch();
   const {
@@ -66,6 +77,91 @@ const AdminDashboard = () => {
     dataLabels: object;
     fill: object;
   }
+
+  useEffect(() => {
+    const fetchDeptRangeData = async () => {
+      setIsDeptLoading(true);
+      const res = await getDepartmentRangeCount();
+      if (res && res.status === "success") {
+        setDeptApiData(res.departments || []);
+      }
+      setIsDeptLoading(false);
+    };
+    fetchDeptRangeData();
+  }, []);
+
+  useEffect(() => {
+    const fetchStatusData = async () => {
+      setLoadingStatus(true);
+      const res = await getEmployeeTypePercentage();
+      if (res && res.status === "success") {
+        setStatusApiData(res.data);
+      }
+      setLoadingStatus(false);
+    };
+    fetchStatusData();
+  }, []);
+
+  const getTypePercent = (typeKey: string) => {
+    if (!statusApiData || !statusApiData[selectedRange]) return "0";
+    return statusApiData[selectedRange][typeKey] || "0";
+  };
+
+  const chartValues = deptApiData.map((d: any) => d[selectedRange] || 0);
+  const maxValue = Math.max(...chartValues, 5); // Default to at least 5 for a good look
+
+  const empDepartmentConfig: any = {
+    chart: {
+      height: 235,
+      type: "bar",
+      toolbar: { show: false },
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 5,
+        horizontal: true,
+        barHeight: "35%",
+      },
+    },
+    colors: ["#F26522"],
+    grid: {
+      borderColor: "#E5E7EB",
+      strokeDashArray: 5,
+      padding: { top: -20, left: 0, right: 0, bottom: 0 },
+    },
+    xaxis: {
+      categories: deptApiData.map((d: any) => d.department),
+      // 🟢 FORCE INTEGER STEPS:
+      // If maxValue is small (e.g., 5), setting tickAmount to maxValue forces a gap of 1.
+      tickAmount: maxValue <= 10 ? maxValue : undefined,
+      decimalsInFloat: 0, // Removes decimals from the scale
+      labels: {
+        style: { colors: "#111827", fontSize: "13px" },
+        // 🟢 Formatter ensures only whole numbers are displayed
+        formatter: (val: number) => val.toFixed(0),
+      },
+    },
+    yaxis: {
+      // Ensuring the department names have enough space
+      labels: {
+        maxWidth: 150,
+      },
+    },
+    series: [
+      {
+        name: "Employees",
+        // 🟢 Map counts based on the selected dropdown range
+        // data: deptApiData.map((d: any) => d[selectedRange] || 0),
+        data: chartValues,
+      },
+    ],
+    // Add tooltip to show data clearly on hover
+    tooltip: {
+      y: {
+        formatter: (val: number) => `${val} Employees`,
+      },
+    },
+  };
 
   const [empDepartment] = useState<EmpDepartmentOptions>({
     chart: {
@@ -223,6 +319,7 @@ const AdminDashboard = () => {
   //Attendance ChartJs
   const [chartData, setChartData] = useState({});
   const [chartOptions, setChartOptions] = useState({});
+
   useEffect(() => {
     const data = {
       labels: ["Late", "Present", "Permission", "Absent"],
@@ -264,6 +361,7 @@ const AdminDashboard = () => {
   //Semi Donut ChartJs
   const [semidonutData, setSemidonutData] = useState({});
   const [semidonutOptions, setSemidonutOptions] = useState({});
+
   const toggleTodo = (index: number) => {
     setIsTodo((prevIsTodo) => {
       const newIsTodo = [...prevIsTodo];
@@ -271,6 +369,7 @@ const AdminDashboard = () => {
       return newIsTodo;
     });
   };
+
   useEffect(() => {
     const data = {
       labels: ["Ongoing", "Onhold", "Completed", "Overdue"],
@@ -322,6 +421,7 @@ const AdminDashboard = () => {
   // dispatch(updateState({ isApiAuth: false }))
   // }
   // }, [dispatch]);
+
   useEffect(() => {
     // fetchData();
     dispatch(ApiAuth() as any);
@@ -647,7 +747,7 @@ const AdminDashboard = () => {
             </div> */}
             {/* /Widget Info */}
             {/* Employees By Department */}
-            <div className="col-xxl-4 d-flex">
+            {/* <div className="col-xxl-4 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
                   <h5 className="mb-2">Employees By Department</h5>
@@ -695,12 +795,89 @@ const AdminDashboard = () => {
                   </p>
                 </div>
               </div>
+            </div> */}
+            <div className="d-flex">
+              <div className="card flex-fill">
+                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
+                  <h5 className="mb-2">Employees By Department</h5>
+
+                  {/* RANGE SELECTOR DROPDOWN */}
+                  <div className="dropdown mb-2">
+                    <Link
+                      to="#"
+                      className="btn btn-white border btn-sm d-inline-flex align-items-center text-capitalize"
+                      data-bs-toggle="dropdown"
+                    >
+                      <i className="ti ti-calendar me-1" />
+                      {selectedRange.replace("_", " ")}
+                    </Link>
+                    <ul className="dropdown-menu dropdown-menu-end p-3">
+                      <li>
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("this_month")}
+                        >
+                          This Month
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("this_week")}
+                        >
+                          This Week
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("last_week")}
+                        >
+                          Last Week
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="card-body">
+                  {isDeptLoading ? (
+                    <div className="text-center py-5">
+                      <div
+                        className="spinner-border text-primary"
+                        role="status"
+                      />
+                    </div>
+                  ) : deptApiData.length > 0 ? (
+                    <ReactApexChart
+                      id="emp-department"
+                      options={empDepartmentConfig}
+                      series={empDepartmentConfig.series}
+                      type="bar"
+                      height={220}
+                    />
+                  ) : (
+                    <div className="text-center py-5 text-muted">
+                      No data available
+                    </div>
+                  )}
+
+                  <p className="fs-13">
+                    <i className="ti ti-circle-filled me-2 fs-8 text-primary" />
+                    Distribution across {deptApiData.length} departments for{" "}
+                    {selectedRange.replace("_", " ")}.
+                  </p>
+                </div>
+              </div>
             </div>
             {/* /Employees By Department */}
           </div>
           <div className="row">
             {/* Total Employee */}
-            <div className="col-xxl-4 d-flex">
+            {/* <div className="col-xxl-4 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
                   <h5 className="mb-2">Employee Status</h5>
@@ -859,6 +1036,205 @@ const AdminDashboard = () => {
                   >
                     View All Employees
                   </Link>
+                </div>
+              </div>
+            </div> */}
+
+            <div className="col-xxl-4 d-flex">
+              <div className="card flex-fill">
+                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
+                  <h5 className="mb-2">Employee Status</h5>
+                  <div className="dropdown mb-2">
+                    <Link
+                      to="#"
+                      className="btn btn-white border btn-sm d-inline-flex align-items-center text-capitalize"
+                      data-bs-toggle="dropdown"
+                    >
+                      <i className="ti ti-calendar me-1" />
+                      {selectedRange.replace("_", " ")}
+                    </Link>
+                    <ul className="dropdown-menu dropdown-menu-end p-3">
+                      <li>
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("today")}
+                        >
+                          Today
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("this_week")}
+                        >
+                          This Week
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("this_month")}
+                        >
+                          This Month
+                        </Link>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div className="card-body">
+                  {loadingStatus ? (
+                    <div className="text-center py-5">
+                      <div
+                        className="spinner-border text-primary"
+                        role="status"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="d-flex align-items-center justify-content-between mb-1">
+                        <p className="fs-13 mb-3">Type Distribution</p>
+                        {/* Total count can be calculated if your API provides total_count, otherwise keep as placeholder */}
+                        <h3 className="mb-3">
+                          {getDashboadrdCountData?.data?.total_employees ?? "0"}
+                        </h3>
+                      </div>
+
+                      {/* 🟢 DYNAMIC STACKED PROGRESS BAR */}
+                      <div className="progress-stacked emp-stack mb-3">
+                        <div
+                          className="progress"
+                          role="progressbar"
+                          style={{ width: `${getTypePercent("permanent")}%` }}
+                        >
+                          <div className="progress-bar bg-primary" />
+                        </div>
+                        <div
+                          className="progress"
+                          role="progressbar"
+                          style={{ width: `${getTypePercent("contract")}%` }}
+                        >
+                          <div className="progress-bar bg-secondary" />
+                        </div>
+                        <div
+                          className="progress"
+                          role="progressbar"
+                          style={{ width: `${getTypePercent("probation")}%` }}
+                        >
+                          <div className="progress-bar bg-danger" />
+                        </div>
+                        <div
+                          className="progress"
+                          role="progressbar"
+                          style={{ width: `${getTypePercent("unknown")}%` }}
+                        >
+                          <div className="progress-bar bg-pink" />
+                        </div>
+                      </div>
+
+                      {/* 🟢 DYNAMIC STATUS BOXES */}
+                      <div className="border mb-3 rounded shadow-sm overflow-hidden">
+                        <div className="row gx-0">
+                          <div className="col-6">
+                            <div className="p-3 flex-fill border-end border-bottom bg-light-subtle">
+                              <p className="fs-13 mb-2">
+                                <i className="ti ti-square-filled text-primary fs-12 me-2" />
+                                Fulltime{" "}
+                                <span className="text-gray-9">
+                                  ({getTypePercent("permanent")}%)
+                                </span>
+                              </p>
+                              <h2 className="display-1">
+                                {/* If you have raw counts, use them here. Otherwise, show the percent */}
+                                {getTypePercent("permanent")}%
+                              </h2>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="p-3 flex-fill border-bottom bg-light-subtle text-end">
+                              <p className="fs-13 mb-2">
+                                <i className="ti ti-square-filled me-2 text-secondary fs-12" />
+                                Contract{" "}
+                                <span className="text-gray-9">
+                                  ({getTypePercent("contract")}%)
+                                </span>
+                              </p>
+                              <h2 className="display-1">
+                                {getTypePercent("contract")}%
+                              </h2>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="p-3 flex-fill border-end">
+                              <p className="fs-13 mb-2">
+                                <i className="ti ti-square-filled me-2 text-danger fs-12" />
+                                Probation{" "}
+                                <span className="text-gray-9">
+                                  ({getTypePercent("probation")}%)
+                                </span>
+                              </p>
+                              <h2 className="display-1">
+                                {getTypePercent("probation")}%
+                              </h2>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="p-3 flex-fill text-end">
+                              <p className="fs-13 mb-2">
+                                <i className="ti ti-square-filled text-pink me-2 fs-12" />
+                                Others{" "}
+                                <span className="text-gray-9">
+                                  ({getTypePercent("unknown")}%)
+                                </span>
+                              </p>
+                              <h2 className="display-1">
+                                {getTypePercent("unknown")}%
+                              </h2>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <h6 className="mb-2">Top Performer</h6>
+                      <div className="p-2 d-flex align-items-center justify-content-between border border-primary bg-primary-100 br-5 mb-4">
+                        <div className="d-flex align-items-center overflow-hidden">
+                          <span className="me-2">
+                            <i className="ti ti-award-filled text-primary fs-24" />
+                          </span>
+                          <Link
+                            to={all_routes.employeedetails}
+                            className="avatar avatar-md me-2"
+                          >
+                            <ImageWithBasePath
+                              src="assets/img/profiles/avatar-24.jpg"
+                              className="rounded-circle border border-white"
+                              alt="avatar"
+                            />
+                          </Link>
+                          <div>
+                            <h6 className="text-truncate mb-1 fs-14 fw-medium">
+                              <Link to={all_routes.employeedetails}>
+                                Daniel Esbella
+                              </Link>
+                            </h6>
+                            <p className="fs-13">IOS Developer</p>
+                          </div>
+                        </div>
+                        <div className="text-end">
+                          <p className="fs-13 mb-1">Performance</p>
+                          <h5 className="text-primary">99%</h5>
+                        </div>
+                      </div>
+                      <Link
+                        to={all_routes.employeeList}
+                        className="btn btn-light btn-md w-100"
+                      >
+                        View All Employees
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

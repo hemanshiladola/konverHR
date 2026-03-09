@@ -97,6 +97,51 @@ export const getContracts = async (): Promise<Contract[]> => {
   }
 };
 
+// Add these to contractService.ts
+
+export const getLeaveConfigurations = async () => {
+  try {
+    const response = await axios({
+      method: "GET",
+      baseURL: CONFIG.BASE_URL_ALL,
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `${localStorage.getItem("authToken")}`,
+      },
+      url: `/api/leave_configuration`,
+      params: { user_id },
+    });
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error("Error fetching leave configurations:", error);
+    return [];
+  }
+};
+
+export const getLeavePreview = async (payload: {
+  employee_id: number;
+  leave_configuration_id: number;
+  contract_start: string;
+}) => {
+  try {
+    const response = await axios({
+      method: "POST", // Usually POST when sending a body like the one provided
+      baseURL: CONFIG.BASE_URL_ALL,
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `${localStorage.getItem("authToken")}`,
+      },
+      url: `/api/leave/configuration/preview`,
+      params: { user_id },
+      data: payload,
+    });
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error("Error fetching leave preview:", error);
+    return [];
+  }
+};
+
 // Create new contract
 export const createContract = async (
   contractData: Omit<Contract, "id">,

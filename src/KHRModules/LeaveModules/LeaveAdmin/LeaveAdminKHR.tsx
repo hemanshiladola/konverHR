@@ -33,7 +33,7 @@ interface TableRow {
 }
 
 interface TableData {
-  present_today?: TableRow[]; // Optional as it was missing in your snippet, but likely exists
+  present_today?: TableRow[];
   planned_leaves: TableRow[];
   absent_unplanned: TableRow[];
   pending_approvals: TableRow[];
@@ -57,8 +57,10 @@ const LeaveAdminKHR = () => {
     setLoading(true);
     try {
       const response: any = await getLeaveDashboard();
-      if (response && response.success) {
-        setDashboardData(response);
+      if (response && response.status === "success" && response.data) {
+        setDashboardData(response.data);
+      } else {
+        console.error("API Error or Empty Data:", response);
       }
     } catch (error) {
       console.error("Failed to fetch dashboard data", error);

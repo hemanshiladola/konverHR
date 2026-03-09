@@ -11,6 +11,8 @@ import {
   getEmployees,
   getWorkingSchedules,
   getDepartments,
+  getLeaveConfigurations,
+  getLeavePreview,
 } from "./contractService";
 import CommonSelect from "@/core/common/commonSelect";
 import { DatePicker } from "antd";
@@ -88,6 +90,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
   // State for the list of added leaves
   const [leaveAllocations, setLeaveAllocations] = useState<any[]>([]);
   const [editingLeaveIndex, setEditingLeaveIndex] = useState<number>(-1);
+  const [leaveConfigs, setLeaveConfigs] = useState<any[]>([]);
+  const [selectedLeaveConfig, setSelectedLeaveConfig] = useState<string>("");
+  const [leavePreview, setLeavePreview] = useState<any[]>([]);
+  const [loadingPreview, setLoadingPreview] = useState(false);
   const [leaveErrors, setLeaveErrors] = useState<any>({}); // Dedicated validation for the entry form
   const [errors, setErrors] = useState<any>({});
 
@@ -183,6 +189,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         const accrualRes = await getAccruralPlans();
         console.log("CHECKPOINT: getAccruralPlans finished", accrualRes);
         setAccrualPlans(extractDataArray(accrualRes, "AccrualPlans"));
+
+        const configRes = await getLeaveConfigurations();
+        setLeaveConfigs(extractDataArray(configRes, "LeaveConfigurations"));
 
         console.log("--- CHECKPOINT 2: All states updated ---");
       } catch (error) {
@@ -371,43 +380,36 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     return isValid;
   };
 
-  const validateLeaveTab = () => {
-    let tempErrors: any = {};
-    let isValid = true;
-
-    const isLeaveActive =
-      leaveFormData.leave_type_id ||
-      leaveFormData.allocation_days ||
-      leaveFormData.from_date;
-
-    if (isLeaveActive) {
-      if (!leaveFormData.leave_type_id) {
-        tempErrors.leave_type_id = "Leave Type is required";
-        isValid = false;
-      }
-      if (
-        leaveFormData.allocation_type === "accrual" &&
-        !leaveFormData.accrual_plan_id
-      ) {
-        tempErrors.accrual_plan_id = "Accrual Plan is required";
-        isValid = false;
-      }
-      if (!leaveFormData.from_date) {
-        tempErrors.from_date = "From Date is required";
-        isValid = false;
-      }
-      if (!leaveFormData.to_date) {
-        tempErrors.to_date = "To Date is required";
-        isValid = false;
-      }
-      if (!leaveFormData.allocation_days) {
-        tempErrors.allocation_days = "Allocation Days are required";
-        isValid = false;
-      }
+  const handleLeaveConfigChange = async (configId: string) => {
+    setSelectedLeaveConfig(configId);
+    if (!configId) {
+      setLeavePreview([]);
+      return;
+    }
+    if (!formData.employee_id || !formData.date_start) {
+      toast.warning(
+        "Please select an Employee and a Start Date first to see the leave preview.",
+      );
+      setSelectedLeaveConfig(""); // Reset selection
+      return;
     }
 
-    setErrors((prev: any) => ({ ...prev, ...tempErrors }));
-    return isValid;
+    setLoadingPreview(true);
+    try {
+      const payload = {
+        employee_id: Number(formData.employee_id),
+        leave_configuration_id: Number(configId),
+        contract_start: formData.date_start, // Uses the value from Tab 1
+      };
+
+      const res = await getLeavePreview(payload);
+      // Use your extractDataArray helper to handle the {status, data} nesting
+      setLeavePreview(extractDataArray(res, "LeavePreview"));
+    } catch (error) {
+      toast.error("Failed to load leave preview.");
+    } finally {
+      setLoadingPreview(false);
+    }
   };
 
   const validateLeaveEntry = () => {
@@ -618,6 +620,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       const finalPayload = {
         ...contractData,
         employee_id: Number(formData.employee_id),
+        if(selectedLeaveConfig: any) {
+          finalPayload.leave_configuration_id = Number(selectedLeaveConfig);
+        },
         // leave_allocation_ids: leaveAllocations.map((l) => ({
         //   // 3. Conditional ID: Only include the key if l.id exists (for existing items)
         //   ...(l.id ? { id: l.id } : {}),
@@ -636,7 +641,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         //   number_of_days: Number(l.allocation_days),
         //   description: l.description || "",
         // })),
-        leave_allocation_ids: [...activeLeaves, ...deletedLeaves],
+        // leave_allocation_ids: [...activeLeaves, ...deletedLeaves],
       };
 
       // 4. Call Single API (Add or Edit)
@@ -719,7 +724,19 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                           Structure
                         </button>
                       </li>
+                      {/* 🟢 NEW TAB: Leave Configuration */}
                       <li className="nav-item">
+                        <button
+                          className={`nav-link fw-medium ${activeTab === "leave_config" ? "active" : ""}`}
+                          onClick={() => setActiveTab("leave_config")}
+                          type="button"
+                        >
+                          <i className="ti ti-settings-automation me-2 fs-16"></i>{" "}
+                          Leave Configuration
+                        </button>
+                      </li>
+                      {/* <li className="nav-item">
+
                         <button
                           className={`nav-link fw-medium d-flex align-items-center ${activeTab === "leave" ? "active" : ""} ${hasTabErrors("leave") ? "text-danger" : ""}`}
                           onClick={() => setActiveTab("leave")}
@@ -731,7 +748,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                             <i className="ti ti-alert-circle-filled ms-2 fs-16 animate__animated animate__pulse animate__infinite"></i>
                           )}
                         </button>
-                      </li>
+                      </li> */}
                     </ul>
                   </div>
 
@@ -1053,6 +1070,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                     )}
 
                     {/* TAB 2: SALARY STRUCTURE */}
+
+                    {/* TAB 2: SALARY STRUCTURE */}
+
                     {activeTab === "salary" && (
                       <div className="animate__animated animate__fadeIn">
                         <div className="row g-4 mx-0">
@@ -1061,37 +1081,53 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               <i className="ti ti-circle-plus me-2"></i>{" "}
                               Allowances & Benefits
                             </h6>
+
                             <div className="row g-2">
                               {[
                                 {
                                   label: "Conveyance",
+
                                   key: "conveyance_allowances",
                                 },
+
                                 { label: "Skill", key: "skill_allowances" },
+
                                 { label: "Food", key: "food_allowances" },
+
                                 { label: "Washing", key: "washing_allowances" },
+
                                 { label: "Special", key: "special_allowances" },
+
                                 { label: "Medical", key: "medial_allowances" },
+
                                 { label: "Uniform", key: "uniform_allowances" },
+
                                 {
                                   label: "Child Education",
+
                                   key: "child_education_allowances",
                                 },
+
                                 {
                                   label: "Other Allowances",
+
                                   key: "other_allowances",
                                 },
+
                                 { label: "LTA", key: "lta" },
+
                                 { label: "Variable Pay", key: "variable_pay" },
                               ].map((item) => (
                                 <div className="col-md-6" key={item.key}>
                                   <label className="form-label fs-12 mb-1">
                                     {item.label}
                                   </label>
+
                                   <div className="input-group input-group-sm">
                                     <span className="input-group-text bg-light text-muted">
                                       ₹
                                     </span>
+
                                     <input
                                       type="number"
                                       className="form-control"
@@ -1099,6 +1135,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                       onChange={(e) =>
                                         setFormData({
                                           ...formData,
+
                                           [item.key]: Number(e.target.value),
                                         })
                                       }
@@ -1114,15 +1151,18 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               <i className="ti ti-circle-minus me-2"></i>{" "}
                               Deductions & Statutory
                             </h6>
+
                             <div className="row g-3">
                               <div className="col-12">
                                 <label className="form-label fs-13">
                                   Professional Tax (PT)
                                 </label>
+
                                 <div className="input-group input-group-sm">
                                   <span className="input-group-text text-danger border-danger">
                                     ₹
                                   </span>
+
                                   <input
                                     type="number"
                                     className="form-control border-danger"
@@ -1130,6 +1170,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     onChange={(e) =>
                                       setFormData({
                                         ...formData,
+
                                         professional_tax: Number(
                                           e.target.value,
                                         ),
@@ -1138,12 +1179,15 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                   />
                                 </div>
                               </div>
+
                               <div className="col-12">
                                 <label className="form-label fs-13">
                                   Gratuity Provision
                                 </label>
+
                                 <div className="input-group input-group-sm">
                                   <span className="input-group-text">₹</span>
+
                                   <input
                                     type="number"
                                     className="form-control"
@@ -1151,6 +1195,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     onChange={(e) =>
                                       setFormData({
                                         ...formData,
+
                                         gratuity: Number(e.target.value),
                                       })
                                     }
@@ -1163,9 +1208,134 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                       </div>
                     )}
 
-                    {activeTab === "leave" && (
+                    {activeTab === "leave_config" && (
                       <div className="animate__animated animate__fadeIn">
-                        {/* --- ENTRY FORM CARD --- */}
+                        {/* CONFIGURATION SELECTION CARD */}
+                        <div className="card border-0 shadow-sm mb-4 bg-light-subtle rounded-4">
+                          <div className="card-body p-4">
+                            <div className="col-md-6">
+                              <label className="form-label fs-13 fw-bold mb-1">
+                                Leave Allocation Configuration{" "}
+                                <span className="text-danger">*</span>
+                              </label>
+                              <CommonSelect
+                                options={leaveConfigs.map((c) => ({
+                                  value: String(c.id),
+                                  label: c.name,
+                                }))}
+                                placeholder="Select Configuration"
+                                value={
+                                  leaveConfigs.find(
+                                    (c) => String(c.id) === selectedLeaveConfig,
+                                  )
+                                    ? {
+                                        value: selectedLeaveConfig,
+                                        label: leaveConfigs.find(
+                                          (c) =>
+                                            String(c.id) ===
+                                            selectedLeaveConfig,
+                                        )?.name,
+                                      }
+                                    : null
+                                }
+                                onChange={(opt) =>
+                                  handleLeaveConfigChange(opt?.value || "")
+                                }
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* PREVIEW TABLE (BASED ON YOUR JSON RESPONSE) */}
+                        <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                          <div className="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                            <h6 className="mb-0 fw-bold text-dark fs-14">
+                              Leave Preview Details
+                            </h6>
+                            {loadingPreview && (
+                              <div className="spinner-border spinner-border-sm text-primary" />
+                            )}
+                          </div>
+                          <div className="table-responsive">
+                            <table className="table table-hover align-middle mb-0">
+                              <thead className="bg-light">
+                                <tr>
+                                  <th className="fs-11 text-uppercase fw-bold text-muted ps-4">
+                                    Leave Type
+                                  </th>
+                                  <th className="fs-11 text-uppercase fw-bold text-muted">
+                                    Mode
+                                  </th>
+                                  <th className="fs-11 text-uppercase fw-bold text-muted text-center">
+                                    Days
+                                  </th>
+                                  <th className="fs-11 text-uppercase fw-bold text-muted">
+                                    Validity
+                                  </th>
+                                  <th className="fs-11 text-uppercase fw-bold text-muted">
+                                    Status
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {leavePreview.length === 0 ? (
+                                  <tr>
+                                    <td
+                                      colSpan={5}
+                                      className="text-center py-5 text-muted"
+                                    >
+                                      {selectedLeaveConfig
+                                        ? "No allocations found for this config."
+                                        : "Please select a configuration above."}
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  leavePreview.map((item) => (
+                                    <tr key={item.id}>
+                                      {/* Extract name from [id, name] array */}
+                                      <td className="ps-4 fw-bold text-dark">
+                                        {Array.isArray(item.holiday_status_id)
+                                          ? item.holiday_status_id[1]
+                                          : "N/A"}
+                                      </td>
+                                      <td>
+                                        <span
+                                          className={`badge rounded-pill ${item.allocation_type === "accrual" ? "bg-info-transparent text-info" : "bg-primary-transparent text-primary"} fs-10`}
+                                        >
+                                          {item.allocation_type?.toUpperCase()}
+                                        </span>
+                                      </td>
+                                      <td className="text-center fw-extrabold text-primary">
+                                        {item.number_of_days}
+                                      </td>
+                                      <td>
+                                        <div className="fs-12 text-muted">
+                                          <i className="ti ti-calendar-event me-1"></i>
+                                          {dayjs(item.date_from).format(
+                                            "DD MMM YYYY",
+                                          )}{" "}
+                                          -{" "}
+                                          {dayjs(item.date_to).format(
+                                            "DD MMM YYYY",
+                                          )}
+                                        </div>
+                                      </td>
+                                      <td>
+                                        <span className="badge badge-soft-success">
+                                          {item.state?.toUpperCase()}
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  ))
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {/* {activeTab === "leave" && (
+                      <div className="animate__animated animate__fadeIn">
                         <div className="card border-0 shadow-sm mb-4 bg-light-subtle rounded-4 overflow-hidden">
                           <div className="card-body p-4">
                             <div className="d-flex align-items-center mb-4">
@@ -1182,7 +1352,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                             </div>
 
                             <div className="row g-3">
-                              {/* Leave Type */}
                               <div className="col-md-4">
                                 <label className="form-label fs-13 fw-bold mb-1">
                                   Leave Type{" "}
@@ -1225,7 +1394,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 )}
                               </div>
 
-                              {/* Allocation Type */}
                               <div className="col-md-4">
                                 <label className="form-label fs-13 fw-bold mb-1">
                                   Allocation Method
@@ -1257,7 +1425,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 )}
                               </div>
 
-                              {/* Conditional Accrual Plan */}
                               {leaveFormData.allocation_type === "accrual" && (
                                 <div className="col-md-4 animate__animated animate__fadeInDown">
                                   <label className="form-label fs-13 fw-bold mb-1">
@@ -1304,7 +1471,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 </div>
                               )}
 
-                              {/* Days */}
                               <div className="col-md-2">
                                 <label className="form-label fs-13 fw-bold mb-1">
                                   Total Days{" "}
@@ -1334,7 +1500,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 )}
                               </div>
 
-                              {/* From Date */}
                               <div className="col-md-3">
                                 <label className="form-label fs-13 fw-bold mb-1">
                                   Valid From{" "}
@@ -1367,7 +1532,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 )}
                               </div>
 
-                              {/* To Date */}
                               <div className="col-md-3">
                                 <label className="form-label fs-13 fw-bold mb-1">
                                   Valid To{" "}
@@ -1399,7 +1563,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 )}
                               </div>
 
-                              {/* Description */}
                               <div className="col-md-4">
                                 <label className="form-label fs-13 fw-bold mb-1">
                                   Description
@@ -1418,7 +1581,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 />
                               </div>
 
-                              {/* Buttons */}
                               <div className="col-md-12 d-flex justify-content-end gap-2 mt-2">
                                 {editingLeaveIndex > -1 && (
                                   <button
@@ -1450,7 +1612,6 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                           </div>
                         </div>
 
-                        {/* --- LIST TABLE SECTION --- */}
                         <div className="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
                           <div className="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                             <h6 className="mb-0 fw-bold text-dark fs-14">
@@ -1590,7 +1751,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                           </div>
                         </div>
                       </div>
-                    )}
+                    )} */}
                   </div>
                 </>
               )}

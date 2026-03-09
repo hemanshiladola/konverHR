@@ -144,7 +144,7 @@ function Datatable<T extends object = object>({
           // Use dataSource directly (it's already filtered/sorted by DatatableKHR)
           dataSource={dataSource}
           pagination={paginationConfig}
-          scroll={{ y: "calc(100vh - 340px)" }}
+          // scroll={{ y: "calc(100vh - 340px)" }}
         />
       </div>
     </>

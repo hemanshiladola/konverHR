@@ -2,9 +2,9 @@
 // const BASE_URL_ALL = "https://www.api.konverthr.com/";
 //  const BASE_URL_ALL = "https://staging.konverthr.com/";
 // const BASE_URL_ALL = "https://konverthrnode.onrender.com/";
-// const BASE_URL_ALL = "http://odooprod.konverthr.com";
 
-const BASE_URL_ALL = "https://odooapi.konverthr.com/";
+// const BASE_URL_ALL = "https://odooapi.konverthr.com/";
+const BASE_URL_ALL = "http://odooprod.konverthr.com";
 
 
 const CONFIG = {
