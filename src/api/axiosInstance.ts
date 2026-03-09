@@ -2,7 +2,7 @@ import axios from "axios";
 
 const Instance = axios.create({
   // baseURL: "https://odooapi.konverthr.com/",
-  baseURL: "http://odooprod.konverthr.com/",
+  baseURL: "https://odooprod.konverthr.com/",
 
   headers: {
     "Content-Type": "application/json",
@@ -15,7 +15,7 @@ const getFreshToken = async () => {
 
     const response = await axios.post(
       // "https://odooapi.konverthr.com//api/auth",
-      "http://odooprod.konverthr.com//api/auth",
+      "https://odooprod.konverthr.com//api/auth",
       {
         user_name: "dhaval",
       },

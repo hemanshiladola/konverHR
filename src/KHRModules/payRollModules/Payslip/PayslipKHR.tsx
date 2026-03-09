@@ -10,12 +10,14 @@ import {
 import { toast } from "react-toastify";
 import { all_routes } from "@/router/all_routes";
 import DatatableKHR from "@/CommonComponent/DataTableKHR/DatatableKHR";
+import ViewPayslipModal from "./ViewPayslipModal";
 
 const PayslipKHR = () => {
   const [payslips, setPayslips] = useState([]);
   const [selectedPayslip, setSelectedPayslip] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
+  const [viewData, setViewData] = useState<any | null>(null);
 
   const fetchPayslips = async () => {
     setLoading(true);
@@ -115,6 +117,17 @@ const PayslipKHR = () => {
   //   },
   // ];
 
+  const handleView = (record: any) => {
+    setViewData(record);
+
+    // This is the part that was likely missing:
+    // const modalElement = document.getElementById("view_payslip_modal");
+    // if (modalElement) {
+    //   const modal = new (window as any).bootstrap.Modal(modalElement);
+    //   modal.show();
+    // }
+  };
+
   const columns = [
     {
       title: "Reference",
@@ -189,6 +202,15 @@ const PayslipKHR = () => {
               <i className="ti ti-calculator"></i>
             </button>
           )}
+          {/* {record.state === "verify" && ( */}
+          <button
+            className="btn btn-sm btn-soft-secondary"
+            onClick={() => handleView(record)}
+            title="View Payslip"
+          >
+            <i className="ti ti-eye"></i>
+          </button>
+          {/* // )} */}
           {/* Only show Confirm for Draft/Verify */}
           {record.state === "draft" && (
             <button
@@ -237,6 +259,7 @@ const PayslipKHR = () => {
           data={selectedPayslip}
           onClose={() => setSelectedPayslip(null)}
         />
+        <ViewPayslipModal data={viewData} onClose={() => setViewData(null)} />
       </div>
     </div>
   );
