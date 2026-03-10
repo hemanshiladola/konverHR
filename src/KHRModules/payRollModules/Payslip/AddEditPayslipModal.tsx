@@ -253,10 +253,13 @@ const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
                                 {item.work_entry_type_name}
                               </td>
                               <td className="text-center">
-                                {item.number_of_days}
+                                {Number(item.number_of_days || 0).toFixed(
+                                  2,
+                                )}{" "}
                               </td>
                               <td className="text-center text-muted">
-                                {item.number_of_hours}h
+                                {Number(item.number_of_hours || 0).toFixed(2)}
+                                h{" "}
                               </td>
                               <td className="text-end pe-3 fw-bold">
                                 {item.currency} {item.amount?.toLocaleString()}
