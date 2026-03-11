@@ -20,9 +20,13 @@ import {
 } from "@/Store/Reducers/TBSlice";
 import { useAppDispatch } from "@/Store/hooks";
 import {
+  getAttendancePercentage,
+  getCheckInData,
   getDepartmentRangeCount,
   getEmployeeTypePercentage,
 } from "./AdminDashboardService";
+import { toast } from "react-toastify";
+import dayjs from "dayjs";
 
 const AdminDashboard = () => {
   const routes = all_routes;
@@ -32,10 +36,17 @@ const AdminDashboard = () => {
   const [selectedRange, setSelectedRange] = useState<
     "this_month" | "this_week" | "last_week" | "today"
   >("this_week");
+  const [attendanceStats, setAttendanceStats] = useState<any>(null);
   const [isDeptLoading, setIsDeptLoading] = useState(true);
   const [statusApiData, setStatusApiData] = useState<any>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const userName = localStorage.getItem("full_name") || "John Doe";
+
+  const [clockLogs, setClockLogs] = useState<any>(null);
+  const [selectedDept, setSelectedDept] = useState<string>("All Departments");
+  const [clockRange, setClockRange] = useState<
+    "today" | "this_week" | "this_month"
+  >("today");
   const dispatch = useAppDispatch();
   const {
     // getDashboadrdCount
@@ -90,6 +101,47 @@ const AdminDashboard = () => {
     fetchDeptRangeData();
   }, []);
 
+  // Inside AdminDashboard component
+
+  useEffect(() => {
+    const fetchClockData = async () => {
+      try {
+        const userId = localStorage.getItem("user_id") || "3199";
+
+        // Call the service function created above
+        const result = await getCheckInData(userId);
+
+        if (result && result.status === "success") {
+          // Based on your JSON, result.data contains the "today", "this_week", etc. keys
+          setClockLogs(result.data);
+        } else {
+          toast.error("Failed to load attendance logs");
+        }
+      } catch (error) {
+        console.error("Error fetching clock logs:", error);
+      }
+    };
+
+    fetchClockData();
+  }, []);
+
+  const getFilteredLogs = () => {
+    // 1. Check if data exists for the selected range (today, this_week, etc.)
+    if (!clockLogs || !clockLogs[clockRange]) return [];
+
+    const rangeData = clockLogs[clockRange];
+
+    // 2. If "All Departments" is selected, flatten all department arrays into one
+    if (selectedDept === "All Departments") {
+      return Object.values(rangeData).flat();
+    }
+
+    // 3. Otherwise, return only the selected department's array
+    return rangeData[selectedDept] || [];
+  };
+
+  const displayLogs = getFilteredLogs();
+
   useEffect(() => {
     const fetchStatusData = async () => {
       setLoadingStatus(true);
@@ -101,6 +153,8 @@ const AdminDashboard = () => {
     };
     fetchStatusData();
   }, []);
+
+  const userId = localStorage.getItem("user_id") || "3145";
 
   const getTypePercent = (typeKey: string) => {
     if (!statusApiData || !statusApiData[selectedRange]) return "0";
@@ -317,47 +371,67 @@ const AdminDashboard = () => {
   });
 
   //Attendance ChartJs
-  const [chartData, setChartData] = useState({});
-  const [chartOptions, setChartOptions] = useState({});
+  const [chartData, setChartData] = useState<any>({
+    labels: ["Present", "Late", "Leave", "Absent"],
+    datasets: [{ data: [0, 0, 0, 0], backgroundColor: [] }],
+  });
+  const [chartOptions, setChartOptions] = useState<any>({});
 
   useEffect(() => {
-    const data = {
-      labels: ["Late", "Present", "Permission", "Absent"],
-      datasets: [
-        {
-          label: "Semi Donut",
-          data: [40, 20, 30, 10],
-          backgroundColor: ["#0C4B5E", "#03C95A", "#FFC107", "#E70D0D"],
-          borderWidth: 5,
-          borderRadius: 10,
-          borderColor: "#fff", // Border between segments
-          hoverBorderWidth: 0, // Border radius for curved edges
-          cutout: "60%",
-        },
-      ],
-    };
-    const options = {
-      rotation: -100,
-      circumference: 200,
-      layout: {
-        padding: {
-          top: -20, // Set to 0 to remove top padding
-          bottom: -20, // Set to 0 to remove bottom padding
-        },
-      },
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false, // Hide the legend
-        },
-      },
-    };
+    const fetchAttendanceData = async () => {
+      const res = await getAttendancePercentage(userId);
+      if (res && res.status === "success") {
+        setAttendanceStats(res.data);
 
-    setChartData(data);
-    setChartOptions(options);
-  }, []);
+        const current = res.data[selectedRange];
 
+        if (current) {
+          // 1. Update Data: Ensure the order of 'data' matches the 'labels'
+          setChartData({
+            labels: ["Present", "Late", "Leave", "Absent"],
+            datasets: [
+              {
+                label: "Attendance %",
+                // Data order must match Labels order above
+                data: [
+                  current.present || 0,
+                  current.late || 0,
+                  current.approved_leave || 0,
+                  current.absent || 0,
+                ],
+                backgroundColor: ["#03C95A", "#0C4B5E", "#FFC107", "#E70D0D"],
+                borderWidth: 5,
+                borderRadius: 10,
+                borderColor: "#fff",
+                hoverBorderWidth: 0,
+                cutout: "60%",
+              },
+            ],
+          });
+
+          // 2. Update Options: Specific settings for the Semi-Donut look
+          setChartOptions({
+            rotation: -100,
+            circumference: 200,
+            cutout: "60%",
+            maintainAspectRatio: false,
+            responsive: true,
+            plugins: {
+              legend: {
+                display: false, // Hidden as you have a custom breakdown list below
+              },
+              tooltip: {
+                callbacks: {
+                  label: (context: any) => ` ${context.label}: ${context.raw}%`,
+                },
+              },
+            },
+          });
+        }
+      }
+    };
+    fetchAttendanceData();
+  }, [userId, selectedRange]); // Re-runs on user or dropdown change
   //Semi Donut ChartJs
   const [semidonutData, setSemidonutData] = useState({});
   const [semidonutOptions, setSemidonutOptions] = useState({});
@@ -1251,21 +1325,33 @@ const AdminDashboard = () => {
                       data-bs-toggle="dropdown"
                     >
                       <i className="ti ti-calendar me-1" />
-                      Today
+                      {selectedRange.replace("_", " ")}
                     </Link>
                     <ul className="dropdown-menu  dropdown-menu-end p-3">
                       <li>
-                        <Link to="#" className="dropdown-item rounded-1">
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("this_month")}
+                        >
                           This Month
                         </Link>
                       </li>
                       <li>
-                        <Link to="#" className="dropdown-item rounded-1">
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("this_week")}
+                        >
                           This Week
                         </Link>
                       </li>
                       <li>
-                        <Link to="#" className="dropdown-item rounded-1">
+                        <Link
+                          to="#"
+                          className="dropdown-item rounded-1"
+                          onClick={() => setSelectedRange("today")}
+                        >
                           Today
                         </Link>
                       </li>
@@ -1281,12 +1367,15 @@ const AdminDashboard = () => {
                       className="w-full attendence-chart md:w-30rem"
                     />
                     <div className="position-absolute text-center attendance-canvas">
-                      <p className="fs-13 mb-1">Total Attendance</p>
-                      <h3>120</h3>
+                      <p className="fs-13 mb-1">Attendance</p>
+                      {/* <h3>120</h3> */}
                     </div>
                   </div>
                   <h6 className="mb-3">Status</h6>
-                  <div className="d-flex align-items-center justify-content-between">
+                  <h4 className="fw-bold">
+                    {selectedRange === "today" ? "Today" : "Range"}
+                  </h4>
+                  {/* <div className="d-flex align-items-center justify-content-between">
                     <p className="f-13 mb-2">
                       <i className="ti ti-circle-filled text-success me-1" />
                       Present
@@ -1358,13 +1447,66 @@ const AdminDashboard = () => {
                     >
                       View Details
                     </Link>
+                  </div> */}
+                  <h6 className="mb-3">Breakdown (%)</h6>
+
+                  <div className="d-flex align-items-center justify-content-between">
+                    <p className="f-13 mb-2">
+                      <i className="ti ti-circle-filled text-success me-1" />
+                      Present
+                    </p>
+                    <p className="f-13 fw-medium text-gray-9 mb-2">
+                      {attendanceStats?.[selectedRange]?.present || 0}%
+                    </p>
+                  </div>
+
+                  <div className="d-flex align-items-center justify-content-between">
+                    <p className="f-13 mb-2">
+                      <i className="ti ti-circle-filled text-secondary me-1" />
+                      Late
+                    </p>
+                    <p className="f-13 fw-medium text-gray-9 mb-2">
+                      {attendanceStats?.[selectedRange]?.late || 0}%
+                    </p>
+                  </div>
+
+                  <div className="d-flex align-items-center justify-content-between">
+                    <p className="f-13 mb-2">
+                      <i className="ti ti-circle-filled text-warning me-1" />
+                      Leave
+                    </p>
+                    <p className="f-13 fw-medium text-gray-9 mb-2">
+                      {attendanceStats?.[selectedRange]?.approved_leave || 0}%
+                    </p>
+                  </div>
+
+                  <div className="d-flex align-items-center justify-content-between mb-2">
+                    <p className="f-13 mb-2">
+                      <i className="ti ti-circle-filled text-danger me-1" />
+                      Absent
+                    </p>
+                    <p className="f-13 fw-medium text-gray-9 mb-2">
+                      {attendanceStats?.[selectedRange]?.absent || 0}%
+                    </p>
+                  </div>
+
+                  <div className="bg-light br-5 box-shadow-xs p-2 pb-0 d-flex align-items-center justify-content-between flex-wrap mt-3">
+                    <p className="mb-2 me-2 small text-muted">
+                      Data for: {selectedRange.replace("_", " ")}
+                    </p>
+                    <Link
+                      to={all_routes.attendaceEmployeeKHR}
+                      className="fs-13 link-primary text-decoration-underline mb-2"
+                    >
+                      View Details
+                    </Link>
                   </div>
                 </div>
               </div>
             </div>
             {/* /Attendance Overview */}
             {/* Clock-In/Out */}
-            <div className="col-xxl-4 col-xl-6 d-flex">
+            {/* <div className="col-xxl-4 col-xl-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
                   <h5 className="mb-2">Clock-In/Out</h5>
@@ -1567,11 +1709,172 @@ const AdminDashboard = () => {
                   </Link>
                 </div>
               </div>
+            </div> */}
+            <div className="col-xxl-4 col-xl-6 d-flex">
+              <div className="card flex-fill">
+                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
+                  <h5 className="mb-2">Clock-In/Out</h5>
+                  <div className="d-flex align-items-center">
+                    {/* Department Dropdown */}
+                    <div className="dropdown mb-2">
+                      <Link
+                        to="#"
+                        className="dropdown-toggle btn btn-white btn-sm d-inline-flex align-items-center border-0 fs-13 me-2"
+                        data-bs-toggle="dropdown"
+                      >
+                        {selectedDept}
+                      </Link>
+                      <ul className="dropdown-menu dropdown-menu-end p-3">
+                        <li>
+                          <Link
+                            to="#"
+                            className="dropdown-item"
+                            onClick={() => setSelectedDept("All Departments")}
+                          >
+                            All Departments
+                          </Link>
+                        </li>
+                        {clockLogs &&
+                          clockLogs[clockRange] &&
+                          Object.keys(clockLogs[clockRange]).map((dept) => (
+                            <li key={dept}>
+                              <Link
+                                to="#"
+                                className="dropdown-item"
+                                onClick={() => setSelectedDept(dept)}
+                              >
+                                {dept}
+                              </Link>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
+
+                    {/* Range Dropdown */}
+                    <div className="dropdown mb-2">
+                      <Link
+                        to="#"
+                        className="btn btn-white border btn-sm d-inline-flex align-items-center text-capitalize"
+                        data-bs-toggle="dropdown"
+                      >
+                        <i className="ti ti-calendar me-1" />
+                        {clockRange.replace("_", " ")}
+                      </Link>
+                      <ul className="dropdown-menu dropdown-menu-end p-3">
+                        <li>
+                          <Link
+                            to="#"
+                            className="dropdown-item"
+                            onClick={() => setClockRange("today")}
+                          >
+                            Today
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="#"
+                            className="dropdown-item"
+                            onClick={() => setClockRange("this_week")}
+                          >
+                            This Week
+                          </Link>
+                        </li>
+                        <li>
+                          <Link
+                            to="#"
+                            className="dropdown-item"
+                            onClick={() => setClockRange("this_month")}
+                          >
+                            This Month
+                          </Link>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card-body">
+                  <div
+                    className="slim-scroll"
+                    style={{ maxHeight: "470px", overflowY: "auto" }}
+                  >
+                    {displayLogs.length > 0 ? (
+                      displayLogs.map((log: any, index: number) => (
+                        <div
+                          key={index}
+                          className="mb-3 p-2 border br-5 shadow-xs"
+                        >
+                          <div className="d-flex align-items-center justify-content-between">
+                            <div className="d-flex align-items-center">
+                              <div
+                                className="avatar flex-shrink-0 bg-soft-primary rounded-circle d-flex align-items-center justify-content-center"
+                                style={{ width: "38px", height: "38px" }}
+                              >
+                                <span className="text-primary fw-bold">
+                                  {log.employee_name.charAt(0)}
+                                </span>
+                              </div>
+                              <div className="ms-2">
+                                <h6
+                                  className="fs-14 fw-medium text-truncate mb-0"
+                                  style={{ maxWidth: "150px" }}
+                                >
+                                  {log.employee_name}
+                                </h6>
+                                <p className="fs-12 text-muted mb-0">
+                                  ID: {log.employee_id}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-end">
+                              <span
+                                className={`badge ${log.check_out ? "bg-soft-danger text-danger" : "bg-soft-success text-success"} fs-10`}
+                              >
+                                <i className="ti ti-circle-filled fs-5 me-1" />
+                                {log.check_out ? "Checked Out" : "Active"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="d-flex align-items-center justify-content-between flex-wrap mt-2 border-top pt-2">
+                            <div>
+                              <p className="mb-0 small text-muted">Clock-In</p>
+                              <h6 className="fs-13 fw-bold mb-0">
+                                {dayjs(log.check_in).format("hh:mm A")}
+                              </h6>
+                            </div>
+                            <div>
+                              <p className="mb-0 small text-muted">Clock-Out</p>
+                              <h6 className="fs-13 fw-bold mb-0">
+                                {log.check_out
+                                  ? dayjs(log.check_out).format("hh:mm A")
+                                  : "--:--"}
+                              </h6>
+                            </div>
+                            <div>
+                              <p className="mb-0 small text-muted">Date</p>
+                              <h6 className="fs-13 fw-normal mb-0">
+                                {dayjs(log.check_in).format("DD MMM")}
+                              </h6>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-5">
+                        <i className="ti ti-clock-off fs-30 text-muted mb-2"></i>
+                        <p className="text-muted">
+                          No logs found for this period.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             {/* /Clock-In/Out */}
           </div>
-          <div className="row">
-            {/* Jobs Applicants */}
+          {/* <div className="row">
             <div className="col-xxl-4 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -1836,8 +2139,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Jobs Applicants */}
-            {/* Employees */}
             <div className="col-xxl-4 col-xl-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -1985,8 +2286,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Employees */}
-            {/* Todo */}
             <div className="col-xxl-4 col-xl-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -2160,10 +2459,8 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Todo */}
-          </div>
-          <div className="row">
-            {/* Sales Overview */}
+          </div> */}
+          {/* <div className="row">
             <div className="col-xl-7 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -2221,8 +2518,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Sales Overview */}
-            {/* Invoices */}
             <div className="col-xl-5 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -2489,10 +2784,8 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Invoices */}
           </div>
           <div className="row">
-            {/* Projects */}
             <div className="col-xxl-8 col-xl-7 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -3007,8 +3300,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Projects */}
-            {/* Tasks Statistics */}
             <div className="col-xxl-4 col-xl-5 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -3103,10 +3394,8 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Tasks Statistics */}
           </div>
           <div className="row">
-            {/* Schedules */}
             <div className="col-xxl-4 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -3254,8 +3543,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Schedules */}
-            {/* Recent Activities */}
             <div className="col-xxl-4 col-xl-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -3412,8 +3699,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Recent Activities */}
-            {/* Birthdays */}
             <div className="col-xxl-4 col-xl-6 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
@@ -3517,8 +3802,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-            {/* /Birthdays */}
-          </div>
+          </div> */}
         </div>
         <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
           <p className="mb-0">2014 - 2025 © SmartHR.</p>
@@ -3531,9 +3815,9 @@ const AdminDashboard = () => {
         </div>
       </div>
       {/* /Page Wrapper */}
-      <ProjectModals />
+      {/* <ProjectModals />
       <RequestModals />
-      <TodoModal />
+      <TodoModal /> */}
     </>
   );
 };

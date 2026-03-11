@@ -781,8 +781,6 @@ const AdminAttandanceKHR = () => {
     {
       title: "Employee",
       dataIndex: "Employee",
-      width: 150,
-      ellipsis: true,
       render: (_text: string, record: AttendanceAdminData) => (
         <div className="d-flex align-items-center file-name-icon">
           <div className="ms-2">

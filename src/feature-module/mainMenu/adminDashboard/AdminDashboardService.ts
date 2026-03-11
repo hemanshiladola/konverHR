@@ -31,3 +31,32 @@ export const getEmployeeTypePercentage = async () => {
     return null;
   }
 };
+
+export const getAttendancePercentage = async (userId: string) => {
+  try {
+    const response = await Instance.get(`/api/employee/attendance_percentage`, {
+      params: { user_id: userId },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching attendance percentage:", error);
+    return null;
+  }
+};
+
+export const getCheckInData = async (userId: string) => {
+  try {
+    const response = await Instance.get(
+      `/api/employee/attendance_logs_department`,
+      {
+        params: { user_id: userId },
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching attendance percentage:", error);
+    return null;
+  }
+};

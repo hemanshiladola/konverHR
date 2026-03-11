@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const Instance = axios.create({
-  baseURL: "https://odooapi.konverthr.com/",
-  // baseURL: "https://odooprod.konverthr.com/",
+  // baseURL: "https://odooapi.konverthr.com/",
+  baseURL: "https://odooprod.konverthr.com/",
 
   headers: {
     "Content-Type": "application/json",
@@ -14,8 +14,8 @@ const getFreshToken = async () => {
     console.log("🔄 Fetching fresh token...");
 
     const response = await axios.post(
-      "https://odooapi.konverthr.com//api/auth",
-      // "https://odooprod.konverthr.com//api/auth",
+      // "https://odooapi.konverthr.com//api/auth",
+      "https://odooprod.konverthr.com//api/auth",
       {
         user_name: "dhaval",
       },
