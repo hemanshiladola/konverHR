@@ -90,6 +90,8 @@ const EmployeeAttendanceKHR = () => {
   const { CheckinCheckoutData, isCheckinCheckoutFetching } =
     useSelector(TBSelector);
 
+  console.log(CheckinCheckoutData);
+
   // Export handlers
   const handleExportExcel = () => {
     const today = new Date();

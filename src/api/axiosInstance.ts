@@ -2,20 +2,21 @@ import axios from "axios";
 
 const Instance = axios.create({
   // baseURL: "https://odooapi.konverthr.com/",
-  baseURL: "https://odooprod.konverthr.com/",
+  baseURL: import.meta.env.VITE_BASE_URL,
 
   headers: {
     "Content-Type": "application/json",
   },
 });
-
+console.log(import.meta.env.VITE_BASE_URL);
 const getFreshToken = async () => {
   try {
     console.log("🔄 Fetching fresh token...");
-
+    const baseURL = import.meta.env.VITE_BASE_URL;
     const response = await axios.post(
       // "https://odooapi.konverthr.com//api/auth",
-      "https://odooprod.konverthr.com//api/auth",
+      // `https://odooprod.konverthr.com//api/auth`,
+      `${baseURL}//api/auth`,
       {
         user_name: "dhaval",
       },

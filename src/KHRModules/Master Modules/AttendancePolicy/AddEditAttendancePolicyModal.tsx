@@ -5,6 +5,7 @@ import {
   AttendancePolicy,
 } from "./AttendancePolicyServices";
 import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 
 interface Props {
   onSuccess: () => void;
@@ -167,7 +168,15 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
       resetForm();
     } catch (error) {
       console.error("Failed to save policy", error);
-      toast.error("Failed to save policy. Please try again.");
+      const err = error as AxiosError<{ message: string }>;
+
+      const message =
+        err.response?.data?.message ||
+        "Failed to save policy. Please try again.";
+
+      toast.error(message);
+
+      // toast.error("Failed to save policy. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
