@@ -75,6 +75,51 @@ const Sidebar = React.memo(() => {
     [dispatch],
   );
 
+  const isChildActive = (items: SidebarMenuItem[]): boolean => {
+    return items.some((item) => {
+      if (item.link === Location.pathname) return true;
+      if (item.submenuItems) return isChildActive(item.submenuItems);
+      return false;
+    });
+  };
+
+  useEffect(() => {
+    (SidebarDataTest as SidebarMainMenu[]).forEach((mainMenu) => {
+      mainMenu.submenuItems.forEach((level1) => {
+        // Check if Level 1 is active or has active children
+        if (
+          level1.link === Location.pathname ||
+          (level1.submenuItems && isChildActive(level1.submenuItems))
+        ) {
+          setSubopen(level1.label);
+
+          // Check if Level 2 (Sub-sidebar) should be open
+          if (level1.submenuItems) {
+            level1.submenuItems.forEach((level2) => {
+              if (
+                level2.link === Location.pathname ||
+                (level2.submenuItems && isChildActive(level2.submenuItems))
+              ) {
+                setSubsidebar(level2.label);
+              }
+            });
+          }
+        }
+      });
+    });
+    // Manage CSS classes for theme compatibility
+    const submenus = document.querySelectorAll(".submenu");
+    submenus.forEach((submenu) => {
+      const listItems = submenu.querySelectorAll("li");
+      submenu.classList.remove("active");
+      listItems.forEach((item) => {
+        if (item.classList.contains("active")) {
+          submenu.classList.add("active");
+        }
+      });
+    });
+  }, [Location.pathname]);
+
   // Memoize the click handler
   const handleClick = useCallback(
     (label: string, themeSetting: boolean, layout: string) => {

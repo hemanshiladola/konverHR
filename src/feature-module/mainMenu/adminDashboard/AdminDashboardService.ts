@@ -19,12 +19,9 @@ export const getDepartmentRangeCount = async () => {
 export const getEmployeeTypePercentage = async () => {
   try {
     const userId = localStorage.getItem("user_id");
-    const response = await Instance.get(
-      `/api/employee/type_percentage_by_date`,
-      {
-        params: { user_id: userId },
-      },
-    );
+    const response = await Instance.get(`/api/employee/type_percentage`, {
+      params: { user_id: userId },
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching employee type percentage:", error);

@@ -4,8 +4,25 @@ services:
     container_name: oddoo-konverthr-frontend-container
     # env_file:
     #   - .env.development
+    env_file:
+      - "/etc/node-env/odoosaas.konverthr.com/.env"
     build: .
     ports:
       - "3002:3002"
+    volumes:
+      - "/etc/node-env/odoosaas.konverthr.com/.env:/app/.env"
+    restart: always
+    # scale: 3
+
+  odooproduction-konverthr-com:
+    image: odooproduction-konverthr-com
+    container_name: odooproduction-konverthr-com
+    env_file:
+      - "/etc/node-env/odooproduction.konverthr.com/.env"
+    build: .
+    ports:
+      - "3003:3002"
+    volumes:
+      - "/etc/node-env/odooproduction.konverthr.com/.env:/app/.env"
     restart: always
     # scale: 3

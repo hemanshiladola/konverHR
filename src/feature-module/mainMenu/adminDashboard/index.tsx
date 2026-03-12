@@ -95,7 +95,6 @@ const AdminDashboard = () => {
       try {
         const res = await getDepartmentRangeCount();
         if (res && res.status === "success") {
-          // Use the 'departments' key from your new JSON
           setDeptApiData(res.departments || []);
         }
       } catch (error) {
@@ -153,6 +152,7 @@ const AdminDashboard = () => {
       setLoadingStatus(true);
       const res = await getEmployeeTypePercentage();
       if (res && res.status === "success") {
+        // res.data now contains { permanent, fixed_term, temporary, other }
         setStatusApiData(res.data);
       }
       setLoadingStatus(false);
@@ -163,8 +163,9 @@ const AdminDashboard = () => {
   const userId = localStorage.getItem("user_id") || "3145";
 
   const getTypePercent = (typeKey: string) => {
-    if (!statusApiData || !statusApiData[selectedRange]) return "0";
-    return statusApiData[selectedRange][typeKey] || "0";
+    if (!statusApiData) return 0;
+    // Use the exact keys from your JSON response
+    return statusApiData[typeKey] || 0;
   };
 
   const chartValues = deptApiData.map((d: any) => d[selectedRange] || 0);
@@ -1156,50 +1157,14 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div> */}
-
             <div className="col-xxl-4 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
                   <h5 className="mb-2">Employee Status</h5>
-                  <div className="dropdown mb-2">
-                    <Link
-                      to="#"
-                      className="btn btn-white border btn-sm d-inline-flex align-items-center text-capitalize"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-calendar me-1" />
-                      {selectedRange.replace("_", " ")}
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item rounded-1"
-                          onClick={() => setSelectedRange("today")}
-                        >
-                          Today
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item rounded-1"
-                          onClick={() => setSelectedRange("this_week")}
-                        >
-                          This Week
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item rounded-1"
-                          onClick={() => setSelectedRange("this_month")}
-                        >
-                          This Month
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
+                  {/* Removed Range Selector as the new API is an overall snapshot */}
+                  {/* <span className="badge bg-soft-secondary text-secondary mb-2">
+                    Overall Snapshot
+                  </span> */}
                 </div>
                 <div className="card-body">
                   {loadingStatus ? (
@@ -1212,10 +1177,10 @@ const AdminDashboard = () => {
                   ) : (
                     <>
                       <div className="d-flex align-items-center justify-content-between mb-1">
-                        <p className="fs-13 mb-3">Type Distribution</p>
-                        {/* Total count can be calculated if your API provides total_count, otherwise keep as placeholder */}
+                        <p className="fs-13 mb-3">Employee Distribution</p>
+                        {/* Using total_employees from your new API response */}
                         <h3 className="mb-3">
-                          {getDashboadrdCountData?.data?.total_employees ?? "0"}
+                          {statusApiData?.total_employees || "75"}
                         </h3>
                       </div>
 
@@ -1231,21 +1196,21 @@ const AdminDashboard = () => {
                         <div
                           className="progress"
                           role="progressbar"
-                          style={{ width: `${getTypePercent("contract")}%` }}
+                          style={{ width: `${getTypePercent("fixed_term")}%` }}
                         >
                           <div className="progress-bar bg-secondary" />
                         </div>
                         <div
                           className="progress"
                           role="progressbar"
-                          style={{ width: `${getTypePercent("probation")}%` }}
+                          style={{ width: `${getTypePercent("temporary")}%` }}
                         >
                           <div className="progress-bar bg-danger" />
                         </div>
                         <div
                           className="progress"
                           role="progressbar"
-                          style={{ width: `${getTypePercent("unknown")}%` }}
+                          style={{ width: `${getTypePercent("other")}%` }}
                         >
                           <div className="progress-bar bg-pink" />
                         </div>
@@ -1258,13 +1223,12 @@ const AdminDashboard = () => {
                             <div className="p-3 flex-fill border-end border-bottom bg-light-subtle">
                               <p className="fs-13 mb-2">
                                 <i className="ti ti-square-filled text-primary fs-12 me-2" />
-                                Fulltime{" "}
+                                Permanent{" "}
                                 <span className="text-gray-9">
                                   ({getTypePercent("permanent")}%)
                                 </span>
                               </p>
                               <h2 className="display-1">
-                                {/* If you have raw counts, use them here. Otherwise, show the percent */}
                                 {getTypePercent("permanent")}%
                               </h2>
                             </div>
@@ -1273,13 +1237,13 @@ const AdminDashboard = () => {
                             <div className="p-3 flex-fill border-bottom bg-light-subtle text-end">
                               <p className="fs-13 mb-2">
                                 <i className="ti ti-square-filled me-2 text-secondary fs-12" />
-                                Contract{" "}
+                                Fixed Term{" "}
                                 <span className="text-gray-9">
-                                  ({getTypePercent("contract")}%)
+                                  ({getTypePercent("fixed_term")}%)
                                 </span>
                               </p>
                               <h2 className="display-1">
-                                {getTypePercent("contract")}%
+                                {getTypePercent("fixed_term")}%
                               </h2>
                             </div>
                           </div>
@@ -1287,13 +1251,13 @@ const AdminDashboard = () => {
                             <div className="p-3 flex-fill border-end">
                               <p className="fs-13 mb-2">
                                 <i className="ti ti-square-filled me-2 text-danger fs-12" />
-                                Probation{" "}
+                                Temporary{" "}
                                 <span className="text-gray-9">
-                                  ({getTypePercent("probation")}%)
+                                  ({getTypePercent("temporary")}%)
                                 </span>
                               </p>
                               <h2 className="display-1">
-                                {getTypePercent("probation")}%
+                                {getTypePercent("temporary")}%
                               </h2>
                             </div>
                           </div>
@@ -1303,50 +1267,20 @@ const AdminDashboard = () => {
                                 <i className="ti ti-square-filled text-pink me-2 fs-12" />
                                 Others{" "}
                                 <span className="text-gray-9">
-                                  ({getTypePercent("unknown")}%)
+                                  ({getTypePercent("other")}%)
                                 </span>
                               </p>
                               <h2 className="display-1">
-                                {getTypePercent("unknown")}%
+                                {getTypePercent("other")}%
                               </h2>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      <h6 className="mb-2">Top Performer</h6>
-                      <div className="p-2 d-flex align-items-center justify-content-between border border-primary bg-primary-100 br-5 mb-4">
-                        <div className="d-flex align-items-center overflow-hidden">
-                          <span className="me-2">
-                            <i className="ti ti-award-filled text-primary fs-24" />
-                          </span>
-                          <Link
-                            to={all_routes.employeedetails}
-                            className="avatar avatar-md me-2"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/profiles/avatar-24.jpg"
-                              className="rounded-circle border border-white"
-                              alt="avatar"
-                            />
-                          </Link>
-                          <div>
-                            <h6 className="text-truncate mb-1 fs-14 fw-medium">
-                              <Link to={all_routes.employeedetails}>
-                                Daniel Esbella
-                              </Link>
-                            </h6>
-                            <p className="fs-13">IOS Developer</p>
-                          </div>
-                        </div>
-                        <div className="text-end">
-                          <p className="fs-13 mb-1">Performance</p>
-                          <h5 className="text-primary">99%</h5>
-                        </div>
-                      </div>
                       <Link
-                        to={all_routes.employeeList}
-                        className="btn btn-light btn-md w-100"
+                        to={all_routes.employeeKHR}
+                        className="btn btn-light btn-md w-100 mt-2"
                       >
                         View All Employees
                       </Link>

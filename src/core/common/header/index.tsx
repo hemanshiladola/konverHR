@@ -27,7 +27,7 @@ const Header = React.memo(() => {
   const dataLayout = useSelector(
     (state: RootState) => state.themeSetting.dataLayout,
   );
-  
+
   const Location = useLocation();
 
   const userCompanyName = localStorage.getItem("company_name") || "N/A";
@@ -667,8 +667,8 @@ const Header = React.memo(() => {
                           </div>
                         </div>
                       </div>
-                      <div className="card-body">
-                        <Link
+                      {/* <div className="card-body"> */}
+                      {/* <Link
                           className="dropdown-item d-inline-flex align-items-center p-0 py-2"
                           to={routes.profile}
                         >
@@ -692,15 +692,15 @@ const Header = React.memo(() => {
                         >
                           <i className="ti ti-circle-arrow-up me-1"></i>My
                           Account
-                        </Link>
-                        {/* <Link
+                        </Link> */}
+                      {/* <Link
                           className="dropdown-item d-inline-flex align-items-center p-0 py-2"
                           to={routes.knowledgebase}
                         >
                           <i className="ti ti-question-mark me-1"></i>Knowledge
                           Base
                         </Link> */}
-                      </div>
+                      {/* </div> */}
                       <div className="card-footer">
                         <Link
                           className="dropdown-item d-inline-flex align-items-center p-0 py-2"
@@ -750,10 +750,10 @@ const Header = React.memo(() => {
                   </div>
                 </div>
               </div>
-              <Link className="dropdown-item" to={routes.profile}>
+              {/* <Link className="dropdown-item" to={routes.profile}>
                 <i className="ti ti-user-circle me-1"></i>My Profile
-              </Link>
-              <Link className="dropdown-item" to={routes.bussinessSettings}>
+              </Link> */}
+              {/* <Link className="dropdown-item" to={routes.bussinessSettings}>
                 <i className="ti ti-settings me-1"></i>Settings
               </Link>
               <Link className="dropdown-item" to={routes.securitysettings}>
@@ -764,7 +764,7 @@ const Header = React.memo(() => {
               </Link>
               <Link className="dropdown-item" to={routes.knowledgebase}>
                 <i className="ti ti-question-mark me-1"></i>Knowledge Base
-              </Link>
+              </Link> */}
               <Link className="dropdown-item" to={routes.login}>
                 <i className="ti ti-login me-2"></i>Logout
               </Link>
