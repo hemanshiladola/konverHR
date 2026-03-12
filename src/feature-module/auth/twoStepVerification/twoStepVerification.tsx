@@ -3,7 +3,7 @@ import { all_routes } from "../../../router/all_routes";
 import { useNavigate } from "react-router";
 import ImageWithBasePath from "../../../core/common/imageWithBasePath";
 import { Link } from "react-router-dom";
-import { InputOtp } from 'primereact/inputotp';
+import { InputOtp } from "primereact/inputotp";
 
 const TwoStepVerification = () => {
   const routes = all_routes;
@@ -23,21 +23,38 @@ const TwoStepVerification = () => {
           <div className="col-lg-5">
             <div className="login-background position-relative d-lg-flex align-items-center justify-content-center d-none flex-wrap vh-100">
               <div className="bg-overlay-img">
-                <ImageWithBasePath src="assets/img/bg/bg-01.png" className="bg-1" alt="Background pattern 1" />
-                <ImageWithBasePath src="assets/img/bg/bg-02.png" className="bg-2" alt="Background pattern 2" />
-                <ImageWithBasePath src="assets/img/bg/bg-03.png" className="bg-3" alt="Background pattern 3" />
+                <ImageWithBasePath
+                  src="assets/img/bg/bg-01.png"
+                  className="bg-1"
+                  alt="Background pattern 1"
+                />
+                <ImageWithBasePath
+                  src="assets/img/bg/bg-02.png"
+                  className="bg-2"
+                  alt="Background pattern 2"
+                />
+                <ImageWithBasePath
+                  src="assets/img/bg/bg-03.png"
+                  className="bg-3"
+                  alt="Background pattern 3"
+                />
               </div>
               <div className="authentication-card w-100">
                 <div className="authen-overlay-item border w-100">
                   <h1 className="text-white display-1">
-                    Empowering people <br /> through seamless HR <br /> management.
+                    Empowering people <br /> through seamless HR <br />{" "}
+                    management.
                   </h1>
                   <div className="my-4 mx-auto authen-overlay-img">
-                    <ImageWithBasePath src="assets/img/bg/authentication-bg-01.png" alt="Authentication illustration" />
+                    <ImageWithBasePath
+                      src="assets/img/bg/authentication-bg-01.png"
+                      alt="Authentication illustration"
+                    />
                   </div>
                   <div>
                     <p className="text-white fs-20 fw-semibold text-center">
-                      Efficiently manage your workforce, streamline <br /> operations effortlessly.
+                      Efficiently manage your workforce, streamline <br />{" "}
+                      operations effortlessly.
                     </p>
                   </div>
                 </div>
@@ -61,12 +78,25 @@ const TwoStepVerification = () => {
                         <h2 className="mb-2">2 Step Verification</h2>
                         <p className="mb-0">
                           Please enter the OTP received to confirm your account
-                          ownership. A code has been send to ******doe@example.com
+                          ownership. A code has been send to
+                          ******doe@example.com
                         </p>
                       </div>
                       <div className="text-center otp-input">
                         <div className="d-flex justify-content-center align-items-center mb-3">
-                          <InputOtp value={token} onChange={(e) => setTokens((typeof e.value === "string" ? e.value : e.value === null ? undefined : String(e.value)))} integerOnly />
+                          <InputOtp
+                            value={token}
+                            onChange={(e) =>
+                              setTokens(
+                                typeof e.value === "string"
+                                  ? e.value
+                                  : e.value === null
+                                    ? undefined
+                                    : String(e.value),
+                              )
+                            }
+                            integerOnly
+                          />
                         </div>
                         <div>
                           <div className="badge bg-danger-transparent mb-3">
@@ -92,7 +122,9 @@ const TwoStepVerification = () => {
                       </div>
                     </div>
                     <div className="mt-5 pb-4 text-center">
-                      <p className="mb-0 text-gray-9">Copyright © 2024 - Smarthr</p>
+                      <p className="mb-0 text-gray-9">
+                        Copyright © 2024 - Smarthr
+                      </p>
                     </div>
                   </div>
                 </form>

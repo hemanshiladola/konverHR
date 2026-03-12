@@ -113,6 +113,12 @@ const EmployeeKHR = () => {
     setFilteredEmployees(filtered);
   }, [searchText, filterDept, filterStatus, employees]);
 
+  const totalCount = employees.length;
+  const activeCount = employees.filter(
+    (e: any) => (e.status || "active").toLowerCase() === "active",
+  ).length;
+  const inactiveCount = totalCount - activeCount;
+
   const handleDeleteEmployee = (id: number) => {
     setArchiveId(id);
     const modalElement = document.getElementById("archive_employee_modal");
@@ -246,6 +252,140 @@ const EmployeeKHR = () => {
   ).filter(Boolean);
 
   return (
+    // <div className="page-wrapper">
+    //   <div className="content">
+    //     <CommonHeader
+    //       title="Employee Directory"
+    //       parentMenu="HR"
+    //       activeMenu="Employees"
+    //       routes={all_routes}
+    //       showViewToggle={true}
+    //       viewType={viewType}
+    //       onViewChange={setViewType}
+    //       buttonText="Add New Employee"
+    //       modalTarget="#add_employee_modal"
+    //     />
+
+    //     <div className="card mb-4 shadow-sm border-0">
+    //       <div className="card-body p-3">
+    //         <div className="row g-3 align-items-center">
+    //           <div className="col-md-4">
+    //             <div className="input-group">
+    //               <span className="input-group-text bg-light border-end-0">
+    //                 <i className="ti ti-search text-muted"></i>
+    //               </span>
+    //               <input
+    //                 type="text"
+    //                 className="form-control border-start-0"
+    //                 placeholder="Search by name..."
+    //                 value={searchText}
+    //                 onChange={(e) => setSearchText(e.target.value)}
+    //               />
+    //             </div>
+    //           </div>
+    //           <div className="col-md-3">
+    //             <select
+    //               className="form-select"
+    //               value={filterDept}
+    //               onChange={(e) => setFilterDept(e.target.value)}
+    //             >
+    //               <option value="">All Departments</option>
+    //               {uniqueDepts.map((dept) => (
+    //                 <option key={dept} value={dept}>
+    //                   {dept}
+    //                 </option>
+    //               ))}
+    //             </select>
+    //           </div>
+    //           <div className="col-md-3">
+    //             <select
+    //               className="form-select"
+    //               value={filterStatus}
+    //               onChange={(e) => setFilterStatus(e.target.value)}
+    //             >
+    //               <option value="">All Employees</option>
+    //               <option value="active">Active</option>
+    //               <option value="inactive">Inactive</option>
+    //             </select>
+    //           </div>
+    //           <div className="col-md-auto ms-auto">
+    //             <button
+    //               className="btn btn-light"
+    //               onClick={() => {
+    //                 setSearchText("");
+    //                 setFilterDept("");
+    //                 setFilterStatus("");
+    //               }}
+    //             >
+    //               <i className="ti ti-refresh me-1"></i> Reset
+    //             </button>
+    //           </div>
+    //         </div>
+    //       </div>
+    //     </div>
+
+    //     {loading ? (
+    //       <div
+    //         className="row mt-4 position-relative"
+    //         style={{ minHeight: "400px" }}
+    //       >
+    //         <div className="position-absolute top-50 start-50 translate-middle text-center w-100">
+    //           <div className="spinner-border text-primary" role="status">
+    //             <span className="visually-hidden">Loading...</span>
+    //           </div>
+    //         </div>
+    //       </div>
+    //     ) : (
+    //       <>
+    //         {viewType === "grid" ? (
+    //           <div className="row mt-4">
+    //             {filteredEmployees.length > 0 ? (
+    //               filteredEmployees.map((emp: any) => (
+    //                 <EmployeeCard
+    //                   key={emp.id}
+    //                   employee={emp}
+    //                   onEdit={handleEditClick}
+    //                   onDelete={handleDeleteEmployee}
+    //                 />
+    //               ))
+    //             ) : (
+    //               <div className="col-12 text-center py-5">
+    //                 <h5 className="text-muted">No Matching Employees Found</h5>
+    //               </div>
+    //             )}
+    //           </div>
+    //         ) : (
+    //           <div className=" shadow-sm border-0">
+    //             <div className="">
+    //               <DatatableKHR
+    //                 data={filteredEmployees} // ✅ Use filtered data
+    //                 columns={columns}
+    //                 selection={true}
+    //               />
+    //             </div>
+    //           </div>
+    //         )}
+    //       </>
+    //     )}
+
+    //     <ArchiveEmployeeModal
+    //       employeeId={archiveId}
+    //       onSuccess={() => {
+    //         fetchEmployees();
+    //         setArchiveId(null);
+    //       }}
+    //       onClose={() => setArchiveId(null)}
+    //     />
+    //     <AddEditEmployeeModal
+    //       data={editData}
+    //       onSuccess={() => {
+    //         fetchEmployees();
+    //         setEditData(null);
+    //       }}
+    //       onClose={() => setEditData(null)}
+    //     />
+    //   </div>
+    // </div>
     <div className="page-wrapper">
       <div className="content">
         <CommonHeader
@@ -260,7 +400,62 @@ const EmployeeKHR = () => {
           modalTarget="#add_employee_modal"
         />
 
-        {/* ✅ Filter Interface */}
+        {/* --- STATS SUMMARY SECTION --- */}
+        <div className="row mb-4">
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 border-start border-primary border-4">
+              <div className="card-body p-3">
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <p className="text-muted mb-1 small fw-bold text-uppercase">
+                      Total Employees
+                    </p>
+                    <h3 className="mb-0">{totalCount}</h3>
+                  </div>
+                  <div className="avatar bg-soft-primary rounded">
+                    <i className="ti ti-users fs-20 text-primary"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 border-start border-success border-4">
+              <div className="card-body p-3">
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <p className="text-muted mb-1 small fw-bold text-uppercase">
+                      Active
+                    </p>
+                    <h3 className="mb-0 text-success">{activeCount}</h3>
+                  </div>
+                  <div className="avatar bg-soft-success rounded">
+                    <i className="ti ti-user-check fs-20 text-success"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-4">
+            <div className="card shadow-sm border-0 border-start border-danger border-4">
+              <div className="card-body p-3">
+                <div className="d-flex align-items-center justify-content-between">
+                  <div>
+                    <p className="text-muted mb-1 small fw-bold text-uppercase">
+                      Inactive
+                    </p>
+                    <h3 className="mb-0 text-danger">{inactiveCount}</h3>
+                  </div>
+                  <div className="avatar bg-soft-danger rounded">
+                    <i className="ti ti-user-x fs-20 text-danger"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* --- FILTER INTERFACE --- */}
         <div className="card mb-4 shadow-sm border-0">
           <div className="card-body p-3">
             <div className="row g-3 align-items-center">
@@ -272,7 +467,7 @@ const EmployeeKHR = () => {
                   <input
                     type="text"
                     className="form-control border-start-0"
-                    placeholder="Search by name..."
+                    placeholder="Search name, ID, or email..."
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                   />
@@ -298,14 +493,14 @@ const EmployeeKHR = () => {
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                 >
-                  <option value="">All Employees</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="">All Statuses</option>
+                  <option value="active">Active Only</option>
+                  <option value="inactive">Inactive Only</option>
                 </select>
               </div>
               <div className="col-md-auto ms-auto">
                 <button
-                  className="btn btn-light"
+                  className="btn btn-white border"
                   onClick={() => {
                     setSearchText("");
                     setFilterDept("");
@@ -319,21 +514,20 @@ const EmployeeKHR = () => {
           </div>
         </div>
 
+        {/* --- EMPLOYEE LIST/GRID --- */}
         {loading ? (
-          <div
-            className="row mt-4 position-relative"
-            style={{ minHeight: "400px" }}
-          >
-            <div className="position-absolute top-50 start-50 translate-middle text-center w-100">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" role="status"></div>
           </div>
         ) : (
           <>
+            <div className="mb-3">
+              <span className="text-muted small">
+                Showing <strong>{filteredEmployees.length}</strong> results
+              </span>
+            </div>
             {viewType === "grid" ? (
-              <div className="row mt-4">
+              <div className="row">
                 {filteredEmployees.length > 0 ? (
                   filteredEmployees.map((emp: any) => (
                     <EmployeeCard
@@ -350,15 +544,11 @@ const EmployeeKHR = () => {
                 )}
               </div>
             ) : (
-              <div className=" shadow-sm border-0">
-                <div className="">
-                  <DatatableKHR
-                    data={filteredEmployees} // ✅ Use filtered data
-                    columns={columns}
-                    selection={true}
-                  />
-                </div>
-              </div>
+              <DatatableKHR
+                data={filteredEmployees}
+                columns={columns}
+                selection={true}
+              />
             )}
           </>
         )}

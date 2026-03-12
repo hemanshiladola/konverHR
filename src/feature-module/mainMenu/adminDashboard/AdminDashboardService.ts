@@ -4,7 +4,7 @@ export const getDepartmentRangeCount = async () => {
   try {
     const userId = localStorage.getItem("user_id");
     const response = await Instance.get(
-      `/api/employee/department_range_count`,
+      `/api/employee/department_employee_count`,
       {
         params: { user_id: userId },
       },
@@ -56,7 +56,7 @@ export const getCheckInData = async (userId: string) => {
 
     return response.data;
   } catch (error) {
-    console.error("Error fetching attendance percentage:", error);
+    console.error("Er ror fetching attendance percentage:", error);
     return null;
   }
 };

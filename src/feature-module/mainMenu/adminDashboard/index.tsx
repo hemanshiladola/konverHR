@@ -92,11 +92,17 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchDeptRangeData = async () => {
       setIsDeptLoading(true);
-      const res = await getDepartmentRangeCount();
-      if (res && res.status === "success") {
-        setDeptApiData(res.departments || []);
+      try {
+        const res = await getDepartmentRangeCount();
+        if (res && res.status === "success") {
+          // Use the 'departments' key from your new JSON
+          setDeptApiData(res.departments || []);
+        }
+      } catch (error) {
+        console.error("Error fetching department data:", error);
+      } finally {
+        setIsDeptLoading(false);
       }
-      setIsDeptLoading(false);
     };
     fetchDeptRangeData();
   }, []);
@@ -166,50 +172,35 @@ const AdminDashboard = () => {
 
   const empDepartmentConfig: any = {
     chart: {
-      height: 235,
+      height: 250,
       type: "bar",
       toolbar: { show: false },
     },
     plotOptions: {
       bar: {
-        borderRadius: 5,
-        horizontal: true,
-        barHeight: "35%",
+        borderRadius: 4,
+        horizontal: true, // Horizontal is best for long department names
+        barHeight: "60%",
+        distributed: true, // Different color for each bar
       },
     },
-    colors: ["#F26522"],
-    grid: {
-      borderColor: "#E5E7EB",
-      strokeDashArray: 5,
-      padding: { top: -20, left: 0, right: 0, bottom: 0 },
-    },
+    dataLabels: { enabled: false },
+    colors: ["#F26522", "#03C95A", "#0C4B5E", "#FFC107", "#E70D0D", "#ab7efd"],
     xaxis: {
+      // Map the new key 'department'
       categories: deptApiData.map((d: any) => d.department),
-      // 🟢 FORCE INTEGER STEPS:
-      // If maxValue is small (e.g., 5), setting tickAmount to maxValue forces a gap of 1.
-      tickAmount: maxValue <= 10 ? maxValue : undefined,
-      decimalsInFloat: 0, // Removes decimals from the scale
       labels: {
-        style: { colors: "#111827", fontSize: "13px" },
-        // 🟢 Formatter ensures only whole numbers are displayed
-        formatter: (val: number) => val.toFixed(0),
-      },
-    },
-    yaxis: {
-      // Ensuring the department names have enough space
-      labels: {
-        maxWidth: 150,
+        style: { fontSize: "12px" },
+        formatter: (val: number) => Math.floor(val), // Force whole numbers
       },
     },
     series: [
       {
         name: "Employees",
-        // 🟢 Map counts based on the selected dropdown range
-        // data: deptApiData.map((d: any) => d[selectedRange] || 0),
-        data: chartValues,
+        // Map the new key 'total_employees'
+        data: deptApiData.map((d: any) => d.total_employees),
       },
     ],
-    // Add tooltip to show data clearly on hover
     tooltip: {
       y: {
         formatter: (val: number) => `${val} Employees`,
@@ -590,7 +581,7 @@ const AdminDashboard = () => {
                       <i className="ti ti-edit fs-14" />
                     </Link>
                   </h3>
-                  <p>
+                  {/* <p>
                     You have{" "}
                     <span className="text-primary text-decoration-underline">
                       {getDashboadrdCountData?.data?.pending_approvals ?? 0}
@@ -600,7 +591,7 @@ const AdminDashboard = () => {
                       {getDashboadrdCountData?.data?.leave_requests ?? 0}
                     </span>{" "}
                     Leave Requests
-                  </p>
+                  </p> */}
                 </div>
               </div>
               <div className="d-flex align-items-center flex-wrap mb-1">
@@ -870,12 +861,11 @@ const AdminDashboard = () => {
                 </div>
               </div>
             </div> */}
-            <div className="d-flex">
+            {/* <div className="d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
                   <h5 className="mb-2">Employees By Department</h5>
 
-                  {/* RANGE SELECTOR DROPDOWN */}
                   <div className="dropdown mb-2">
                     <Link
                       to="#"
@@ -944,6 +934,59 @@ const AdminDashboard = () => {
                     Distribution across {deptApiData.length} departments for{" "}
                     {selectedRange.replace("_", " ")}.
                   </p>
+                </div>
+              </div>
+            </div> */}
+
+            <div className=" d-flex">
+              <div className="card flex-fill">
+                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
+                  <h5 className="mb-2">Employees By Department</h5>
+                  <div className="mb-2">
+                    <span className="badge bg-soft-primary text-primary border border-primary">
+                      Total:{" "}
+                      {deptApiData.reduce(
+                        (acc, curr) => acc + curr.total_employees,
+                        0,
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="card-body">
+                  {isDeptLoading ? (
+                    <div className="text-center py-5">
+                      <div
+                        className="spinner-border text-primary"
+                        role="status"
+                      />
+                    </div>
+                  ) : deptApiData.length > 0 ? (
+                    <>
+                      <div className="chartjs-wrapper-demo position-relative mb-4">
+                        <ReactApexChart
+                          id="emp-department"
+                          options={empDepartmentConfig}
+                          series={empDepartmentConfig.series}
+                          type="bar"
+                          height={250}
+                        />
+                      </div>
+                      <div className="mt-3">
+                        <p className="fs-13 mb-0">
+                          <i className="ti ti-circle-filled me-2 fs-8 text-primary" />
+                          Showing distribution across{" "}
+                          <strong>{deptApiData.length}</strong> active
+                          departments.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-5 text-muted">
+                      <i className="ti ti-database-off fs-30 mb-2 d-block"></i>
+                      No department data available
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -3804,7 +3847,7 @@ const AdminDashboard = () => {
             </div>
           </div> */}
         </div>
-        <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
+        {/* <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
           <p className="mb-0">2014 - 2025 © SmartHR.</p>
           <p>
             Designed &amp; Developed By{" "}
@@ -3812,7 +3855,7 @@ const AdminDashboard = () => {
               Dreams
             </Link>
           </p>
-        </div>
+        </div> */}
       </div>
       {/* /Page Wrapper */}
       {/* <ProjectModals />
