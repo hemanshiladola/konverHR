@@ -282,6 +282,6 @@ export default defineConfig({
     port: 3002,
     open: true,
     host: true,
-    allowedHosts: ["odoosaas.konverthr.com"],
+    allowedHosts: ["odoosaas.konverthr.com", "odooproduction.konverthr.com"],
   },
 });
