@@ -261,7 +261,11 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   };
 
   const resetForm = () => {
-    setFormData(initialFormData); // Resets all input values
+    const defaultBranch = branches.length > 0 ? branches[0].value : "";
+    setFormData({
+      ...initialFormData,
+      name_of_client: defaultBranch, // Set the first branch instead of ""
+    });
     setImgPreview(null); // Clears the photo preview
     setErrors({}); // Clears validation error messages
     setIsSubmitted(false); // Resets our custom submission flag
@@ -1056,11 +1060,11 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   useEffect(() => {
     const fetchBranchData = async () => {
       try {
-        const data = await getBranches();
-        const branchList = Array.isArray(data) ? data : [];
+        const response = await getBranches();
+        const branchList = Array.isArray(response) ? response : [];
 
         const formattedBranches = branchList.map((b: any) => ({
-          value: b.id.toString(),
+          value: String(b.id),
           label: `${b.RegisteredCompnany} | ${b.address}`,
         }));
 
@@ -2402,6 +2406,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                         {/* Removed validation border classes */}
                         <div>
                           <CommonSelect
+                            key={`branch-field-${formData.name_of_client}-${branches.length}`}
                             options={branches}
                             placeholder="Select Branch"
                             defaultValue={branches.find(
@@ -2413,6 +2418,12 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                             //       b.value === String(formData.name_of_client),
                             //   ) || null
                             // }
+                            value={
+                              branches.find(
+                                (b) =>
+                                  b.value === String(formData.name_of_client),
+                              ) || null
+                            }
                             formatOptionLabel={(option: any) => {
                               // Split the combined label back into Company and Address
                               const [company, address] =

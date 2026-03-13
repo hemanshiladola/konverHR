@@ -1,28 +1,48 @@
-name: Auto Deploy to Server with Docker Compose
+name: Auto Deploy (Production & Staging)
 
 on:
   push:
     branches:
       - main
+      - staging
 
 jobs:
-  deploy:
+  # =========================
+  # PRODUCTION DEPLOY
+  # =========================
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Deploy to Server
+      - name: Deploy Production via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
           script: |
-            cd /var/www/saas.konverthr.com
+            cd /var/www/odooproduction.konverthr.com
             git pull origin main
-            # Rebuild and restart containers in detached mode
-            docker compose up -d --build
-            # Clean up unused images to save space
-            # docker image prune -f
+            docker compose up -d --build odooproduction-konverthr-com
+
+  # =========================
+  # STAGING DEPLOY
+  # =========================
+  deploy-staging:
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy Staging via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script: |
+            cd /var/www/odoosaas.konverthr.com
+            git pull origin staging
+            docker compose up -d --build konvertHR-saas-frontend

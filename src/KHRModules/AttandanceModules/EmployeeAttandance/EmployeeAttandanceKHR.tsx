@@ -358,6 +358,15 @@ const EmployeeAttendanceKHR = () => {
   }) => {
     return dateRange.label;
   };
+  const getDynamicGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  // Get name from localStorage
+  const storedName = localStorage.getItem("full_name") || "User";
 
   // Test function to verify date range calculations (can be removed in production)
   const testDateRangeCalculations = () => {
@@ -1082,16 +1091,18 @@ const EmployeeAttendanceKHR = () => {
               <div className="card flex-fill">
                 <div className="card-body">
                   <div className="mb-3 text-center">
-                    <h6 className="fw-medium text-gray-5 mb-2">
-                      {CheckinCheckoutData.user?.greeting || "Hello"},{" "}
-                      {CheckinCheckoutData.user?.name || "User"}
-                    </h6>
+                    <div className="mb-3 text-center">
+                      <h6 className="fw-medium text-gray-5 mb-1">
+                        {getDynamicGreeting()},
+                      </h6>
+                      <h4 className="fw-bold text-dark">{storedName}</h4>
+                    </div>
 
-                    <h4>
-                      {datass?.check_in_time
-                        ? formatTime(datass.check_in_time)
+                    {/* <h4>
+                      {CheckinCheckoutData?.action_time
+                        ? formatTime(CheckinCheckoutData.action_time)
                         : "--:--"}
-                    </h4>
+                    </h4> */}
                     {/* <small>
                       {datass?.check_in_time
                         ? formatDate(datass.check_in_time)
@@ -1109,11 +1120,47 @@ const EmployeeAttendanceKHR = () => {
                     <span className="progress-right">
                       <span className="progress-bar border-success" />
                     </span>
-                    <div className="avatar avatar-xxl avatar-rounded">
+                    {/* <div className="avatar avatar-xxl avatar-rounded">
                       <ImageWithBasePath
-                        src="assets/img/profiles/avatar-23.jpg"
+                        src={getProcessedImage()}
                         alt="Logo"
+                        className="rounded-circle"
                       />
+                    </div> */}
+                    <div className="avatar avatar-xxl avatar-rounded mb-3">
+                      {CheckinCheckoutData?.action_image &&
+                      CheckinCheckoutData.action_image.length > 100 ? (
+                        <img
+                          src={
+                            CheckinCheckoutData.action_image.startsWith(
+                              "data:image",
+                            )
+                              ? CheckinCheckoutData.action_image
+                              : `data:image/jpeg;base64,${CheckinCheckoutData.action_image}`
+                          }
+                          alt="Attendance"
+                          className="rounded-circle"
+                          style={{
+                            width: "100px", // Fixed width
+                            height: "100px", // Fixed height to match width
+                            objectFit: "cover", // This crops the image to fit the circle without stretching
+                            objectPosition: "center", // Ensures the face/center of the photo is visible
+                            display: "block",
+                          }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "assets/img/profiles/avatar-23.jpg";
+                          }}
+                        />
+                      ) : (
+                        <ImageWithBasePath
+                          src="assets/img/profiles/avatar-23.jpg"
+                          alt="Default Avatar"
+                          className="rounded-circle"
+                          width={100}
+                          height={100}
+                        />
+                      )}
                     </div>
                   </div>
 
