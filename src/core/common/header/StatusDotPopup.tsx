@@ -22,9 +22,11 @@ const StatusCheckInPopup: React.FC = () => {
   const [totalMinutes, setTotalMinutes] = useState(0);
   const [isUserAction, setIsUserAction] = useState(false);
 
+  console.log(
+    getCurrentAttendanceStatusData.status,
+    "getCurrentAttendanceStatusData",
+  );
 
-  console.log(getCurrentAttendanceStatusData.status,"getCurrentAttendanceStatusData");
-  
   /* =====================
      DERIVED STATE
   ===================== */
@@ -33,9 +35,7 @@ const StatusCheckInPopup: React.FC = () => {
 
   console.log(getCurrentAttendanceStatusData, "getCurrentAttendanceStatusData");
 
-
-  console.log(isCheckinCheckoutFetching,"isCheckinCheckoutFetching");
-  
+  console.log(isCheckinCheckoutFetching, "isCheckinCheckoutFetching");
 
   /* =====================
      LOAD CURRENT STATUS ON MOUNT
@@ -97,8 +97,8 @@ const StatusCheckInPopup: React.FC = () => {
     const interval = setInterval(() => {
       const now = new Date();
       const diff = Math.floor((now.getTime() - checkInTime.getTime()) / 60000);
-      console.log(diff,"dddiiff");
-      
+      console.log(diff, "dddiiff");
+
       setTotalMinutes(diff);
     }, 60000);
 
@@ -171,11 +171,21 @@ const StatusCheckInPopup: React.FC = () => {
   /* =====================
      FORMATTERS
   ===================== */
+  const formatDate = (date: Date | null) =>
+    date
+      ? date.toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "---";
+
   const formatTime = (date: Date | null) =>
     date
       ? date.toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
+          hour12: true, // Optional: adds AM/PM
         })
       : "--:--";
 
@@ -228,7 +238,7 @@ const StatusCheckInPopup: React.FC = () => {
             </button>
           ) : (
             <>
-              <div className="d-flex justify-content-between mb-2">
+              {/* <div className="d-flex justify-content-between mb-2">
                 <div>
                   <small className="text-muted">Check-in</small>
                   <div className="fw-bold">{formatTime(checkInTime)}</div>
@@ -239,6 +249,42 @@ const StatusCheckInPopup: React.FC = () => {
                 </div>
               </div>
 
+              <button
+                className="btn btn-warning w-100"
+                onClick={handleAction}
+                disabled={isCheckinCheckoutFetching}
+              >
+                {isCheckinCheckoutFetching ? "Checking Out..." : "Check Out ↪"}
+              </button> */}
+              <div className="mb-2 pb-2 border-bottom d-flex align-items-center">
+                <i
+                  className="ti ti-calendar me-2 text-primary"
+                  style={{ fontSize: "18px" }}
+                ></i>
+                <div>
+                  <small
+                    className="text-muted d-block"
+                    style={{ fontSize: "10px", lineHeight: "1" }}
+                  >
+                    Date
+                  </small>
+                  <div className="fw-bold" style={{ fontSize: "13px" }}>
+                    {formatDate(checkInTime)}
+                  </div>
+                </div>
+              </div>
+              <div className="d-flex justify-content-between mb-3">
+                <div>
+                  <small className="text-muted">Check-in</small>
+                  <div className="fw-bold">{formatTime(checkInTime)}</div>
+                </div>
+                <div>
+                  <small className="text-muted">Since</small>
+                  <div className="fw-bold text-success">
+                    {formatTotal(totalMinutes)}
+                  </div>
+                </div>
+              </div>
               <button
                 className="btn btn-warning w-100"
                 onClick={handleAction}

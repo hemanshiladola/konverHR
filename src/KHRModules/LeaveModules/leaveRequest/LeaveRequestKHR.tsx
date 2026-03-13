@@ -152,33 +152,93 @@ const LeaveRequestKHR = () => {
         ),
     },
     // -----------------------------
+    // {
+    //   title: "Actions",
+    //   dataIndex: "id",
+    //   render: (_: any, record: any) => (
+    //     <div className="action-icon d-inline-flex">
+    //       <Link
+    //         to="#"
+    //         className="me-2"
+    //         data-bs-toggle="modal"
+    //         data-bs-target="#add_leave_request"
+    //         onClick={() => {
+    //           setSelectedPolicy({ ...record });
+    //           const jq = (window as any).jQuery || (window as any).$;
+    //           if (jq && jq("#add_leave_request").modal) {
+    //             try {
+    //               jq("#add_leave_request").modal("show");
+    //             } catch (e) {}
+    //           }
+    //         }}
+    //       >
+    //         <i className="ti ti-edit text-blue" />
+    //       </Link>
+    //       <Link to="#" onClick={() => handleDelete(record.id)}>
+    //         <i className="ti ti-trash text-danger" />
+    //       </Link>
+    //     </div>
+    //   ),
+    // },
     {
       title: "Actions",
       dataIndex: "id",
-      render: (_: any, record: any) => (
-        <div className="action-icon d-inline-flex">
-          <Link
-            to="#"
-            className="me-2"
-            data-bs-toggle="modal"
-            data-bs-target="#add_leave_request"
-            onClick={() => {
-              setSelectedPolicy({ ...record });
-              const jq = (window as any).jQuery || (window as any).$;
-              if (jq && jq("#add_leave_request").modal) {
-                try {
-                  jq("#add_leave_request").modal("show");
-                } catch (e) {}
-              }
-            }}
-          >
-            <i className="ti ti-edit text-blue" />
-          </Link>
-          <Link to="#" onClick={() => handleDelete(record.id)}>
-            <i className="ti ti-trash text-danger" />
-          </Link>
-        </div>
-      ),
+      render: (_: any, record: any) => {
+        /** * SPECIFIC STATUS LOGIC:
+         * We allow Edit/Delete ONLY if the status is 'draft'.
+         * For all other statuses (confirm, validate1, validate2, validate, refuse, cancel),
+         * the actions should be disabled.
+         */
+        const canModify = record.status === "draft";
+
+        return (
+          <div className="action-icon d-inline-flex">
+            {/* EDIT BUTTON */}
+            {canModify ? (
+              <Link
+                to="#"
+                className="me-2"
+                data-bs-toggle="modal"
+                data-bs-target="#add_leave_request"
+                onClick={() => {
+                  setSelectedPolicy({ ...record });
+                  const jq = (window as any).jQuery || (window as any).$;
+                  if (jq && jq("#add_leave_request").modal) {
+                    try {
+                      jq("#add_leave_request").modal("show");
+                    } catch (e) {}
+                  }
+                }}
+              >
+                <i className="ti ti-edit text-blue" />
+              </Link>
+            ) : (
+              <span
+                className="me-2 opacity-50"
+                title={`Cannot edit ${record.status} requests`}
+                style={{ cursor: "not-allowed" }}
+              >
+                <i className="ti ti-edit text-gray" />
+              </span>
+            )}
+
+            {/* DELETE BUTTON */}
+            {canModify ? (
+              <Link to="#" onClick={() => handleDelete(record.id)}>
+                <i className="ti ti-trash text-danger" />
+              </Link>
+            ) : (
+              <span
+                className="opacity-50"
+                title={`Cannot delete ${record.status} requests`}
+                style={{ cursor: "not-allowed" }}
+              >
+                <i className="ti ti-trash text-gray" />
+              </span>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

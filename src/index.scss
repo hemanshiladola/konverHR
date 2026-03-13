@@ -12,6 +12,19 @@ a {
   display: none;
 }
 
+/* Hide Edge / IE reveal password icon */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
+/* Hide Edge password reveal button */
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+}
+
 // Bootstrap variables (adjust if your theme differs)
 $primary: #0d6efd;
 $border-color: #ced4da;
