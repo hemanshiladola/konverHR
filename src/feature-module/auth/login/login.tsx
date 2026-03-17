@@ -87,9 +87,9 @@ const Login = () => {
 
         // 1. Clear everything first to avoid stale data
         localStorage.clear();
-        localStorage.setItem(
+       localStorage.setItem(
           "is_incomplete_admin_profile",
-          data.is_incomplete_admin_profile.toString(), // stores "true" or "false"
+          String(data.is_incomplete_admin_profile ?? false),
         );
         // 2. Essential Auth & ID
         const token = data.token || data.accessToken;
