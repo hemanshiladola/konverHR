@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import ReactApexChart from "react-apexcharts";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ImageWithBasePath from "../../../core/common/imageWithBasePath";
 import { all_routes } from "../../../router/all_routes";
 import "slick-carousel/slick/slick.css";
@@ -27,9 +27,13 @@ import {
 } from "./AdminDashboardService";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
+import { getEmployees } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
+import AddEditEmployeeModal from "@/KHRModules/EmployeModules/Employee/AddEditEmployeeModal";
 
 const AdminDashboard = () => {
   const routes = all_routes;
+  const navigate = useNavigate();
+  const modalInstanceRef = useRef<any>(null);
 
   const [isTodo, setIsTodo] = useState([false, false, false]);
   const [deptApiData, setDeptApiData] = useState<any[]>([]);
@@ -47,6 +51,10 @@ const AdminDashboard = () => {
   const [clockRange, setClockRange] = useState<
     "today" | "this_week" | "this_month"
   >("today");
+
+  const [editData, setEditData] = useState<any>(null);
+  const [isProfileLocked, setIsProfileLocked] = useState(false);
+
   const dispatch = useAppDispatch();
   const {
     // getDashboadrdCount
@@ -88,6 +96,168 @@ const AdminDashboard = () => {
     dataLabels: object;
     fill: object;
   }
+
+  // 1. Refined Data Fetching
+  useEffect(() => {
+    const handleForcedProfileUpdate = async () => {
+      // ✅ CHANGED: Open only if the flag is "true"
+      const isProfileIncomplete =
+        String(localStorage.getItem("is_incomplete_admin_profile")) === "true";
+      const userRole = localStorage.getItem("user_role");
+      const loggedInUserId = String(localStorage.getItem("user_id"));
+
+      console.log("Checking Profile Enforcement:", {
+        isProfileIncomplete,
+        userRole,
+        loggedInUserId,
+      });
+
+      if (userRole === "REGISTER_ADMIN" && isProfileIncomplete) {
+        try {
+          const employees = await getEmployees();
+          const adminRecord = employees.find((emp: any) => {
+            const empUserId = Array.isArray(emp.user_id)
+              ? String(emp.user_id[0])
+              : String(emp.user_id);
+            return empUserId === loggedInUserId;
+          });
+
+          if (adminRecord) {
+            setIsProfileLocked(true);
+            setEditData(adminRecord);
+          } else {
+            setIsProfileLocked(true); // Still lock if match fails to prevent bypass
+          }
+        } catch (error) {
+          console.error("Forced update fetch failed", error);
+        }
+      }
+    };
+    handleForcedProfileUpdate();
+  }, []);
+
+  const handleModalSuccess = useCallback(() => {
+    if (isProfileLocked) {
+      const adminEmail = localStorage.getItem("user_email");
+      toast.success("Profile updated! Logging out to refresh session...");
+      localStorage.clear();
+      if (adminEmail) localStorage.setItem("remembered_email", adminEmail);
+      setTimeout(() => {
+        navigate(all_routes.login);
+        window.location.reload();
+      }, 2000);
+    } else {
+      setEditData(null);
+    }
+  }, [isProfileLocked, navigate]);
+
+  const handleModalClose = useCallback(() => {
+    setEditData(null);
+  }, []);
+
+  // 2. BULLETPROOF TRIGGER: Show the modal
+  // useEffect(() => {
+  //   if (isProfileLocked && editData) {
+  //     const triggerModal = () => {
+  //       const modalElement = document.getElementById("add_employee_modal");
+
+  //       if (modalElement) {
+  //         console.log("Modal Element found, initializing Bootstrap...");
+  //         try {
+  //           // Dispose of any old instances to prevent conflicts
+  //           const existing = (window as any).bootstrap.Modal.getInstance(
+  //             modalElement,
+  //           );
+  //           if (existing) existing.dispose();
+
+  //           const modalInstance = new (window as any).bootstrap.Modal(
+  //             modalElement,
+  //             {
+  //               backdrop: "static",
+  //               keyboard: false,
+  //             },
+  //           );
+  //           modalInstance.show();
+  //           console.log("✅ Modal .show() called successfully");
+  //         } catch (err) {
+  //           console.error("Bootstrap JS Error:", err);
+  //         }
+  //       } else {
+  //         console.warn(
+  //           "Modal element not found in DOM yet, retrying in 500ms...",
+  //         );
+  //         setTimeout(triggerModal, 500); // Retry if React hasn't painted yet
+  //       }
+  //     };
+
+  //     triggerModal();
+  //   }
+  // }, [isProfileLocked, editData]); // Trigger when lock state OR data changes
+
+  // 2. Use this stabilized "Strong Lock" logic
+  // useEffect(() => {
+  //   // We only run this if the profile is locked and we have the data
+  //   if (isProfileLocked && editData) {
+  //     const triggerModal = () => {
+  //       const modalElement = document.getElementById("add_employee_modal");
+
+  //       if (modalElement) {
+  //         // ✅ FIX: Only initialize IF we don't already have an active instance
+  //         if (!modalInstanceRef.current) {
+  //           console.log("Initializing Admin Profile Lock Modal...");
+  //           try {
+  //             // Check if Bootstrap already has an instance (e.g., from a previous partial render)
+  //             const existing = (window as any).bootstrap.Modal.getInstance(
+  //               modalElement,
+  //             );
+  //             if (existing) existing.dispose();
+
+  //             const modalInstance = new (window as any).bootstrap.Modal(
+  //               modalElement,
+  //               {
+  //                 backdrop: "static",
+  //                 keyboard: false,
+  //               },
+  //             );
+
+  //             modalInstanceRef.current = modalInstance;
+  //             modalInstance.show();
+  //             console.log("✅ Admin Profile Modal Locked Successfully");
+  //           } catch (err) {
+  //             console.error("Bootstrap Modal Error:", err);
+  //           }
+  //         }
+  //       } else {
+  //         // Retry if the modal isn't in the DOM yet (happens on slow initial loads)
+  //         console.warn("Modal not found in DOM, retrying...");
+  //         setTimeout(triggerModal, 500);
+  //       }
+  //     };
+
+  //     triggerModal();
+  //   }
+
+  //   // Cleanup: When the dashboard unmounts or the lock is removed, reset the ref
+  //   return () => {
+  //     modalInstanceRef.current = null;
+  //   };
+  // }, [isProfileLocked]); // ❌ CRITICAL: Remove 'editData' from here to stop the infinite loop
+
+useEffect(() => {
+  if (isProfileLocked && editData) {
+    const modalElement = document.getElementById("add_employee_modal");
+    if (modalElement && !modalInstanceRef.current) {
+      const modal = new (window as any).bootstrap.Modal(modalElement, {
+        backdrop: "static",
+        keyboard: false,
+      });
+      modalInstanceRef.current = modal;
+      modal.show();
+    }
+  }
+  return () => { modalInstanceRef.current = null; };
+}, [isProfileLocked]); // Only re-run if the lock status changes, NOT on every editData change
+
 
   useEffect(() => {
     const fetchDeptRangeData = async () => {
@@ -172,37 +342,72 @@ const AdminDashboard = () => {
   const maxValue = Math.max(...chartValues, 5); // Default to at least 5 for a good look
 
   const empDepartmentConfig: any = {
-    chart: {
-      height: 250,
-      type: "bar",
-      toolbar: { show: false },
-    },
-    plotOptions: {
-      bar: {
-        borderRadius: 4,
-        horizontal: true, // Horizontal is best for long department names
-        barHeight: "60%",
-        distributed: true, // Different color for each bar
-      },
-    },
-    dataLabels: { enabled: false },
-    colors: ["#F26522", "#03C95A", "#0C4B5E", "#FFC107", "#E70D0D", "#ab7efd"],
-    xaxis: {
-      // Map the new key 'department'
-      categories: deptApiData.map((d: any) => d.department),
-      labels: {
-        style: { fontSize: "12px" },
-        formatter: (val: number) => Math.floor(val), // Force whole numbers
-      },
-    },
     series: [
       {
         name: "Employees",
-        // Map the new key 'total_employees'
         data: deptApiData.map((d: any) => d.total_employees),
       },
     ],
+    chart: {
+      type: "bar",
+      height: 250,
+      toolbar: { show: true },
+      fontFamily: "inherit",
+    },
+    plotOptions: {
+      bar: {
+        horizontal: false, // Set to false for vertical columns
+        columnWidth: "50%", // Spacing between columns
+        borderRadius: 8, // Rounded tops for a modern look
+        borderRadiusApplication: "around",
+        distributed: true, // Unique colors for each department
+      },
+    },
+    colors: ["#F26522", "#03C95A", "#0C4B5E", "#FFC107", "#E70D0D", "#ab7efd"],
+    dataLabels: {
+      enabled: true,
+      offsetY: -20, // Position the label above the column
+      style: {
+        fontSize: "12px",
+        fontWeight: 600,
+        colors: ["#333"],
+      },
+    },
+    grid: {
+      show: true,
+      borderColor: "#f1f1f1",
+      yaxis: {
+        lines: { show: true }, // Horizontal lines to judge height
+      },
+      xaxis: {
+        lines: { show: false },
+      },
+    },
+    xaxis: {
+      categories: deptApiData.map((d: any) => d.department),
+      labels: {
+        rotate: -45, // Rotates labels so they don't overlap
+        rotateAlways: false,
+        style: {
+          fontSize: "12px",
+          fontWeight: 500,
+        },
+      },
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: {
+      labels: {
+        style: {
+          fontSize: "12px",
+          fontWeight: 500,
+        },
+        formatter: (val: number) => Math.floor(val),
+      },
+    },
+    legend: { show: false },
     tooltip: {
+      theme: "light",
       y: {
         formatter: (val: number) => `${val} Employees`,
       },
@@ -621,325 +826,7 @@ const AdminDashboard = () => {
           </div>
           {/* /Welcome Wrap */}
           <div className="row">
-            {/* Widget Info */}
-            {/* <div className="col-xxl-8 d-flex">
-              <div className="row flex-fill">
-                <div className="col-md-3 d-flex">
-                  <div className="card flex-fill">
-                    <div className="card-body">
-                      <span className="avatar rounded-circle bg-primary mb-2">
-                        <i className="ti ti-calendar-share fs-16" />
-                      </span>
-                      <h6 className="fs-13 fw-medium text-default mb-1">
-                        Attendance
-                      </h6>
-                      <h3 className="mb-3">
-                        92/99{" "}
-                        <span className="fs-12 fw-medium text-success">
-                          <i className="fa-solid fa-caret-up me-1" />
-                          +2.1%
-                        </span>
-                      </h3>
-                      <Link
-                        to={all_routes.attendanceemployee}
-                        className="link-default"
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-3 d-flex">
-                  <div className="card flex-fill">
-                    <div className="card-body">
-                      <span className="avatar rounded-circle bg-secondary mb-2">
-                        <i className="ti ti-browser fs-16" />
-                      </span>
-                      <h6 className="fs-13 fw-medium text-default mb-1">
-                        Total Project's
-                      </h6>
-                      <h3 className="mb-3">
-                        90/94{" "}
-                        <span className="fs-12 fw-medium text-danger">
-                          <i className="fa-solid fa-caret-down me-1" />
-                          -2.1%
-                        </span>
-                      </h3>
-                      <Link to={all_routes.project} className="link-default">
-                        View All
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-3 d-flex">
-                  <div className="card flex-fill">
-                    <div className="card-body">
-                      <span className="avatar rounded-circle bg-info mb-2">
-                        <i className="ti ti-users-group fs-16" />
-                      </span>
-                      <h6 className="fs-13 fw-medium text-default mb-1">
-                        Total Clients
-                      </h6>
-                      <h3 className="mb-3">
-                        69/86{" "}
-                        <span className="fs-12 fw-medium text-danger">
-                          <i className="fa-solid fa-caret-down me-1" />
-                          -11.2%
-                        </span>
-                      </h3>
-                      <Link to={all_routes.clientlist} className="link-default">
-                        View All
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-3 d-flex">
-                  <div className="card flex-fill">
-                    <div className="card-body">
-                      <span className="avatar rounded-circle bg-pink mb-2">
-                        <i className="ti ti-checklist fs-16" />
-                      </span>
-                      <h6 className="fs-13 fw-medium text-default mb-1">
-                        Total Tasks
-                      </h6>
-                      <h3 className="mb-3">
-                        25/28{" "}
-                        <span className="fs-12 fw-medium text-success">
-                          <i className="fa-solid fa-caret-down me-1" />
-                          +11.2%
-                        </span>
-                      </h3>
-                      <Link to={all_routes.tasks} className="link-default">
-                        View All
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-3 d-flex">
-                  <div className="card flex-fill">
-                    <div className="card-body">
-                      <span className="avatar rounded-circle bg-purple mb-2">
-                        <i className="ti ti-moneybag fs-16" />
-                      </span>
-                      <h6 className="fs-13 fw-medium text-default mb-1">
-                        Earnings
-                      </h6>
-                      <h3 className="mb-3">
-                        $2144{" "}
-                        <span className="fs-12 fw-medium text-success">
-                          <i className="fa-solid fa-caret-up me-1" />
-                          +10.2%
-                        </span>
-                      </h3>
-                      <Link to={all_routes.expense} className="link-default">
-                        View All
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-3 d-flex">
-                  <div className="card flex-fill">
-                    <div className="card-body">
-                      <span className="avatar rounded-circle bg-danger mb-2">
-                        <i className="ti ti-browser fs-16" />
-                      </span>
-                      <h6 className="fs-13 fw-medium text-default mb-1">
-                        Profit This Week
-                      </h6>
-                      <h3 className="mb-3">
-                        $5,544{" "}
-                        <span className="fs-12 fw-medium text-success">
-                          <i className="fa-solid fa-caret-up me-1" />
-                          +2.1%
-                        </span>
-                      </h3>
-                      <Link
-                        to={all_routes.superAdminPurchaseTransaction}
-                        className="link-default"
-                      >
-                        View All
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-3 d-flex">
-                  <div className="card flex-fill">
-                    <div className="card-body">
-                      <span className="avatar rounded-circle bg-success mb-2">
-                        <i className="ti ti-users-group fs-16" />
-                      </span>
-                      <h6 className="fs-13 fw-medium text-default mb-1">
-                        Job Applicants
-                      </h6>
-                      <h3 className="mb-3">
-                        98{" "}
-                        <span className="fs-12 fw-medium text-success">
-                          <i className="fa-solid fa-caret-up me-1" />
-                          +2.1%
-                        </span>
-                      </h3>
-                      <Link to={all_routes.joblist} className="link-default">
-                        View All
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-3 d-flex">
-                  <div className="card flex-fill">
-                    <div className="card-body">
-                      <span className="avatar rounded-circle bg-dark mb-2">
-                        <i className="ti ti-user-star fs-16" />
-                      </span>
-                      <h6 className="fs-13 fw-medium text-default mb-1">
-                        New Hire
-                      </h6>
-                      <h3 className="mb-3">
-                        45/48{" "}
-                        <span className="fs-12 fw-medium text-danger">
-                          <i className="fa-solid fa-caret-down me-1" />
-                          -11.2%
-                        </span>
-                      </h3>
-                      <Link
-                        to={all_routes.candidateslist}
-                        className="link-default"
-                      >
-                        View All
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div> */}
-            {/* /Widget Info */}
-            {/* Employees By Department */}
-            {/* <div className="col-xxl-4 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Employees By Department</h5>
-                  <div className="dropdown mb-2">
-                    <Link
-                      to="#"
-                      className="btn btn-white border btn-sm d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-calendar me-1" />
-                      This Week
-                    </Link>
-                    <ul className="dropdown-menu  dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          This Month
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          This Week
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Last Week
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <ReactApexChart
-                    id="emp-department"
-                    options={empDepartment}
-                    series={empDepartment.series}
-                    type="bar"
-                    height={220}
-                  />
-                  <p className="fs-13">
-                    <i className="ti ti-circle-filled me-2 fs-8 text-primary" />
-                    No of Employees increased by{" "}
-                    <span className="text-success fw-bold">+20%</span> from last
-                    Week
-                  </p>
-                </div>
-              </div>
-            </div> */}
-            {/* <div className="d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Employees By Department</h5>
-
-                  <div className="dropdown mb-2">
-                    <Link
-                      to="#"
-                      className="btn btn-white border btn-sm d-inline-flex align-items-center text-capitalize"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-calendar me-1" />
-                      {selectedRange.replace("_", " ")}
-                    </Link>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item rounded-1"
-                          onClick={() => setSelectedRange("this_month")}
-                        >
-                          This Month
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item rounded-1"
-                          onClick={() => setSelectedRange("this_week")}
-                        >
-                          This Week
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          to="#"
-                          className="dropdown-item rounded-1"
-                          onClick={() => setSelectedRange("last_week")}
-                        >
-                          Last Week
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="card-body">
-                  {isDeptLoading ? (
-                    <div className="text-center py-5">
-                      <div
-                        className="spinner-border text-primary"
-                        role="status"
-                      />
-                    </div>
-                  ) : deptApiData.length > 0 ? (
-                    <ReactApexChart
-                      id="emp-department"
-                      options={empDepartmentConfig}
-                      series={empDepartmentConfig.series}
-                      type="bar"
-                      height={220}
-                    />
-                  ) : (
-                    <div className="text-center py-5 text-muted">
-                      No data available
-                    </div>
-                  )}
-
-                  <p className="fs-13">
-                    <i className="ti ti-circle-filled me-2 fs-8 text-primary" />
-                    Distribution across {deptApiData.length} departments for{" "}
-                    {selectedRange.replace("_", " ")}.
-                  </p>
-                </div>
-              </div>
-            </div> */}
-
-            <div className=" d-flex">
+            <div className="col-xxl-4 col-xl-4 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
                   <h5 className="mb-2">Employees By Department</h5>
@@ -953,7 +840,6 @@ const AdminDashboard = () => {
                     </span>
                   </div>
                 </div>
-
                 <div className="card-body">
                   {isDeptLoading ? (
                     <div className="text-center py-5">
@@ -962,336 +848,22 @@ const AdminDashboard = () => {
                         role="status"
                       />
                     </div>
-                  ) : deptApiData.length > 0 ? (
-                    <>
-                      <div className="chartjs-wrapper-demo position-relative mb-4">
-                        <ReactApexChart
-                          id="emp-department"
-                          options={empDepartmentConfig}
-                          series={empDepartmentConfig.series}
-                          type="bar"
-                          height={250}
-                        />
-                      </div>
-                      <div className="mt-3">
-                        <p className="fs-13 mb-0">
-                          <i className="ti ti-circle-filled me-2 fs-8 text-primary" />
-                          Showing distribution across{" "}
-                          <strong>{deptApiData.length}</strong> active
-                          departments.
-                        </p>
-                      </div>
-                    </>
                   ) : (
-                    <div className="text-center py-5 text-muted">
-                      <i className="ti ti-database-off fs-30 mb-2 d-block"></i>
-                      No department data available
+                    <div className="chartjs-wrapper-demo position-relative">
+                      <ReactApexChart
+                        options={empDepartmentConfig}
+                        series={empDepartmentConfig.series}
+                        type="bar"
+                        height={350}
+                      />
                     </div>
                   )}
                 </div>
               </div>
             </div>
             {/* /Employees By Department */}
-          </div>
-          <div className="row">
-            {/* Total Employee */}
-            {/* <div className="col-xxl-4 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Employee Status</h5>
-                  <div className="dropdown mb-2">
-                    <Link
-                      to="#"
-                      className="btn btn-white border btn-sm d-inline-flex align-items-center"
-                      data-bs-toggle="dropdown"
-                    >
-                      <i className="ti ti-calendar me-1" />
-                      This Week
-                    </Link>
-                    <ul className="dropdown-menu  dropdown-menu-end p-3">
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          This Month
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          This Week
-                        </Link>
-                      </li>
-                      <li>
-                        <Link to="#" className="dropdown-item rounded-1">
-                          Today
-                        </Link>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <div className="d-flex align-items-center justify-content-between mb-1">
-                    <p className="fs-13 mb-3">Total Employee</p>
-                    <h3 className="mb-3">154</h3>
-                  </div>
-                  <div className="progress-stacked emp-stack mb-3">
-                    <div
-                      className="progress"
-                      role="progressbar"
-                      aria-label="Segment one"
-                      aria-valuenow={15}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      style={{ width: "40%" }}
-                    >
-                      <div className="progress-bar bg-warning" />
-                    </div>
-                    <div
-                      className="progress"
-                      role="progressbar"
-                      aria-label="Segment two"
-                      aria-valuenow={30}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      style={{ width: "20%" }}
-                    >
-                      <div className="progress-bar bg-secondary" />
-                    </div>
-                    <div
-                      className="progress"
-                      role="progressbar"
-                      aria-label="Segment three"
-                      aria-valuenow={20}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      style={{ width: "10%" }}
-                    >
-                      <div className="progress-bar bg-danger" />
-                    </div>
-                    <div
-                      className="progress"
-                      role="progressbar"
-                      aria-label="Segment four"
-                      aria-valuenow={20}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      style={{ width: "30%" }}
-                    >
-                      <div className="progress-bar bg-pink" />
-                    </div>
-                  </div>
-                  <div className="border mb-3">
-                    <div className="row gx-0">
-                      <div className="col-6">
-                        <div className="p-2 flex-fill border-end border-bottom">
-                          <p className="fs-13 mb-2">
-                            <i className="ti ti-square-filled text-primary fs-12 me-2" />
-                            Fulltime <span className="text-gray-9">(48%)</span>
-                          </p>
-                          <h2 className="display-1">112</h2>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="p-2 flex-fill border-bottom text-end">
-                          <p className="fs-13 mb-2">
-                            <i className="ti ti-square-filled me-2 text-secondary fs-12" />
-                            Contract <span className="text-gray-9">(20%)</span>
-                          </p>
-                          <h2 className="display-1">112</h2>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="p-2 flex-fill border-end">
-                          <p className="fs-13 mb-2">
-                            <i className="ti ti-square-filled me-2 text-danger fs-12" />
-                            Probation <span className="text-gray-9">(22%)</span>
-                          </p>
-                          <h2 className="display-1">12</h2>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div className="p-2 flex-fill text-end">
-                          <p className="fs-13 mb-2">
-                            <i className="ti ti-square-filled text-pink me-2 fs-12" />
-                            WFH <span className="text-gray-9">(20%)</span>
-                          </p>
-                          <h2 className="display-1">04</h2>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <h6 className="mb-2">Top Performer</h6>
-                  <div className="p-2 d-flex align-items-center justify-content-between border border-primary bg-primary-100 br-5 mb-4">
-                    <div className="d-flex align-items-center overflow-hidden">
-                      <span className="me-2">
-                        <i className="ti ti-award-filled text-primary fs-24" />
-                      </span>
-                      <Link
-                        to={all_routes.employeedetails}
-                        className="avatar avatar-md me-2"
-                      >
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-24.jpg"
-                          className="rounded-circle border border-white"
-                          alt="avatar"
-                        />
-                      </Link>
-                      <div>
-                        <h6 className="text-truncate mb-1 fs-14 fw-medium">
-                          <Link to={all_routes.employeedetails}>
-                            Daniel Esbella
-                          </Link>
-                        </h6>
-                        <p className="fs-13">IOS Developer</p>
-                      </div>
-                    </div>
-                    <div className="text-end">
-                      <p className="fs-13 mb-1">Performance</p>
-                      <h5 className="text-primary">99%</h5>
-                    </div>
-                  </div>
-                  <Link
-                    to={all_routes.employeeList}
-                    className="btn btn-light btn-md w-100"
-                  >
-                    View All Employees
-                  </Link>
-                </div>
-              </div>
-            </div> */}
-            <div className="col-xxl-4 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Employee Status</h5>
-                  {/* Removed Range Selector as the new API is an overall snapshot */}
-                  {/* <span className="badge bg-soft-secondary text-secondary mb-2">
-                    Overall Snapshot
-                  </span> */}
-                </div>
-                <div className="card-body">
-                  {loadingStatus ? (
-                    <div className="text-center py-5">
-                      <div
-                        className="spinner-border text-primary"
-                        role="status"
-                      />
-                    </div>
-                  ) : (
-                    <>
-                      <div className="d-flex align-items-center justify-content-between mb-1">
-                        <p className="fs-13 mb-3">Employee Distribution</p>
-                        {/* Using total_employees from your new API response */}
-                        <h3 className="mb-3">
-                          {statusApiData?.total_employees || "75"}
-                        </h3>
-                      </div>
-
-                      {/* 🟢 DYNAMIC STACKED PROGRESS BAR */}
-                      <div className="progress-stacked emp-stack mb-3">
-                        <div
-                          className="progress"
-                          role="progressbar"
-                          style={{ width: `${getTypePercent("permanent")}%` }}
-                        >
-                          <div className="progress-bar bg-primary" />
-                        </div>
-                        <div
-                          className="progress"
-                          role="progressbar"
-                          style={{ width: `${getTypePercent("fixed_term")}%` }}
-                        >
-                          <div className="progress-bar bg-secondary" />
-                        </div>
-                        <div
-                          className="progress"
-                          role="progressbar"
-                          style={{ width: `${getTypePercent("temporary")}%` }}
-                        >
-                          <div className="progress-bar bg-danger" />
-                        </div>
-                        <div
-                          className="progress"
-                          role="progressbar"
-                          style={{ width: `${getTypePercent("other")}%` }}
-                        >
-                          <div className="progress-bar bg-pink" />
-                        </div>
-                      </div>
-
-                      {/* 🟢 DYNAMIC STATUS BOXES */}
-                      <div className="border mb-3 rounded shadow-sm overflow-hidden">
-                        <div className="row gx-0">
-                          <div className="col-6">
-                            <div className="p-3 flex-fill border-end border-bottom bg-light-subtle">
-                              <p className="fs-13 mb-2">
-                                <i className="ti ti-square-filled text-primary fs-12 me-2" />
-                                Permanent{" "}
-                                <span className="text-gray-9">
-                                  ({getTypePercent("permanent")}%)
-                                </span>
-                              </p>
-                              <h2 className="display-1">
-                                {getTypePercent("permanent")}%
-                              </h2>
-                            </div>
-                          </div>
-                          <div className="col-6">
-                            <div className="p-3 flex-fill border-bottom bg-light-subtle text-end">
-                              <p className="fs-13 mb-2">
-                                <i className="ti ti-square-filled me-2 text-secondary fs-12" />
-                                Fixed Term{" "}
-                                <span className="text-gray-9">
-                                  ({getTypePercent("fixed_term")}%)
-                                </span>
-                              </p>
-                              <h2 className="display-1">
-                                {getTypePercent("fixed_term")}%
-                              </h2>
-                            </div>
-                          </div>
-                          <div className="col-6">
-                            <div className="p-3 flex-fill border-end">
-                              <p className="fs-13 mb-2">
-                                <i className="ti ti-square-filled me-2 text-danger fs-12" />
-                                Temporary{" "}
-                                <span className="text-gray-9">
-                                  ({getTypePercent("temporary")}%)
-                                </span>
-                              </p>
-                              <h2 className="display-1">
-                                {getTypePercent("temporary")}%
-                              </h2>
-                            </div>
-                          </div>
-                          <div className="col-6">
-                            <div className="p-3 flex-fill text-end">
-                              <p className="fs-13 mb-2">
-                                <i className="ti ti-square-filled text-pink me-2 fs-12" />
-                                Others{" "}
-                                <span className="text-gray-9">
-                                  ({getTypePercent("other")}%)
-                                </span>
-                              </p>
-                              <h2 className="display-1">
-                                {getTypePercent("other")}%
-                              </h2>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <Link
-                        to={all_routes.employeeKHR}
-                        className="btn btn-light btn-md w-100 mt-2"
-                      >
-                        View All Employees
-                      </Link>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-            {/* /Total Employee */}
             {/* Attendance Overview */}
-            <div className="col-xxl-4 col-xl-6 d-flex">
+            <div className="col-xxl-4 col-xl-4 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
                   <h5 className="mb-2">Attendance Overview</h5>
@@ -1352,79 +924,7 @@ const AdminDashboard = () => {
                   <h4 className="fw-bold">
                     {selectedRange === "today" ? "Today" : "Range"}
                   </h4>
-                  {/* <div className="d-flex align-items-center justify-content-between">
-                    <p className="f-13 mb-2">
-                      <i className="ti ti-circle-filled text-success me-1" />
-                      Present
-                    </p>
-                    <p className="f-13 fw-medium text-gray-9 mb-2">59%</p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between">
-                    <p className="f-13 mb-2">
-                      <i className="ti ti-circle-filled text-secondary me-1" />
-                      Late
-                    </p>
-                    <p className="f-13 fw-medium text-gray-9 mb-2">21%</p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between">
-                    <p className="f-13 mb-2">
-                      <i className="ti ti-circle-filled text-warning me-1" />
-                      Permission
-                    </p>
-                    <p className="f-13 fw-medium text-gray-9 mb-2">2%</p>
-                  </div>
-                  <div className="d-flex align-items-center justify-content-between mb-2">
-                    <p className="f-13 mb-2">
-                      <i className="ti ti-circle-filled text-danger me-1" />
-                      Absent
-                    </p>
-                    <p className="f-13 fw-medium text-gray-9 mb-2">15%</p>
-                  </div>
-                  <div className="bg-light br-5 box-shadow-xs p-2 pb-0 d-flex align-items-center justify-content-between flex-wrap">
-                    <div className="d-flex align-items-center">
-                      <p className="mb-2 me-2">Total Absenties</p>
-                      <div className="avatar-list-stacked avatar-group-sm mb-2">
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/profiles/avatar-27.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/profiles/avatar-30.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            src="assets/img/profiles/avatar-14.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            src="assets/img/profiles/avatar-29.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <Link
-                          className="avatar bg-primary avatar-rounded text-fixed-white fs-10"
-                          to="#"
-                        >
-                          +1
-                        </Link>
-                      </div>
-                    </div>
-                    <Link
-                      to={all_routes.leaveType}
-                      className="fs-13 link-primary text-decoration-underline mb-2"
-                    >
-                      View Details
-                    </Link>
-                  </div> */}
+
                   <h6 className="mb-3">Breakdown (%)</h6>
 
                   <div className="d-flex align-items-center justify-content-between">
@@ -1472,7 +972,7 @@ const AdminDashboard = () => {
                       Data for: {selectedRange.replace("_", " ")}
                     </p>
                     <Link
-                      to={all_routes.attendaceEmployeeKHR}
+                      to={all_routes.attendanceAdminKHR}
                       className="fs-13 link-primary text-decoration-underline mb-2"
                     >
                       View Details
@@ -1482,2319 +982,280 @@ const AdminDashboard = () => {
               </div>
             </div>
             {/* /Attendance Overview */}
-            {/* Clock-In/Out */}
-            {/* <div className="col-xxl-4 col-xl-6 d-flex">
+            <div className="col-xxl-4 col-xl-4 d-flex">
               <div className="card flex-fill">
                 <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Clock-In/Out</h5>
-                  <div className="d-flex align-items-center">
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="dropdown-toggle btn btn-white btn-sm d-inline-flex align-items-center border-0 fs-13 me-2"
-                        data-bs-toggle="dropdown"
-                      >
-                        All Departments
-                      </Link>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Finance
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Development
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Marketing
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="btn btn-white border btn-sm d-inline-flex align-items-center"
-                        data-bs-toggle="dropdown"
-                      >
-                        <i className="ti ti-calendar me-1" />
-                        Today
-                      </Link>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Month
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Week
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Today
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                  <h5 className="mb-2">Employee Status</h5>
                 </div>
                 <div className="card-body">
-                  <div>
-                    <div className="d-flex align-items-center justify-content-between mb-3 p-2 border border-dashed br-5">
-                      <div className="d-flex align-items-center">
-                        <Link to="#" className="avatar flex-shrink-0">
-                          <ImageWithBasePath
-                            src="assets/img/profiles/avatar-24.jpg"
-                            className="rounded-circle border border-2"
-                            alt="avatar"
-                          />
-                        </Link>
-                        <div className="ms-2">
-                          <h6 className="fs-14 fw-medium text-truncate">
-                            Daniel Esbella
-                          </h6>
-                          <p className="fs-13">UI/UX Designer</p>
+                  {loadingStatus ? (
+                    <div className="text-center py-5">
+                      <div
+                        className="spinner-border text-primary"
+                        role="status"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="d-flex align-items-center justify-content-between mb-1">
+                        <p className="fs-13 mb-3">Employee Distribution</p>
+                        {/* Using total_employees from your new API response */}
+                        <h3 className="mb-3">
+                          {statusApiData?.total_employees || "75"}
+                        </h3>
+                      </div>
+
+                      {/* 🟢 DYNAMIC STACKED PROGRESS BAR */}
+                      <div className="progress-stacked emp-stack mb-3">
+                        <div
+                          className="progress"
+                          role="progressbar"
+                          style={{ width: `${getTypePercent("permanent")}%` }}
+                        >
+                          <div className="progress-bar bg-primary" />
+                        </div>
+                        <div
+                          className="progress"
+                          role="progressbar"
+                          style={{ width: `${getTypePercent("fixed_term")}%` }}
+                        >
+                          <div className="progress-bar bg-secondary" />
+                        </div>
+                        <div
+                          className="progress"
+                          role="progressbar"
+                          style={{ width: `${getTypePercent("temporary")}%` }}
+                        >
+                          <div className="progress-bar bg-danger" />
+                        </div>
+                        <div
+                          className="progress"
+                          role="progressbar"
+                          style={{ width: `${getTypePercent("other")}%` }}
+                        >
+                          <div className="progress-bar bg-pink" />
                         </div>
                       </div>
-                      <div className="d-flex align-items-center">
-                        <Link to="#" className="link-default me-2">
-                          <i className="ti ti-clock-share" />
-                        </Link>
-                        <span className="fs-10 fw-medium d-inline-flex align-items-center badge badge-success">
-                          <i className="ti ti-circle-filled fs-5 me-1" />
-                          09:15
-                        </span>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center justify-content-between mb-3 p-2 border br-5">
-                      <div className="d-flex align-items-center">
-                        <Link to="#" className="avatar flex-shrink-0">
-                          <ImageWithBasePath
-                            src="assets/img/profiles/avatar-23.jpg"
-                            className="rounded-circle border border-2"
-                            alt="avatar"
-                          />
-                        </Link>
-                        <div className="ms-2">
-                          <h6 className="fs-14 fw-medium">Doglas Martini</h6>
-                          <p className="fs-13">Project Manager</p>
-                        </div>
-                      </div>
-                      <div className="d-flex align-items-center">
-                        <Link to="#" className="link-default me-2">
-                          <i className="ti ti-clock-share" />
-                        </Link>
-                        <span className="fs-10 fw-medium d-inline-flex align-items-center badge badge-success">
-                          <i className="ti ti-circle-filled fs-5 me-1" />
-                          09:36
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mb-3 p-2 border br-5">
-                      <div className="d-flex align-items-center justify-content-between">
-                        <div className="d-flex align-items-center">
-                          <Link to="#" className="avatar flex-shrink-0">
-                            <ImageWithBasePath
-                              src="assets/img/profiles/avatar-27.jpg"
-                              className="rounded-circle border border-2"
-                              alt="img"
-                            />
-                          </Link>
-                          <div className="ms-2">
-                            <h6 className="fs-14 fw-medium text-truncate">
-                              Brian Villalobos
-                            </h6>
-                            <p className="fs-13">PHP Developer</p>
+
+                      {/* 🟢 DYNAMIC STATUS BOXES */}
+                      <div className="border mb-3 rounded shadow-sm overflow-hidden">
+                        <div className="row gx-0">
+                          <div className="col-6">
+                            <div className="p-3 flex-fill border-end border-bottom bg-light-subtle">
+                              <p className="fs-13 mb-2">
+                                <i className="ti ti-square-filled text-primary fs-10 me-2" />
+                                Permanent{" "}
+                                <span className="text-gray-9">
+                                  ({getTypePercent("permanent")}%)
+                                </span>
+                              </p>
+                              <h3 className="display-1">
+                                {getTypePercent("permanent")}%
+                              </h3>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="p-3 flex-fill border-bottom bg-light-subtle text-end">
+                              <p className="fs-13 mb-2">
+                                <i className="ti ti-square-filled me-2 text-secondary fs-12" />
+                                Fixed Term{" "}
+                                <span className="text-gray-9">
+                                  ({getTypePercent("fixed_term")}%)
+                                </span>
+                              </p>
+                              <h3 className="display-1">
+                                {getTypePercent("fixed_term")}%
+                              </h3>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="p-3 flex-fill border-end">
+                              <p className="fs-13 mb-2">
+                                <i className="ti ti-square-filled me-2 text-danger fs-12" />
+                                Temporary{" "}
+                                <span className="text-gray-9">
+                                  ({getTypePercent("temporary")}%)
+                                </span>
+                              </p>
+                              <h3 className="display-1">
+                                {getTypePercent("temporary")}%
+                              </h3>
+                            </div>
+                          </div>
+                          <div className="col-6">
+                            <div className="p-3 flex-fill text-end">
+                              <p className="fs-13 mb-2">
+                                <i className="ti ti-square-filled text-pink me-2 fs-12" />
+                                Others{" "}
+                                <span className="text-gray-9">
+                                  ({getTypePercent("other")}%)
+                                </span>
+                              </p>
+                              <h2 className="display-1">
+                                {getTypePercent("other")}%
+                              </h2>
+                            </div>
                           </div>
                         </div>
-                        <div className="d-flex align-items-center">
-                          <Link to="#" className="link-default me-2">
-                            <i className="ti ti-clock-share" />
-                          </Link>
-                          <span className="fs-10 fw-medium d-inline-flex align-items-center badge badge-success">
-                            <i className="ti ti-circle-filled fs-5 me-1" />
-                            09:15
-                          </span>
-                        </div>
                       </div>
-                      <div className="d-flex align-items-center justify-content-between flex-wrap mt-2 border br-5 p-2 pb-0">
-                        <div>
-                          <p className="mb-1 d-inline-flex align-items-center">
-                            <i className="ti ti-circle-filled text-success fs-5 me-1" />
-                            Clock in
-                          </p>
-                          <h6 className="fs-13 fw-normal mb-2">10:30 AM</h6>
-                        </div>
-                        <div>
-                          <p className="mb-1 d-inline-flex align-items-center">
-                            <i className="ti ti-circle-filled text-danger fs-5 me-1" />
-                            Clock Out
-                          </p>
-                          <h6 className="fs-13 fw-normal mb-2">09:45 AM</h6>
-                        </div>
-                        <div>
-                          <p className="mb-1 d-inline-flex align-items-center">
-                            <i className="ti ti-circle-filled text-warning fs-5 me-1" />
-                            Production
-                          </p>
-                          <h6 className="fs-13 fw-normal mb-2">09:21 Hrs</h6>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <h6 className="mb-2">Late</h6>
-                  <div className="d-flex align-items-center justify-content-between mb-3 p-2 border border-dashed br-5">
-                    <div className="d-flex align-items-center">
-                      <span className="avatar flex-shrink-0">
-                        <ImageWithBasePath
-                          src="assets/img/profiles/avatar-29.jpg"
-                          className="rounded-circle border border-2"
-                          alt="avatar"
-                        />
-                      </span>
-                      <div className="ms-2">
-                        <h6 className="fs-14 fw-medium text-truncate">
-                          Anthony Lewis{" "}
-                          <span className="fs-10 fw-medium d-inline-flex align-items-center badge badge-success">
-                            <i className="ti ti-clock-hour-11 me-1" />
-                            30 Min
-                          </span>
-                        </h6>
-                        <p className="fs-13">Marketing Head</p>
-                      </div>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <Link to="#" className="link-default me-2">
-                        <i className="ti ti-clock-share" />
+
+                      <Link
+                        to={all_routes.employeeKHR}
+                        className="btn btn-light btn-md w-100 mt-2"
+                      >
+                        View All Employees
                       </Link>
-                      <span className="fs-10 fw-medium d-inline-flex align-items-center badge badge-danger">
-                        <i className="ti ti-circle-filled fs-5 me-1" />
-                        08:35
-                      </span>
-                    </div>
-                  </div>
-                  <Link
-                    to={all_routes.attendancereport}
-                    className="btn btn-light btn-md w-100"
-                  >
-                    View All Attendance
-                  </Link>
+                    </>
+                  )}
                 </div>
               </div>
-            </div> */}
-            <div className="col-xxl-4 col-xl-6 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Clock-In/Out</h5>
-                  <div className="d-flex align-items-center">
-                    {/* Department Dropdown */}
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="dropdown-toggle btn btn-white btn-sm d-inline-flex align-items-center border-0 fs-13 me-2"
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12">
+              <div className="card shadow-sm border-0">
+                <div className="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                  <h5 className="card-title mb-0">Live Clock-In/Out Status</h5>
+                  <div className="d-flex gap-2">
+                    <div className="dropdown">
+                      <button
+                        className="btn btn-white btn-sm border dropdown-toggle"
                         data-bs-toggle="dropdown"
                       >
                         {selectedDept}
-                      </Link>
-                      <ul className="dropdown-menu dropdown-menu-end p-3">
+                      </button>
+                      <ul className="dropdown-menu">
                         <li>
-                          <Link
-                            to="#"
+                          <button
                             className="dropdown-item"
                             onClick={() => setSelectedDept("All Departments")}
                           >
                             All Departments
-                          </Link>
+                          </button>
                         </li>
                         {clockLogs &&
-                          clockLogs[clockRange] &&
-                          Object.keys(clockLogs[clockRange]).map((dept) => (
-                            <li key={dept}>
-                              <Link
-                                to="#"
-                                className="dropdown-item"
-                                onClick={() => setSelectedDept(dept)}
-                              >
-                                {dept}
-                              </Link>
-                            </li>
-                          ))}
+                          Object.keys(clockLogs[clockRange] || {}).map(
+                            (dept) => (
+                              <li key={dept}>
+                                <button
+                                  className="dropdown-item"
+                                  onClick={() => setSelectedDept(dept)}
+                                >
+                                  {dept}
+                                </button>
+                              </li>
+                            ),
+                          )}
                       </ul>
                     </div>
-
-                    {/* Range Dropdown */}
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="btn btn-white border btn-sm d-inline-flex align-items-center text-capitalize"
+                    <div className="dropdown">
+                      <button
+                        className="btn btn-white btn-sm border dropdown-toggle text-capitalize"
                         data-bs-toggle="dropdown"
                       >
-                        <i className="ti ti-calendar me-1" />
-                        {clockRange.replace("_", " ")}
-                      </Link>
-                      <ul className="dropdown-menu dropdown-menu-end p-3">
+                        {clockRange}
+                      </button>
+                      <ul className="dropdown-menu">
                         <li>
-                          <Link
-                            to="#"
+                          <button
                             className="dropdown-item"
                             onClick={() => setClockRange("today")}
                           >
                             Today
-                          </Link>
+                          </button>
                         </li>
                         <li>
-                          <Link
-                            to="#"
+                          <button
                             className="dropdown-item"
                             onClick={() => setClockRange("this_week")}
                           >
                             This Week
-                          </Link>
-                        </li>
-                        <li>
-                          <Link
-                            to="#"
-                            className="dropdown-item"
-                            onClick={() => setClockRange("this_month")}
-                          >
-                            This Month
-                          </Link>
+                          </button>
                         </li>
                       </ul>
                     </div>
                   </div>
                 </div>
-
-                <div className="card-body">
+                <div className="card-body p-0">
                   <div
-                    className="slim-scroll"
-                    style={{ maxHeight: "470px", overflowY: "auto" }}
+                    className="table-responsive slim-scroll"
+                    style={{ maxHeight: "400px" }}
                   >
-                    {displayLogs.length > 0 ? (
-                      displayLogs.map((log: any, index: number) => (
-                        <div
-                          key={index}
-                          className="mb-3 p-2 border br-5 shadow-xs"
-                        >
-                          <div className="d-flex align-items-center justify-content-between">
-                            <div className="d-flex align-items-center">
-                              <div
-                                className="avatar flex-shrink-0 bg-soft-primary rounded-circle d-flex align-items-center justify-content-center"
-                                style={{ width: "38px", height: "38px" }}
-                              >
-                                <span className="text-primary fw-bold">
-                                  {log.employee_name.charAt(0)}
-                                </span>
-                              </div>
-                              <div className="ms-2">
-                                <h6
-                                  className="fs-14 fw-medium text-truncate mb-0"
-                                  style={{ maxWidth: "150px" }}
-                                >
-                                  {log.employee_name}
-                                </h6>
-                                <p className="fs-12 text-muted mb-0">
-                                  ID: {log.employee_id}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-end">
-                              <span
-                                className={`badge ${log.check_out ? "bg-soft-danger text-danger" : "bg-soft-success text-success"} fs-10`}
-                              >
-                                <i className="ti ti-circle-filled fs-5 me-1" />
-                                {log.check_out ? "Checked Out" : "Active"}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="d-flex align-items-center justify-content-between flex-wrap mt-2 border-top pt-2">
-                            <div>
-                              <p className="mb-0 small text-muted">Clock-In</p>
-                              <h6 className="fs-13 fw-bold mb-0">
+                    <table className="table table-nowrap align-middle mb-0">
+                      <thead className="sticky-top bg-light">
+                        <tr>
+                          <th className="ps-4">Employee</th>
+                          <th>Clock-In</th>
+                          <th>Clock-Out</th>
+                          <th>Status</th>
+                          <th className="text-end pe-4">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {displayLogs.length > 0 ? (
+                          displayLogs.map((log: any, index: number) => (
+                            <tr key={index}>
+                              <td className="ps-4">
+                                <div className="d-flex align-items-center">
+                                  <div className="avatar avatar-sm bg-soft-primary rounded-circle text-primary fw-bold d-flex align-items-center justify-content-center">
+                                    {log.employee_name.charAt(0)}
+                                  </div>
+                                  <div className="ms-2">
+                                    <h6 className="fs-13 mb-0">
+                                      {log.employee_name}
+                                    </h6>
+                                    <span className="text-muted fs-11">
+                                      ID: {log.employee_id}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="fs-13 fw-medium">
                                 {dayjs(log.check_in).format("hh:mm A")}
-                              </h6>
-                            </div>
-                            <div>
-                              <p className="mb-0 small text-muted">Clock-Out</p>
-                              <h6 className="fs-13 fw-bold mb-0">
+                              </td>
+                              <td className="fs-13 fw-medium">
                                 {log.check_out
                                   ? dayjs(log.check_out).format("hh:mm A")
                                   : "--:--"}
-                              </h6>
-                            </div>
-                            <div>
-                              <p className="mb-0 small text-muted">Date</p>
-                              <h6 className="fs-13 fw-normal mb-0">
-                                {dayjs(log.check_in).format("DD MMM")}
-                              </h6>
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-5">
-                        <i className="ti ti-clock-off fs-30 text-muted mb-2"></i>
-                        <p className="text-muted">
-                          No logs found for this period.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-            {/* /Clock-In/Out */}
-          </div>
-          {/* <div className="row">
-            <div className="col-xxl-4 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Jobs Applicants</h5>
-                  <Link
-                    to={all_routes.joblist}
-                    className="btn btn-light btn-md mb-2"
-                  >
-                    View All
-                  </Link>
-                </div>
-                <div className="card-body">
-                  <ul
-                    className="nav nav-tabs tab-style-1 nav-justified d-sm-flex d-block p-0 mb-4"
-                    role="tablist"
-                  >
-                    <li className="nav-item" role="presentation">
-                      <Link
-                        className="nav-link fw-medium"
-                        data-bs-toggle="tab"
-                        data-bs-target="#openings"
-                        aria-current="page"
-                        to="#openings"
-                        aria-selected="true"
-                        role="tab"
-                      >
-                        Openings
-                      </Link>
-                    </li>
-                    <li className="nav-item" role="presentation">
-                      <Link
-                        className="nav-link fw-medium active"
-                        data-bs-toggle="tab"
-                        data-bs-target="#applicants"
-                        to="#applicants"
-                        aria-selected="false"
-                        tabIndex={-1}
-                        role="tab"
-                      >
-                        Applicants
-                      </Link>
-                    </li>
-                  </ul>
-                  <div className="tab-content">
-                    <div className="tab-pane fade" id="openings">
-                      <div className="d-flex align-items-center justify-content-between mb-4">
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="avatar overflow-hidden flex-shrink-0 bg-gray-100"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/icons/apple.svg"
-                              className="img-fluid rounded-circle w-auto h-auto"
-                              alt="apple"
-                            />
-                          </Link>
-                          <div className="ms-2 overflow-hidden">
-                            <p className="text-dark fw-medium text-truncate mb-0">
-                              <Link to="#">Senior IOS Developer</Link>
-                            </p>
-                            <span className="fs-12">No of Openings : 25 </span>
-                          </div>
-                        </div>
-                        <Link
-                          to="#"
-                          className="btn btn-light btn-sm p-0 btn-icon d-flex align-items-center justify-content-center"
-                        >
-                          <i className="ti ti-edit" />
-                        </Link>
-                      </div>
-                      <div className="d-flex align-items-center justify-content-between mb-4">
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="avatar overflow-hidden flex-shrink-0 bg-gray-100"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/icons/php.svg"
-                              className="img-fluid w-auto h-auto"
-                              alt="php"
-                            />
-                          </Link>
-                          <div className="ms-2 overflow-hidden">
-                            <p className="text-dark fw-medium text-truncate mb-0">
-                              <Link to="#">Junior PHP Developer</Link>
-                            </p>
-                            <span className="fs-12">No of Openings : 20 </span>
-                          </div>
-                        </div>
-                        <Link
-                          to="#"
-                          className="btn btn-light btn-sm p-0 btn-icon d-flex align-items-center justify-content-center"
-                        >
-                          <i className="ti ti-edit" />
-                        </Link>
-                      </div>
-                      <div className="d-flex align-items-center justify-content-between mb-4">
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="avatar overflow-hidden flex-shrink-0 bg-gray-100"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/icons/react.svg"
-                              className="img-fluid w-auto h-auto"
-                              alt="react"
-                            />
-                          </Link>
-                          <div className="ms-2 overflow-hidden">
-                            <p className="text-dark fw-medium text-truncate mb-0">
-                              <Link to="#">Junior React Developer </Link>
-                            </p>
-                            <span className="fs-12">No of Openings : 30 </span>
-                          </div>
-                        </div>
-                        <Link
-                          to="#"
-                          className="btn btn-light btn-sm p-0 btn-icon d-flex align-items-center justify-content-center"
-                        >
-                          <i className="ti ti-edit" />
-                        </Link>
-                      </div>
-                      <div className="d-flex align-items-center justify-content-between mb-0">
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="avatar overflow-hidden flex-shrink-0 bg-gray-100"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/icons/laravel-icon.svg"
-                              className="img-fluid w-auto h-auto"
-                              alt="laravel-icon"
-                            />
-                          </Link>
-                          <div className="ms-2 overflow-hidden">
-                            <p className="text-dark fw-medium text-truncate mb-0">
-                              <Link to="#">Senior Laravel Developer</Link>
-                            </p>
-                            <span className="fs-12">No of Openings : 40 </span>
-                          </div>
-                        </div>
-                        <Link
-                          to="#"
-                          className="btn btn-light btn-sm p-0 btn-icon d-flex align-items-center justify-content-center"
-                        >
-                          <i className="ti ti-edit" />
-                        </Link>
-                      </div>
-                    </div>
-                    <div className="tab-pane fade show active" id="applicants">
-                      <div className="d-flex align-items-center justify-content-between mb-4">
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="avatar overflow-hidden flex-shrink-0"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-09.jpg"
-                              className="img-fluid rounded-circle"
-                              alt="user image"
-                            />
-                          </Link>
-                          <div className="ms-2 overflow-hidden">
-                            <p className="text-dark fw-medium text-truncate mb-0">
-                              <Link to="#">Brian Villalobos</Link>
-                            </p>
-                            <span className="fs-13 d-inline-flex align-items-center">
-                              Exp : 5+ Years
-                              <i className="ti ti-circle-filled fs-4 mx-2 text-primary" />
-                              USA
-                            </span>
-                          </div>
-                        </div>
-                        <span className="badge badge-secondary badge-xs">
-                          UI/UX Designer
-                        </span>
-                      </div>
-                      <div className="d-flex align-items-center justify-content-between mb-4">
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="avatar overflow-hidden flex-shrink-0"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-32.jpg"
-                              className="img-fluid rounded-circle"
-                              alt="user image"
-                            />
-                          </Link>
-                          <div className="ms-2 overflow-hidden">
-                            <p className="text-dark fw-medium text-truncate mb-0">
-                              <Link to="#">Anthony Lewis</Link>
-                            </p>
-                            <span className="fs-13 d-inline-flex align-items-center">
-                              Exp : 4+ Years
-                              <i className="ti ti-circle-filled fs-4 mx-2 text-primary" />
-                              USA
-                            </span>
-                          </div>
-                        </div>
-                        <span className="badge badge-info badge-xs">
-                          Python Developer
-                        </span>
-                      </div>
-                      <div className="d-flex align-items-center justify-content-between mb-4">
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="avatar overflow-hidden flex-shrink-0"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-32.jpg"
-                              className="img-fluid rounded-circle"
-                              alt="user image"
-                            />
-                          </Link>
-                          <div className="ms-2 overflow-hidden">
-                            <p className="text-dark fw-medium text-truncate mb-0">
-                              <Link to="#">Stephan Peralt</Link>
-                            </p>
-                            <span className="fs-13 d-inline-flex align-items-center">
-                              Exp : 6+ Years
-                              <i className="ti ti-circle-filled fs-4 mx-2 text-primary" />
-                              USA
-                            </span>
-                          </div>
-                        </div>
-                        <span className="badge badge-pink badge-xs">
-                          Android Developer
-                        </span>
-                      </div>
-                      <div className="d-flex align-items-center justify-content-between mb-0">
-                        <div className="d-flex align-items-center">
-                          <Link
-                            to="#"
-                            className="avatar overflow-hidden flex-shrink-0"
-                          >
-                            <ImageWithBasePath
-                              src="assets/img/users/user-34.jpg"
-                              className="img-fluid rounded-circle"
-                              alt="user image"
-                            />
-                          </Link>
-                          <div className="ms-2 overflow-hidden">
-                            <p className="text-dark fw-medium text-truncate mb-0">
-                              <Link to="#">Doglas Martini</Link>
-                            </p>
-                            <span className="fs-13 d-inline-flex align-items-center">
-                              Exp : 2+ Years
-                              <i className="ti ti-circle-filled fs-4 mx-2 text-primary" />
-                              USA
-                            </span>
-                          </div>
-                        </div>
-                        <span className="badge badge-purple badge-xs">
-                          React Developer
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-xxl-4 col-xl-6 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Employees</h5>
-                  <Link
-                    to={all_routes.employeeList}
-                    className="btn btn-light btn-md mb-2"
-                  >
-                    View All
-                  </Link>
-                </div>
-                <div className="card-body p-0">
-                  <div className="table-responsive">
-                    <table className="table table-nowrap mb-0">
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Department</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar">
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-32.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to="#">Anthony Lewis</Link>
-                                </h6>
-                                <span className="fs-12">Finance</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-secondary-transparent badge-xs">
-                              Finance
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar">
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-09.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to="#">Brian Villalobos</Link>
-                                </h6>
-                                <span className="fs-12">PHP Developer</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-danger-transparent badge-xs">
-                              Development
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar">
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-01.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to="#">Stephan Peralt</Link>
-                                </h6>
-                                <span className="fs-12">Executive</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-info-transparent badge-xs">
-                              Marketing
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar">
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-34.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to="#">Doglas Martini</Link>
-                                </h6>
-                                <span className="fs-12">Project Manager</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-purple-transparent badge-xs">
-                              Manager
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="border-0">
-                            <div className="d-flex align-items-center">
-                              <Link to="#" className="avatar">
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-37.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to="#">Anthony Lewis</Link>
-                                </h6>
-                                <span className="fs-12">UI/UX Designer</span>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="border-0">
-                            <span className="badge badge-pink-transparent badge-xs">
-                              UI/UX Design
-                            </span>
-                          </td>
-                        </tr>
+                              </td>
+                              <td>
+                                <span
+                                  className={`badge rounded-pill border ${log.check_out ? "bg-soft-danger text-danger border-danger" : "bg-soft-success text-success border-success"}`}
+                                >
+                                  <i className="ti ti-circle-filled fs-6 me-1" />
+                                  {log.check_out ? "Checked Out" : "Active"}
+                                </span>
+                              </td>
+                              <td className="text-end pe-4 fs-12 text-muted">
+                                {dayjs(log.check_in).format("DD MMM, YYYY")}
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td
+                              colSpan={5}
+                              className="text-center py-5 text-muted"
+                            >
+                              No activity found for this period.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="col-xxl-4 col-xl-6 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Todo</h5>
-                  <div className="d-flex align-items-center">
-                    <div className="dropdown mb-2 me-2">
-                      <Link
-                        to="#"
-                        className="btn btn-white border btn-sm d-inline-flex align-items-center"
-                        data-bs-toggle="dropdown"
-                      >
-                        <i className="ti ti-calendar me-1" />
-                        Today
-                      </Link>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Month
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Week
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Today
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                    <Link
-                      to="#"
-                      className="btn btn-primary btn-icon btn-xs rounded-circle d-flex align-items-center justify-content-center p-0 mb-2"
-                      data-bs-toggle="modal"
-                      data-inert={true}
-                      data-bs-target="#add_todo"
-                    >
-                      <i className="ti ti-plus fs-16" />
-                    </Link>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <div
-                    className={`d-flex align-items-center todo-item border p-2 br-5 mb-2 ${
-                      isTodo[0] ? "todo-strike" : ""
-                    }`}
-                  >
-                    <i className="ti ti-grid-dots me-2" />
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="todo1"
-                        onChange={() => toggleTodo(0)}
-                      />
-                      <label
-                        className="form-check-label fw-medium"
-                        htmlFor="todo1"
-                      >
-                        Add Holidays
-                      </label>
-                    </div>
-                  </div>
-                  <div
-                    className={`d-flex align-items-center todo-item border p-2 br-5 mb-2 ${
-                      isTodo[1] ? "todo-strike" : ""
-                    }`}
-                  >
-                    <i className="ti ti-grid-dots me-2" />
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="todo2"
-                        onChange={() => toggleTodo(1)}
-                      />
-                      <label
-                        className="form-check-label fw-medium"
-                        htmlFor="todo2"
-                      >
-                        Add Meeting to Client
-                      </label>
-                    </div>
-                  </div>
-                  <div
-                    className={`d-flex align-items-center todo-item border p-2 br-5 mb-2 ${
-                      isTodo[2] ? "todo-strike" : ""
-                    }`}
-                  >
-                    <i className="ti ti-grid-dots me-2" />
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="todo3"
-                        onChange={() => toggleTodo(2)}
-                      />
-                      <label
-                        className="form-check-label fw-medium"
-                        htmlFor="todo3"
-                      >
-                        Chat with Adrian
-                      </label>
-                    </div>
-                  </div>
-                  <div
-                    className={`d-flex align-items-center todo-item border p-2 br-5 mb-2 ${
-                      isTodo[3] ? "todo-strike" : ""
-                    }`}
-                  >
-                    <i className="ti ti-grid-dots me-2" />
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="todo4"
-                        onChange={() => toggleTodo(3)}
-                      />
-                      <label
-                        className="form-check-label fw-medium"
-                        htmlFor="todo4"
-                      >
-                        Management Call
-                      </label>
-                    </div>
-                  </div>
-                  <div
-                    className={`d-flex align-items-center todo-item border p-2 br-5 mb-2 ${
-                      isTodo[4] ? "todo-strike" : ""
-                    }`}
-                  >
-                    <i className="ti ti-grid-dots me-2" />
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="todo5"
-                        onChange={() => toggleTodo(4)}
-                      />
-                      <label
-                        className="form-check-label fw-medium"
-                        htmlFor="todo5"
-                      >
-                        Add Payroll
-                      </label>
-                    </div>
-                  </div>
-                  <div
-                    className={`d-flex align-items-center todo-item border p-2 br-5 mb-2 ${
-                      isTodo[5] ? "todo-strike" : ""
-                    }`}
-                  >
-                    <i className="ti ti-grid-dots me-2" />
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="todo6"
-                        onChange={() => toggleTodo(5)}
-                      />
-                      <label
-                        className="form-check-label fw-medium"
-                        htmlFor="todo6"
-                      >
-                        Add Policy for Increment{" "}
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> */}
-          {/* <div className="row">
-            <div className="col-xl-7 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Sales Overview</h5>
-                  <div className="d-flex align-items-center">
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="dropdown-toggle btn btn-white border-0 btn-sm d-inline-flex align-items-center fs-13 me-2"
-                        data-bs-toggle="dropdown"
-                      >
-                        All Departments
-                      </Link>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            UI/UX Designer
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            HR Manager
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Junior Tester
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-body pb-0">
-                  <div className="d-flex align-items-center justify-content-between flex-wrap">
-                    <div className="d-flex align-items-center mb-1">
-                      <p className="fs-13 text-gray-9 me-3 mb-0">
-                        <i className="ti ti-square-filled me-2 text-primary" />
-                        Income
-                      </p>
-                      <p className="fs-13 text-gray-9 mb-0">
-                        <i className="ti ti-square-filled me-2 text-gray-2" />
-                        Expenses
-                      </p>
-                    </div>
-                    <p className="fs-13 mb-1">Last Updated at 11:30PM</p>
-                  </div>
-                  <ReactApexChart
-                    id="sales-income"
-                    options={salesIncome}
-                    series={salesIncome.series}
-                    type="bar"
-                    height={270}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="col-xl-5 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Invoices</h5>
-                  <div className="d-flex align-items-center">
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="dropdown-toggle btn btn-white btn-sm d-inline-flex align-items-center fs-13 me-2 border-0"
-                        data-bs-toggle="dropdown"
-                      >
-                        Invoices
-                      </Link>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Invoices
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Paid
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Unpaid
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="btn btn-white border btn-sm d-inline-flex align-items-center"
-                        data-bs-toggle="dropdown"
-                      >
-                        <i className="ti ti-calendar me-1" />
-                        This Week
-                      </Link>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Month
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Week
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Today
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-body pt-2">
-                  <div className="table-responsive pt-1">
-                    <table className="table table-nowrap table-borderless mb-0">
-                      <tbody>
-                        <tr>
-                          <td className="px-0">
-                            <div className="d-flex align-items-center">
-                              <Link
-                                to={all_routes.invoiceDetails}
-                                className="avatar"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-39.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to={all_routes.invoiceDetails}>
-                                    Redesign Website
-                                  </Link>
-                                </h6>
-                                <span className="fs-13 d-inline-flex align-items-center">
-                                  #INVOO2
-                                  <i className="ti ti-circle-filled fs-4 mx-1 text-primary" />
-                                  Logistics
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="fs-13 mb-1">Payment</p>
-                            <h6 className="fw-medium">$3560</h6>
-                          </td>
-                          <td className="px-0 text-end">
-                            <span className="badge badge-danger-transparent badge-xs d-inline-flex align-items-center">
-                              <i className="ti ti-circle-filled fs-5 me-1" />
-                              Unpaid
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-0">
-                            <div className="d-flex align-items-center">
-                              <Link
-                                to={all_routes.invoiceDetails}
-                                className="avatar"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-40.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to={all_routes.invoiceDetails}>
-                                    Module Completion
-                                  </Link>
-                                </h6>
-                                <span className="fs-13 d-inline-flex align-items-center">
-                                  #INVOO5
-                                  <i className="ti ti-circle-filled fs-4 mx-1 text-primary" />
-                                  Yip Corp
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="fs-13 mb-1">Payment</p>
-                            <h6 className="fw-medium">$4175</h6>
-                          </td>
-                          <td className="px-0 text-end">
-                            <span className="badge badge-danger-transparent badge-xs d-inline-flex align-items-center">
-                              <i className="ti ti-circle-filled fs-5 me-1" />
-                              Unpaid
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-0">
-                            <div className="d-flex align-items-center">
-                              <Link
-                                to={all_routes.invoiceDetails}
-                                className="avatar"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-55.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to={all_routes.invoiceDetails}>
-                                    Change on Emp Module
-                                  </Link>
-                                </h6>
-                                <span className="fs-13 d-inline-flex align-items-center">
-                                  #INVOO3
-                                  <i className="ti ti-circle-filled fs-4 mx-1 text-primary" />
-                                  Ignis LLP
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="fs-13 mb-1">Payment</p>
-                            <h6 className="fw-medium">$6985</h6>
-                          </td>
-                          <td className="px-0 text-end">
-                            <span className="badge badge-danger-transparent badge-xs d-inline-flex align-items-center">
-                              <i className="ti ti-circle-filled fs-5 me-1" />
-                              Unpaid
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-0">
-                            <div className="d-flex align-items-center">
-                              <Link
-                                to={all_routes.invoiceDetails}
-                                className="avatar"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-42.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to={all_routes.invoiceDetails}>
-                                    Changes on the Board
-                                  </Link>
-                                </h6>
-                                <span className="fs-13 d-inline-flex align-items-center">
-                                  #INVOO2
-                                  <i className="ti ti-circle-filled fs-4 mx-1 text-primary" />
-                                  Ignis LLP
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="fs-13 mb-1">Payment</p>
-                            <h6 className="fw-medium">$1457</h6>
-                          </td>
-                          <td className="px-0 text-end">
-                            <span className="badge badge-danger-transparent badge-xs d-inline-flex align-items-center">
-                              <i className="ti ti-circle-filled fs-5 me-1" />
-                              Unpaid
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-0">
-                            <div className="d-flex align-items-center">
-                              <Link
-                                to={all_routes.invoiceDetails}
-                                className="avatar"
-                              >
-                                <ImageWithBasePath
-                                  src="assets/img/users/user-44.jpg"
-                                  className="img-fluid rounded-circle"
-                                  alt="user image"
-                                />
-                              </Link>
-                              <div className="ms-2">
-                                <h6 className="fw-medium">
-                                  <Link to={all_routes.invoiceDetails}>
-                                    Hospital Management
-                                  </Link>
-                                </h6>
-                                <span className="fs-13 d-inline-flex align-items-center">
-                                  #INVOO6
-                                  <i className="ti ti-circle-filled fs-4 mx-1 text-primary" />
-                                  HCL Corp
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="fs-13 mb-1">Payment</p>
-                            <h6 className="fw-medium">$6458</h6>
-                          </td>
-                          <td className="px-0 text-end">
-                            <span className="badge badge-success-transparent badge-xs d-inline-flex align-items-center">
-                              <i className="ti ti-circle-filled fs-5 me-1" />
-                              Paid
-                            </span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                  <Link
-                    to={all_routes.invoice}
-                    className="btn btn-light btn-md w-100 mt-2"
-                  >
-                    View All
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
-          <div className="row">
-            <div className="col-xxl-8 col-xl-7 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Projects</h5>
-                  <div className="d-flex align-items-center">
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="btn btn-white border btn-sm d-inline-flex align-items-center"
-                        data-bs-toggle="dropdown"
-                      >
-                        <i className="ti ti-calendar me-1" />
-                        This Week
-                      </Link>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Month
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Week
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Today
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-body p-0">
-                  <div className="table-responsive">
-                    <table className="table table-nowrap mb-0">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Name</th>
-                          <th>Team</th>
-                          <th>Hours</th>
-                          <th>Deadline</th>
-                          <th>Priority</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>
-                            <Link
-                              to={all_routes.projectdetails}
-                              className="link-default"
-                            >
-                              PRO-001
-                            </Link>
-                          </td>
-                          <td>
-                            <h6 className="fw-medium">
-                              <Link to={all_routes.projectdetails}>
-                                Office Management App
-                              </Link>
-                            </h6>
-                          </td>
-                          <td>
-                            <div className="avatar-list-stacked avatar-group-sm">
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-02.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-03.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-05.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="mb-1">15/255 Hrs</p>
-                            <div
-                              className="progress progress-xs w-100"
-                              role="progressbar"
-                              aria-valuenow={40}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            >
-                              <div
-                                className="progress-bar bg-primary"
-                                style={{ width: "40%" }}
-                              />
-                            </div>
-                          </td>
-                          <td>12/09/2024</td>
-                          <td>
-                            <span className="badge badge-danger d-inline-flex align-items-center badge-xs">
-                              <i className="ti ti-point-filled me-1" />
-                              High
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <Link
-                              to={all_routes.projectdetails}
-                              className="link-default"
-                            >
-                              PRO-002
-                            </Link>
-                          </td>
-                          <td>
-                            <h6 className="fw-medium">
-                              <Link to={all_routes.projectdetails}>
-                                Clinic Management{" "}
-                              </Link>
-                            </h6>
-                          </td>
-                          <td>
-                            <div className="avatar-list-stacked avatar-group-sm">
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-06.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-07.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-08.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <Link
-                                className="avatar bg-primary avatar-rounded text-fixed-white fs-10 fw-medium"
-                                to="#"
-                              >
-                                +1
-                              </Link>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="mb-1">15/255 Hrs</p>
-                            <div
-                              className="progress progress-xs w-100"
-                              role="progressbar"
-                              aria-valuenow={40}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            >
-                              <div
-                                className="progress-bar bg-primary"
-                                style={{ width: "40%" }}
-                              />
-                            </div>
-                          </td>
-                          <td>24/10/2024</td>
-                          <td>
-                            <span className="badge badge-success d-inline-flex align-items-center badge-xs">
-                              <i className="ti ti-point-filled me-1" />
-                              Low
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <Link
-                              to={all_routes.projectdetails}
-                              className="link-default"
-                            >
-                              PRO-003
-                            </Link>
-                          </td>
-                          <td>
-                            <h6 className="fw-medium">
-                              <Link to={all_routes.projectdetails}>
-                                Educational Platform
-                              </Link>
-                            </h6>
-                          </td>
-                          <td>
-                            <div className="avatar-list-stacked avatar-group-sm">
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-06.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-08.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-09.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="mb-1">40/255 Hrs</p>
-                            <div
-                              className="progress progress-xs w-100"
-                              role="progressbar"
-                              aria-valuenow={50}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            >
-                              <div
-                                className="progress-bar bg-primary"
-                                style={{ width: "50%" }}
-                              />
-                            </div>
-                          </td>
-                          <td>18/02/2024</td>
-                          <td>
-                            <span className="badge badge-pink d-inline-flex align-items-center badge-xs">
-                              <i className="ti ti-point-filled me-1" />
-                              Medium
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <Link
-                              to={all_routes.projectdetails}
-                              className="link-default"
-                            >
-                              PRO-004
-                            </Link>
-                          </td>
-                          <td>
-                            <h6 className="fw-medium">
-                              <Link to={all_routes.projectdetails}>
-                                Chat &amp; Call Mobile App
-                              </Link>
-                            </h6>
-                          </td>
-                          <td>
-                            <div className="avatar-list-stacked avatar-group-sm">
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-11.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-12.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-13.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="mb-1">35/155 Hrs</p>
-                            <div
-                              className="progress progress-xs w-100"
-                              role="progressbar"
-                              aria-valuenow={50}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            >
-                              <div
-                                className="progress-bar bg-primary"
-                                style={{ width: "50%" }}
-                              />
-                            </div>
-                          </td>
-                          <td>19/02/2024</td>
-                          <td>
-                            <span className="badge badge-danger d-inline-flex align-items-center badge-xs">
-                              <i className="ti ti-point-filled me-1" />
-                              High
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <Link
-                              to={all_routes.projectdetails}
-                              className="link-default"
-                            >
-                              PRO-005
-                            </Link>
-                          </td>
-                          <td>
-                            <h6 className="fw-medium">
-                              <Link to={all_routes.projectdetails}>
-                                Travel Planning Website
-                              </Link>
-                            </h6>
-                          </td>
-                          <td>
-                            <div className="avatar-list-stacked avatar-group-sm">
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-17.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-18.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-19.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="mb-1">50/235 Hrs</p>
-                            <div
-                              className="progress progress-xs w-100"
-                              role="progressbar"
-                              aria-valuenow={50}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            >
-                              <div
-                                className="progress-bar bg-primary"
-                                style={{ width: "50%" }}
-                              />
-                            </div>
-                          </td>
-                          <td>18/02/2024</td>
-                          <td>
-                            <span className="badge badge-pink d-inline-flex align-items-center badge-xs">
-                              <i className="ti ti-point-filled me-1" />
-                              Medium
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <Link
-                              to={all_routes.projectdetails}
-                              className="link-default"
-                            >
-                              PRO-006
-                            </Link>
-                          </td>
-                          <td>
-                            <h6 className="fw-medium">
-                              <Link to={all_routes.projectdetails}>
-                                Service Booking Software
-                              </Link>
-                            </h6>
-                          </td>
-                          <td>
-                            <div className="avatar-list-stacked avatar-group-sm">
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-06.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-08.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-09.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                            </div>
-                          </td>
-                          <td>
-                            <p className="mb-1">40/255 Hrs</p>
-                            <div
-                              className="progress progress-xs w-100"
-                              role="progressbar"
-                              aria-valuenow={50}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            >
-                              <div
-                                className="progress-bar bg-primary"
-                                style={{ width: "50%" }}
-                              />
-                            </div>
-                          </td>
-                          <td>20/02/2024</td>
-                          <td>
-                            <span className="badge badge-success d-inline-flex align-items-center badge-xs">
-                              <i className="ti ti-point-filled me-1" />
-                              Low
-                            </span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="border-0">
-                            <Link
-                              to={all_routes.projectdetails}
-                              className="link-default"
-                            >
-                              PRO-008
-                            </Link>
-                          </td>
-                          <td className="border-0">
-                            <h6 className="fw-medium">
-                              <Link to={all_routes.projectdetails}>
-                                Travel Planning Website
-                              </Link>
-                            </h6>
-                          </td>
-                          <td className="border-0">
-                            <div className="avatar-list-stacked avatar-group-sm">
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-15.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-16.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <span className="avatar avatar-rounded">
-                                <ImageWithBasePath
-                                  className="border border-white"
-                                  src="assets/img/profiles/avatar-17.jpg"
-                                  alt="avatar"
-                                />
-                              </span>
-                              <Link
-                                className="avatar bg-primary avatar-rounded text-fixed-white fs-10 fw-medium"
-                                to="#"
-                              >
-                                +2
-                              </Link>
-                            </div>
-                          </td>
-                          <td className="border-0">
-                            <p className="mb-1">15/255 Hrs</p>
-                            <div
-                              className="progress progress-xs w-100"
-                              role="progressbar"
-                              aria-valuenow={45}
-                              aria-valuemin={0}
-                              aria-valuemax={100}
-                            >
-                              <div
-                                className="progress-bar bg-primary"
-                                style={{ width: "45%" }}
-                              />
-                            </div>
-                          </td>
-                          <td className="border-0">17/10/2024</td>
-                          <td className="border-0">
-                            <span className="badge badge-pink d-inline-flex align-items-center badge-xs">
-                              <i className="ti ti-point-filled me-1" />
-                              Medium
-                            </span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-xxl-4 col-xl-5 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Tasks Statistics</h5>
-                  <div className="d-flex align-items-center">
-                    <div className="dropdown mb-2">
-                      <Link
-                        to="#"
-                        className="btn btn-white border btn-sm d-inline-flex align-items-center"
-                        data-bs-toggle="dropdown"
-                      >
-                        <i className="ti ti-calendar me-1" />
-                        This Week
-                      </Link>
-                      <ul className="dropdown-menu  dropdown-menu-end p-3">
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Month
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            This Week
-                          </Link>
-                        </li>
-                        <li>
-                          <Link to="#" className="dropdown-item rounded-1">
-                            Today
-                          </Link>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <div className="chartjs-wrapper-demo position-relative mb-4">
-                    <Chart
-                      type="doughnut"
-                      data={semidonutData}
-                      options={semidonutOptions}
-                      className="w-full md:w-30rem semi-donut-chart"
-                    />
-                    <div className="position-absolute text-center attendance-canvas">
-                      <p className="fs-13 mb-1">Total Tasks</p>
-                      <h3>124/165</h3>
-                    </div>
-                  </div>
-                  <div className="d-flex align-items-center flex-wrap">
-                    <div className="border-end text-center me-2 pe-2 mb-3">
-                      <p className="fs-13 d-inline-flex align-items-center mb-1">
-                        <i className="ti ti-circle-filled fs-10 me-1 text-warning" />
-                        Ongoing
-                      </p>
-                      <h5>24%</h5>
-                    </div>
-                    <div className="border-end text-center me-2 pe-2 mb-3">
-                      <p className="fs-13 d-inline-flex align-items-center mb-1">
-                        <i className="ti ti-circle-filled fs-10 me-1 text-info" />
-                        On Hold{" "}
-                      </p>
-                      <h5>10%</h5>
-                    </div>
-                    <div className="border-end text-center me-2 pe-2 mb-3">
-                      <p className="fs-13 d-inline-flex align-items-center mb-1">
-                        <i className="ti ti-circle-filled fs-10 me-1 text-danger" />
-                        Overdue
-                      </p>
-                      <h5>16%</h5>
-                    </div>
-                    <div className="text-center me-2 pe-2 mb-3">
-                      <p className="fs-13 d-inline-flex align-items-center mb-1">
-                        <i className="ti ti-circle-filled fs-10 me-1 text-success" />
-                        Ongoing
-                      </p>
-                      <h5>40%</h5>
-                    </div>
-                  </div>
-                  <div className="bg-dark br-5 p-3 pb-0 d-flex align-items-center justify-content-between">
-                    <div className="mb-2">
-                      <h4 className="text-success">389/689 hrs</h4>
-                      <p className="fs-13 mb-0">
-                        Spent on Overall Tasks This Week
-                      </p>
-                    </div>
-                    <Link
-                      to={all_routes.tasks}
-                      className="btn btn-sm btn-light mb-2 text-nowrap"
-                    >
-                      View All
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-xxl-4 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Schedules</h5>
-                  <Link
-                    to={all_routes.candidateslist}
-                    className="btn btn-light btn-md mb-2"
-                  >
-                    View All
-                  </Link>
-                </div>
-                <div className="card-body">
-                  <div className="bg-light p-3 br-5 mb-4">
-                    <span className="badge badge-secondary badge-xs mb-1">
-                      UI/ UX Designer
-                    </span>
-                    <h6 className="mb-2 text-truncate">
-                      Interview Candidates - UI/UX Designer
-                    </h6>
-                    <div className="d-flex align-items-center flex-wrap">
-                      <p className="fs-13 mb-1 me-2">
-                        <i className="ti ti-calendar-event me-2" />
-                        Thu, 15 Feb 2025
-                      </p>
-                      <p className="fs-13 mb-1">
-                        <i className="ti ti-clock-hour-11 me-2" />
-                        01:00 PM - 02:20 PM
-                      </p>
-                    </div>
-                    <div className="d-flex align-items-center justify-content-between border-top mt-2 pt-3">
-                      <div className="avatar-list-stacked avatar-group-sm">
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-49.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-13.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-11.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-22.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-58.jpg"
-                            alt="avatar"
-                          />
-                        </span>
-                        <Link
-                          className="avatar bg-primary avatar-rounded text-fixed-white fs-10 fw-medium"
-                          to="#"
-                        >
-                          +3
-                        </Link>
-                      </div>
-                      <Link to="#" className="btn btn-primary btn-xs">
-                        Join Meeting
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="bg-light p-3 br-5 mb-0">
-                    <span className="badge badge-dark badge-xs mb-1">
-                      IOS Developer
-                    </span>
-                    <h6 className="mb-2 text-truncate">
-                      Interview Candidates - IOS Developer
-                    </h6>
-                    <div className="d-flex align-items-center flex-wrap">
-                      <p className="fs-13 mb-1 me-2">
-                        <i className="ti ti-calendar-event me-2" />
-                        Thu, 15 Feb 2025
-                      </p>
-                      <p className="fs-13 mb-1">
-                        <i className="ti ti-clock-hour-11 me-2" />
-                        02:00 PM - 04:20 PM
-                      </p>
-                    </div>
-                    <div className="d-flex align-items-center justify-content-between border-top mt-2 pt-3">
-                      <div className="avatar-list-stacked avatar-group-sm">
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-49.jpg"
-                            alt="user"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-13.jpg"
-                            alt="user"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-11.jpg"
-                            alt="user"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-22.jpg"
-                            alt="user"
-                          />
-                        </span>
-                        <span className="avatar avatar-rounded">
-                          <ImageWithBasePath
-                            className="border border-white"
-                            src="assets/img/users/user-58.jpg"
-                            alt="user"
-                          />
-                        </span>
-                        <Link
-                          className="avatar bg-primary avatar-rounded text-fixed-white fs-10 fw-medium"
-                          to="#"
-                        >
-                          +3
-                        </Link>
-                      </div>
-                      <Link to="#" className="btn btn-primary btn-xs">
-                        Join Meeting
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-xxl-4 col-xl-6 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Recent Activities</h5>
-                  <Link
-                    to={all_routes.activity}
-                    className="btn btn-light btn-md mb-2"
-                  >
-                    View All
-                  </Link>
-                </div>
-                <div className="card-body">
-                  <div className="recent-item">
-                    <div className="d-flex justify-content-between">
-                      <div className="d-flex align-items-center w-100">
-                        <Link to="#" className="avatar  flex-shrink-0">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-38.jpg"
-                            className="rounded-circle"
-                            alt="Andrew Jermia's profile picture"
-                          />
-                        </Link>
-                        <div className="ms-2 flex-fill">
-                          <div className="d-flex align-items-center justify-content-between">
-                            <h6 className="fs-medium text-truncate">
-                              <Link to="#">Matt Morgan</Link>
-                            </h6>
-                            <p className="fs-13">05:30 PM</p>
-                          </div>
-                          <p className="fs-13">
-                            Added New Project{" "}
-                            <span className="text-primary">HRMS Dashboard</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="recent-item">
-                    <div className="d-flex justify-content-between">
-                      <div className="d-flex align-items-center w-100">
-                        <Link to="#" className="avatar  flex-shrink-0">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-01.jpg"
-                            className="rounded-circle"
-                            alt="user"
-                          />
-                        </Link>
-                        <div className="ms-2 flex-fill">
-                          <div className="d-flex align-items-center justify-content-between">
-                            <h6 className="fs-medium text-truncate">
-                              <Link to="#">Jay Ze</Link>
-                            </h6>
-                            <p className="fs-13">05:00 PM</p>
-                          </div>
-                          <p className="fs-13">
-                            Commented on Uploaded Document
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="recent-item">
-                    <div className="d-flex justify-content-between">
-                      <div className="d-flex align-items-center w-100">
-                        <Link to="#" className="avatar  flex-shrink-0">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-19.jpg"
-                            className="rounded-circle"
-                            alt="user"
-                          />
-                        </Link>
-                        <div className="ms-2 flex-fill">
-                          <div className="d-flex align-items-center justify-content-between">
-                            <h6 className="fs-medium text-truncate">
-                              <Link to="#">Mary Donald</Link>
-                            </h6>
-                            <p className="fs-13">05:30 PM</p>
-                          </div>
-                          <p className="fs-13">Approved Task Projects</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="recent-item">
-                    <div className="d-flex justify-content-between">
-                      <div className="d-flex align-items-center w-100">
-                        <Link to="#" className="avatar  flex-shrink-0">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-11.jpg"
-                            className="rounded-circle"
-                            alt="user"
-                          />
-                        </Link>
-                        <div className="ms-2 flex-fill">
-                          <div className="d-flex align-items-center justify-content-between">
-                            <h6 className="fs-medium text-truncate">
-                              <Link to="#">George David</Link>
-                            </h6>
-                            <p className="fs-13">06:00 PM</p>
-                          </div>
-                          <p className="fs-13">
-                            Requesting Access to Module Tickets
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="recent-item">
-                    <div className="d-flex justify-content-between">
-                      <div className="d-flex align-items-center w-100">
-                        <Link to="#" className="avatar  flex-shrink-0">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-20.jpg"
-                            className="rounded-circle"
-                            alt="user"
-                          />
-                        </Link>
-                        <div className="ms-2 flex-fill">
-                          <div className="d-flex align-items-center justify-content-between">
-                            <h6 className="fs-medium text-truncate">
-                              <Link to="#">Aaron Zeen</Link>
-                            </h6>
-                            <p className="fs-13">06:30 PM</p>
-                          </div>
-                          <p className="fs-13">Downloaded App Reportss</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="recent-item">
-                    <div className="d-flex justify-content-between">
-                      <div className="d-flex align-items-center w-100">
-                        <Link to="#" className="avatar  flex-shrink-0">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-08.jpg"
-                            className="rounded-circle"
-                            alt="user"
-                          />
-                        </Link>
-                        <div className="ms-2 flex-fill">
-                          <div className="d-flex align-items-center justify-content-between">
-                            <h6 className="fs-medium text-truncate">
-                              <Link to="#">Hendry Daniel</Link>
-                            </h6>
-                            <p className="fs-13">05:30 PM</p>
-                          </div>
-                          <p className="fs-13">
-                            Completed New Project <span>HMS</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-xxl-4 col-xl-6 d-flex">
-              <div className="card flex-fill">
-                <div className="card-header pb-2 d-flex align-items-center justify-content-between flex-wrap">
-                  <h5 className="mb-2">Birthdays</h5>
-                  <Link to="#" className="btn btn-light btn-md mb-2">
-                    View All
-                  </Link>
-                </div>
-                <div className="card-body pb-1">
-                  <h6 className="mb-2">Today</h6>
-                  <div className="bg-light p-2 border border-dashed rounded-top mb-3">
-                    <div className="d-flex align-items-center justify-content-between">
-                      <div className="d-flex align-items-center">
-                        <Link to="#" className="avatar">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-38.jpg"
-                            className="rounded-circle"
-                            alt="Andrew Jermia's profile picture"
-                          />
-                        </Link>
-                        <div className="ms-2 overflow-hidden">
-                          <h6 className="fs-medium ">Andrew Jermia</h6>
-                          <p className="fs-13">IOS Developer</p>
-                        </div>
-                      </div>
-                      <Link to="#" className="btn btn-secondary btn-xs">
-                        <i className="ti ti-cake me-1" />
-                        Send
-                      </Link>
-                    </div>
-                  </div>
-                  <h6 className="mb-2">Tomorow</h6>
-                  <div className="bg-light p-2 border border-dashed rounded-top mb-3">
-                    <div className="d-flex align-items-center justify-content-between">
-                      <div className="d-flex align-items-center">
-                        <Link to="#" className="avatar">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-10.jpg"
-                            className="rounded-circle"
-                            alt="user"
-                          />
-                        </Link>
-                        <div className="ms-2 overflow-hidden">
-                          <h6 className="fs-medium">
-                            <Link to="#">Mary Zeen</Link>
-                          </h6>
-                          <p className="fs-13">UI/UX Designer</p>
-                        </div>
-                      </div>
-                      <Link to="#" className="btn btn-secondary btn-xs">
-                        <i className="ti ti-cake me-1" />
-                        Send
-                      </Link>
-                    </div>
-                  </div>
-                  <div className="bg-light p-2 border border-dashed rounded-top mb-3">
-                    <div className="d-flex align-items-center justify-content-between">
-                      <div className="d-flex align-items-center">
-                        <Link to="#" className="avatar">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-09.jpg"
-                            className="rounded-circle"
-                            alt="user"
-                          />
-                        </Link>
-                        <div className="ms-2 overflow-hidden">
-                          <h6 className="fs-medium ">
-                            <Link to="#">Antony Lewis</Link>
-                          </h6>
-                          <p className="fs-13">Android Developer</p>
-                        </div>
-                      </div>
-                      <Link to="#" className="btn btn-secondary btn-xs">
-                        <i className="ti ti-cake me-1" />
-                        Send
-                      </Link>
-                    </div>
-                  </div>
-                  <h6 className="mb-2">25 Jan 2025</h6>
-                  <div className="bg-light p-2 border border-dashed rounded-top mb-3">
-                    <div className="d-flex align-items-center justify-content-between">
-                      <div className="d-flex align-items-center">
-                        <span className="avatar">
-                          <ImageWithBasePath
-                            src="assets/img/users/user-12.jpg"
-                            className="rounded-circle"
-                            alt="user"
-                          />
-                        </span>
-                        <div className="ms-2 overflow-hidden">
-                          <h6 className="fs-medium ">Doglas Martini</h6>
-                          <p className="fs-13">.Net Developer</p>
-                        </div>
-                      </div>
-                      <Link to="#" className="btn btn-secondary btn-xs">
-                        <i className="ti ti-cake me-1" />
-                        Send
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> */}
         </div>
-        {/* <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
-          <p className="mb-0">2014 - 2025 © SmartHR.</p>
-          <p>
-            Designed &amp; Developed By{" "}
-            <Link to="#" className="text-primary">
-              Dreams
-            </Link>
-          </p>
-        </div> */}
       </div>
-      {/* /Page Wrapper */}
-      {/* <ProjectModals />
-      <RequestModals />
-      <TodoModal /> */}
+      <AddEditEmployeeModal
+        data={editData}
+        preventClose={isProfileLocked}
+        onSuccess={handleModalSuccess} // Use the stable function
+        onClose={handleModalClose} // Use the stable function
+      />
     </>
   );
 };

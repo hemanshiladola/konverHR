@@ -21,6 +21,9 @@ export const AddEditBankAccountModal: React.FC<Props> = ({ onSuccess }) => {
   const [banks, setBanks] = useState<any[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const isIncomplete =
+    localStorage.getItem("is_incomplete_admin_profile") === "true";
+
   useEffect(() => {
     const loadBanks = async () => {
       const data = await getBanks();
@@ -29,7 +32,7 @@ export const AddEditBankAccountModal: React.FC<Props> = ({ onSuccess }) => {
           value: String(b.id),
           label: b.name,
           swift: b.swift_code,
-        }))
+        })),
       );
     };
     loadBanks();

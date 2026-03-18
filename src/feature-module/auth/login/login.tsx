@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ImageWithBasePath from "../../../core/common/imageWithBasePath";
 import { Link, useNavigate } from "react-router-dom";
 import { all_routes } from "../../../router/all_routes";
@@ -14,7 +14,9 @@ const Login = () => {
   const navigation = useNavigate();
 
   // State
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => {
+    return localStorage.getItem("remembered_email") || "";
+  });
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>(
@@ -24,6 +26,19 @@ const Login = () => {
   const [passwordVisibility, setPasswordVisibility] = useState({
     password: false,
   });
+
+  useEffect(() => {
+    const remembered = localStorage.getItem("remembered_email");
+    if (remembered) {
+      // Clear it from storage so it doesn't stay there forever,
+      // but keep it in the 'email' state variable.
+      localStorage.removeItem("remembered_email");
+
+      toast.info("Session refreshed. Please log in again with your password.", {
+        position: "top-center",
+      });
+    }
+  }, []);
 
   const togglePasswordVisibility = (field: PasswordField) => {
     setPasswordVisibility((prevState) => ({
@@ -139,6 +154,7 @@ const Login = () => {
         toast.error(response.data.message || "Login failed.");
       }
     } catch (error: any) {
+      console.error("DEBUG LOGIN ERROR:", error); // This will show exactly where the JS is breaking
       const errorMessage =
         error.response?.data?.message || "Check your credentials.";
       toast.error(errorMessage);
