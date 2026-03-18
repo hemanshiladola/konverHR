@@ -102,7 +102,7 @@ const Login = () => {
 
         // 1. Clear everything first to avoid stale data
         localStorage.clear();
-        localStorage.setItem(
+       localStorage.setItem(
           "is_incomplete_admin_profile",
           String(data.is_incomplete_admin_profile ?? false),
         );
