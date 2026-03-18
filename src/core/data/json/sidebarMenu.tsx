@@ -348,23 +348,23 @@ const rawSidebarData = [
       },
     ],
   },
-  {
-    tittle: "Setting",
-    icon: "settings",
-    showAsTab: true,
-    separateRoute: false,
-    submenuItems: [
-      {
-        label: "Edit Profile",
-        link: routes.employeeCalenderKHR,
-        submenu: false,
-        icon: "profile",
-        showSubRoute: false,
-        roles: [ROLES.ADMIN],
-        base: "form-horizontal",
-      },
-    ],
-  },
+  // {
+  //   tittle: "Setting",
+  //   icon: "settings",
+  //   showAsTab: true,
+  //   separateRoute: false,
+  //   submenuItems: [
+  //     {
+  //       label: "Edit Profile",
+  //       link: routes.employeeCalenderKHR,
+  //       submenu: false,
+  //       icon: "profile",
+  //       showSubRoute: false,
+  //       roles: [ROLES.ADMIN],
+  //       base: "form-horizontal",
+  //     },
+  //   ],
+  // },
   // {
   //   tittle: "Version History",
   //   icon: "file",

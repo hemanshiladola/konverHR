@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import CommonHeader from "../../../CommonComponent/HeaderKHR/HeaderKHR";
 import AddEditEmployeeModal from "./AddEditEmployeeModal";
 import { getEmployees, deleteEmployee, Employee } from "./EmployeeServices";
@@ -9,7 +10,12 @@ import DatatableKHR from "@/CommonComponent/DataTableKHR/DatatableKHR";
 import ArchiveEmployeeModal from "./ArchiveEmployeeModal";
 
 const EmployeeKHR = () => {
+  const navigate = useNavigate();
   const routes = all_routes;
+
+  const userRole = localStorage.getItem("user_role");
+  const isAdmin = userRole === "REGISTER_ADMIN";
+
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]); // ✅ Added for filtering
   const [loading, setLoading] = useState(true);
@@ -34,6 +40,38 @@ const EmployeeKHR = () => {
   //     setLoading(false);
   //   }
   // };
+
+  // Inside EmployeeKHR.tsx (or your Admin Dashboard component)
+  useEffect(() => {
+    const checkForIncompleteProfile = () => {
+      // ✅ CHANGED: Open only if flag is "true"
+      const isProfileIncomplete =
+        localStorage.getItem("is_incomplete_admin_profile") === "true";
+      const loggedInUserId = localStorage.getItem("user_id");
+      const userRole = localStorage.getItem("user_role");
+
+      if (
+        userRole === "REGISTER_ADMIN" &&
+        isProfileIncomplete &&
+        employees.length > 0
+      ) {
+        const adminRecord = employees.find((emp: any) => {
+          const empUserId = Array.isArray(emp.user_id)
+            ? String(emp.user_id[0])
+            : String(emp.user_id);
+          return empUserId === loggedInUserId;
+        });
+
+        if (adminRecord) {
+          handleEditClick(adminRecord); // Opens Modal in Edit Mode
+        }
+      }
+    };
+
+    if (!loading) {
+      checkForIncompleteProfile();
+    }
+  }, [loading, employees]);
 
   const fetchEmployees = async () => {
     setLoading(true);
@@ -149,14 +187,26 @@ const EmployeeKHR = () => {
           : String(record.user_id);
         const isSelfAdmin =
           recordUserId === loggedInUserId && userRole === "REGISTER_ADMIN";
-
+        const rawImg = record.image_1920 || record.image_url;
+        const getListImg = () => {
+          if (!rawImg || rawImg === "false") return null;
+          if (rawImg.startsWith("http")) return rawImg; // Don't add timestamp in list view to save performance
+          if (rawImg.length > 50)
+            return `data:image/png;base64,${rawImg.replace(/\s/g, "")}`;
+          return null;
+        };
+        const finalImg = getListImg();
         return (
           <div className="d-flex align-items-center">
             <div className="avatar avatar-md me-2">
               <img
-                src={record.image_url || "assets/img/profiles/avatar-02.jpg"}
-                className="rounded-circle"
+                src={finalImg || "assets/img/profiles/avatar-02.jpg"}
+                className="rounded-circle object-fit-cover"
                 alt="User"
+                onError={(e) => {
+                  // Fallback if the URL fails to load
+                  e.currentTarget.src = "assets/img/profiles/avatar-02.jpg";
+                }}
               />
             </div>
             <div>
@@ -221,24 +271,26 @@ const EmployeeKHR = () => {
     },
     {
       title: "Action",
-      render: (_: any, record: any) => (
-        <div className="d-flex align-items-center gap-2">
-          <button
-            className="btn btn-icon btn-sm btn-soft-primary"
-            onClick={() => handleEditClick(record)}
-          >
-            <i className="ti ti-edit"></i>
-          </button>
-          <button
-            className="btn btn-icon btn-sm btn-soft-danger"
-            onClick={() => handleDeleteEmployee(record.id)}
-          >
-            <i className="ti ti-trash"></i>
-          </button>
-        </div>
-      ),
+      hidden: !isAdmin,
+      render: (_: any, record: any) =>
+        isAdmin && ( // Double check here
+          <div className="d-flex align-items-center gap-2">
+            <button
+              className="btn btn-icon btn-sm btn-soft-primary"
+              onClick={() => handleEditClick(record)}
+            >
+              <i className="ti ti-edit"></i>
+            </button>
+            <button
+              className="btn btn-icon btn-sm btn-soft-danger"
+              onClick={() => handleDeleteEmployee(record.id)}
+            >
+              <i className="ti ti-trash"></i>
+            </button>
+          </div>
+        ),
     },
-  ];
+  ].filter((col) => !col.hidden);
 
   // Get unique departments for filter dropdown
   const uniqueDepts = Array.from(
@@ -396,8 +448,8 @@ const EmployeeKHR = () => {
           showViewToggle={true}
           viewType={viewType}
           onViewChange={setViewType}
-          buttonText="Add New Employee"
-          modalTarget="#add_employee_modal"
+          buttonText={isAdmin ? "Add New Employee" : ""}
+          modalTarget={isAdmin ? "#add_employee_modal" : ""}
         />
 
         {/* --- STATS SUMMARY SECTION --- */}
@@ -561,11 +613,40 @@ const EmployeeKHR = () => {
           }}
           onClose={() => setArchiveId(null)}
         />
-        <AddEditEmployeeModal
+        {/* <AddEditEmployeeModal
           data={editData}
           onSuccess={() => {
             fetchEmployees();
             setEditData(null);
+          }}
+          onClose={() => setEditData(null)}
+        /> */}
+        <AddEditEmployeeModal
+          data={editData}
+          // 2. LOGOUT FLOW ON SUCCESS
+          onSuccess={() => {
+            const isLocked =
+              localStorage.getItem("is_incomplete_admin_profile") === "true";
+
+            if (isLocked) {
+              const adminEmail = localStorage.getItem("user_email");
+              toast.success(
+                "Profile completed! Logging out to refresh your session...",
+                { position: "top-center" },
+              );
+
+              localStorage.clear();
+              if (adminEmail)
+                localStorage.setItem("remembered_email", adminEmail);
+
+              setTimeout(() => {
+                navigate(routes.login);
+                window.location.reload();
+              }, 2000);
+            } else {
+              getEmployees();
+              setEditData(null);
+            }
           }}
           onClose={() => setEditData(null)}
         />

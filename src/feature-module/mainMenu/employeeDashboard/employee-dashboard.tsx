@@ -183,7 +183,7 @@ const EmployeeDashboard = () => {
                   </ul>
                 </div>
               </div>
-              <div className="input-icon w-120 position-relative mb-2">
+              {/* <div className="input-icon w-120 position-relative mb-2">
                 <span className="input-icon-addon">
                   <i className="ti ti-calendar text-gray-9" />
                 </span>
@@ -194,7 +194,7 @@ const EmployeeDashboard = () => {
                   dateFormat="yy"
                   className="Calendar-form"
                 />
-              </div>
+              </div> */}
               <div className="ms-2 head-icons">
                 <CollapseHeader />
               </div>

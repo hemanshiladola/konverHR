@@ -368,6 +368,58 @@ const EmployeeAttendanceKHR = () => {
   // Get name from localStorage
   const storedName = localStorage.getItem("full_name") || "User";
 
+  const tabConfig = [
+    { id: "legal", label: "Legal & ID", icon: "ti-id", category: "Identity" },
+    {
+      id: "personal",
+      label: "Personal",
+      icon: "ti-user",
+      category: "Identity",
+    },
+    {
+      id: "address",
+      label: "Address",
+      icon: "ti-map-pin",
+      category: "Contact",
+    },
+    {
+      id: "emergency",
+      label: "Emergency",
+      icon: "ti-phone-call",
+      category: "Contact",
+    },
+    {
+      id: "employment",
+      label: "Employment",
+      icon: "ti-briefcase",
+      category: "Company",
+    },
+    {
+      id: "banking",
+      label: "Banking",
+      icon: "ti-building-bank",
+      category: "Company",
+    },
+    {
+      id: "notice",
+      label: "Separation",
+      icon: "ti-door-exit",
+      category: "Company",
+    },
+    {
+      id: "device",
+      label: "Mobile App",
+      icon: "ti-device-mobile",
+      category: "System",
+    },
+    {
+      id: "group_access",
+      label: "Access Rights",
+      icon: "ti-users-group",
+      category: "System",
+    },
+  ];
+
   // Test function to verify date range calculations (can be removed in production)
   const testDateRangeCalculations = () => {
     const now = new Date();

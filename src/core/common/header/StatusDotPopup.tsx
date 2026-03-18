@@ -248,7 +248,6 @@ const StatusCheckInPopup: React.FC = () => {
                   <div className="fw-bold">{formatTotal(totalMinutes)}</div>
                 </div>
               </div>
-
               <button
                 className="btn btn-warning w-100"
                 onClick={handleAction}

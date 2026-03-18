@@ -8,7 +8,8 @@ type Props = {
 
 export const ProtectedRoute: React.FC<Props> = ({ children }) => {
   const location = useLocation();
-  const isAuth = !!localStorage.getItem("user_id") || !!localStorage.getItem("user_id");
+  const isAuth =
+    !!localStorage.getItem("user_id") || !!localStorage.getItem("user_id");
 
   if (!isAuth) {
     return <Navigate to={routes.login} replace state={{ from: location }} />;
@@ -18,7 +19,8 @@ export const ProtectedRoute: React.FC<Props> = ({ children }) => {
 };
 
 export const GuestRoute: React.FC<Props> = ({ children }) => {
-  const isAuth = !!localStorage.getItem("user_id") || !!localStorage.getItem("user_id");
+  const isAuth =
+    !!localStorage.getItem("user_id") || !!localStorage.getItem("user_id");
 
   if (isAuth) {
     return <Navigate to={routes.adminDashboard} replace />;

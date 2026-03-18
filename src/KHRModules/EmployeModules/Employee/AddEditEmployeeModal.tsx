@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DatePicker, Radio, Slider, Checkbox } from "antd";
 import dayjs from "dayjs";
 import CommonSelect from "../../../core/common/commonSelect";
@@ -31,14 +31,15 @@ interface Props {
   onSuccess: () => void;
   onClose: () => void;
   data: any | null;
+  preventClose?: boolean;
 }
 
 const AddEditEmployeeModal: React.FC<Props> = ({
   onSuccess,
   onClose,
   data,
+  preventClose = false,
 }) => {
-  console.log("MODAL COMPONENT RENDERED"); // This MUST show when you click 'Add' or 'Edit'
   const [activeTab, setActiveTab] = useState("legal");
   const [validated, setValidated] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -76,6 +77,10 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     Record<string, Option[]>
   >({});
   const [showPassword, setShowPassword] = useState(false);
+  const scrollRef = React.useRef<HTMLUListElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+
   const [groupAccessLines, setGroupAccessLines] = useState<any[]>([
     {
       model: "leave", // Added default
@@ -288,257 +293,285 @@ const AddEditEmployeeModal: React.FC<Props> = ({
 
   // ✅ USE THIS CONSOLIDATED EFFECT
   useEffect(() => {
-    if (data) {
-      // 1. Helper to handle API's [id, "name"] or false/null values
-      const getVal = (field: any) => {
-        if (Array.isArray(field)) return String(field[0]); // Extract ID from [123, "Name"]
-        if (field === false || field === null || field === 0) return ""; // Convert false/null/0 to empty string
-        return String(field);
-      };
+    const incomingId = data?.id ? String(data.id) : null;
+    const currentId = formData.id ? String(formData.id) : null;
+    if (incomingId !== currentId) {
+      if (data) {
+        // Add this ID check
+        // 1. Helper to handle API's [id, "name"] or false/null values
+        const getVal = (field: any) => {
+          if (Array.isArray(field)) return String(field[0]); // Extract ID from [123, "Name"]
+          if (field === false || field === null || field === 0) return ""; // Convert false/null/0 to empty string
+          return String(field);
+        };
 
-      const cId = getVal(data.country_id) || "104";
-      const sId = getVal(data.state_id);
-
-      loadStates(cId); // Load states so the dropdown can find the label
-      if (sId) loadDistricts(cId, sId); // Load cities so the dropdown can find the label
-
-      const bankDetails = data.bank_account_details || {};
-      const imgUrl = data.image_url || null;
-      const licenseUrl = data.driving_license_url || null;
-      const passbookUrl = data.passbook_url || null;
-
-      // 2. Set the Form Data
-      setFormData({
-        ...initialFormData, // Start with defaults
-        ...data, // Spread API data
-
-        // --- Explicitly map Dropdown/Select fields ---
-        // This ensures the Select component gets a clean ID string, not an array
-        work_phone: data.work_phone ? String(data.work_phone) : "",
-        attendance_policy_id: getVal(data.attendance_policy_id),
-        name_of_client: getVal(data.name_of_site || data.name_of_client), // Handle key mismatch
-        resource_calendar_id: getVal(data.resource_calendar_id),
-        shift_roster_id: getVal(data.shift_roster_id),
-        // country_id: getVal(data.country_id),
-        // state_id: getVal(data.state_id),
-        // district_id: getVal(data.district_id),
-        country_id: cId,
-        state_id: sId,
-        district_id: getVal(data.district_id),
-        department_id: getVal(data.department_id),
-        job_id: getVal(data.job_id),
-        // bank_account_id: getVal(data.bank_account_id),
-
-        bank_id: getVal(bankDetails.bank_id),
-        account_number: bankDetails.account_number || "",
-        bank_iafc_code: bankDetails.bank_iafc_code || "",
-        bank_swift_code: bankDetails.bank_swift_code || "",
-        currency_id: bankDetails.currency_name || "INR",
-
-        reporting_manager_id: getVal(data.reporting_manager_id),
-        head_of_department_id: getVal(data.head_of_department_id),
-        employment_type: data.employment_type
-          ? data.employment_type.toLowerCase()
-          : "permanent",
-        employee_category: data.employee_category
-          ? data.employee_category.toLowerCase()
-          : "staff",
-        attendance_capture_mode: data.attendance_capture_mode,
-
-        // --- Handle numeric fields ---
-        pin_code: data.pin_code === 0 ? "" : data.pin_code,
-        probation_period: data.probation_period || 6,
-        notice_period_days: data.notice_period_days || 0,
-        in_probation:
-          data.in_probation !== undefined ? data.in_probation : true,
-        birthday: data.birthday || null,
-        joining_date: data.joining_date || null,
-        confirmation_date: data.confirmation_date || null,
-        resignation_date: data.resignation_date || null,
-        notice_period_end_date: data.notice_period_end_date || null,
-        probation_end_date: data.probation_end_date || null,
-        group_company_joining_date: data.group_company_joining_date || null,
-        date_of_marriage: data.date_of_marriage || null,
-
-        // --- Handle Files/Images ---
-        // Keep them as null or existing strings; do not overwrite with File objects yet
-        // image_1920: data.image_1920 || null,
-        // driving_license: data.driving_license || null,
-        // upload_passbook: data.upload_passbook || null,
-        image_1920: imgUrl,
-        driving_license: licenseUrl,
-        upload_passbook: passbookUrl,
-        latitude: data.latitude || "",
-        longitude: data.longitude || "",
-
-        random_code_for_reg: data.random_code_for_reg || "", // Pre-fill from API
-
-        // Ensure device fields are also mapped if they weren't already
-        device_id: data.device_id || "",
-        device_unique_id: data.device_unique_id || "",
-        device_name: data.device_name || "",
-        system_version: data.system_version || "",
-        ip_address: data.ip_address || "",
-        device_platform: data.device_platform || "",
-      });
-
-      // let loadedGroupAccess: any[] = [];
-
-      // const cleanGroupId = getVal(data.group_id);
-
-      // if (cleanGroupId) {
-      //   // Create the row using cleaned IDs
-      //   loadedGroupAccess = [
-      //     {
-      //       group_id: cleanGroupId,
-      //       approval_user_id: getVal(data.approval_user_id), // Extracts "41" from [41, "Name"]
-      //       approval_sequance: data.approval_sequance || 0,
-      //     },
-      //   ];
-      // }
-      // // Fallback: If old array format exists (legacy support)
-      // else if (
-      //   data.group_access &&
-      //   Array.isArray(data.group_access) &&
-      //   data.group_access.length > 0
-      // ) {
-      //   loadedGroupAccess = data.group_access;
-      // }
-
-      // // If we found data, load it and fetch the users for the dropdowns
-      // if (loadedGroupAccess.length > 0) {
-      //   const loadInitialUsers = async () => {
-      //     const newOptions: Record<string, Option[]> = { ...groupUserOptions };
-
-      //     for (const line of loadedGroupAccess) {
-      //       const gId = String(line.group_id);
-      //       if (gId && !newOptions[gId]) {
-      //         try {
-      //           // Fetch Users so the dropdown shows the name "Abhigna Desai" instead of just ID
-      //           const response = await getGroupUsers(gId);
-
-      //           // Robust Extraction
-      //           let userList: any[] = [];
-      //           if (response?.data?.users) userList = response.data.users;
-      //           else if (response?.data?.data?.users)
-      //             userList = response.data.data.users;
-      //           else if (response?.users) userList = response.users;
-      //           else if (Array.isArray(response)) userList = response;
-
-      //           newOptions[gId] = userList.map((u: any) => ({
-      //             value: String(u.user_id || u.id),
-      //             label: u.name || u.login,
-      //           }));
-      //         } catch (e) {
-      //           console.error("Error loading group users for edit:", e);
-      //         }
-      //       }
-      //     }
-      //     setGroupUserOptions(newOptions);
-      //     setGroupAccessLines(loadedGroupAccess);
-      //   };
-      //   loadInitialUsers();
-      // } else {
-      //   // Reset to default empty row if no group data found
-      //   setGroupAccessLines([
-      //     { group_id: "", approval_user_id: "", approval_sequance: 0 },
-      //   ]);
-      // }
-      // --- GROUP ACCESS LOGIC START ---
-
-      let loadedGroupAccess: any[] = [];
-
-      // A. Check for NEW 'approvals' array (Matches your JSON)
-      if (
-        data.approvals &&
-        Array.isArray(data.approvals) &&
-        data.approvals.length > 0
-      ) {
-        loadedGroupAccess = data.approvals.map((item: any) => ({
-          model: item.model || "leave",
-          group_id: getVal(item.group_id),
-          approval_user_id: getVal(item.approval_user_id),
-          approval_sequance: item.approval_sequance || 0,
-        }));
-      }
-      // B. Fallback: Check for legacy 'group_access' array
-      else if (data.group_access && Array.isArray(data.group_access)) {
-        loadedGroupAccess = data.group_access.map((item: any) => ({
-          ...item,
-          model: item.model || "leave",
-          group_id: getVal(item.group_id),
-          approval_user_id: getVal(item.approval_user_id),
-        }));
-      }
-      // C. Fallback: Check for flat structure
-      else {
-        const cleanGroupId = getVal(data.group_id);
-        if (cleanGroupId) {
-          loadedGroupAccess = [
-            {
-              model: "leave",
-              group_id: cleanGroupId,
-              approval_user_id: getVal(data.approval_user_id),
-              approval_sequance: data.approval_sequance || 0,
-            },
-          ];
+        const cId = getVal(data.country_id) || "104";
+        const sId = getVal(data.state_id);
+        const dId = getVal(data.department_id); // Extracts "806" from [806, "Admin"]
+        loadStates(cId); // Load states so the dropdown can find the label
+        if (sId) loadDistricts(cId, sId); // Load cities so the dropdown can find the label
+        if (dId) {
+          loadFilteredDesignations(dId);
         }
-      }
+        const bankDetails = data.bank_account_details || {};
+        const imgUrl = data.image_url || null;
+        const licenseUrl = data.driving_license_url || null;
+        const passbookUrl = data.passbook_url || null;
 
-      // Load Users for the Group Dropdowns
-      if (loadedGroupAccess.length > 0) {
-        const loadInitialUsers = async () => {
-          const newOptions: Record<string, any[]> = { ...groupUserOptions };
+        // 2. Set the Form Data
+        setFormData({
+          ...initialFormData, // Start with defaults
+          ...data, // Spread API data
 
-          for (const line of loadedGroupAccess) {
-            const gId = String(line.group_id);
-            // Only fetch if we haven't loaded users for this group yet
-            if (gId && gId !== "0" && !newOptions[gId]) {
-              try {
-                const response = await getGroupUsers(gId);
-                // ... (Your existing user extraction logic) ...
-                let userList: any[] = [];
-                if (response?.data?.users) userList = response.data.users;
-                else if (response?.users) userList = response.users;
-                else if (Array.isArray(response)) userList = response;
+          // --- Explicitly map Dropdown/Select fields ---
+          // This ensures the Select component gets a clean ID string, not an array
+          work_phone: data.work_phone ? String(data.work_phone) : "",
+          attendance_policy_id: getVal(data.attendance_policy_id),
+          name_of_client: getVal(data.name_of_site || data.name_of_client), // Handle key mismatch
+          resource_calendar_id: getVal(data.resource_calendar_id),
+          shift_roster_id: getVal(data.shift_roster_id),
+          // country_id: getVal(data.country_id),
+          // state_id: getVal(data.state_id),
+          // district_id: getVal(data.district_id),
+          country_id: cId,
+          state_id: sId,
+          district_id: getVal(data.district_id),
+          // department_id: getVal(data.department_id),
+          department_id: dId,
+          job_id: getVal(data.job_id),
+          // bank_account_id: getVal(data.bank_account_id),
 
-                newOptions[gId] = userList.map((u: any) => ({
-                  value: String(u.user_id || u.id),
-                  label: u.name || u.login,
-                }));
-              } catch (e) {
-                console.error("Error loading group users:", e);
+          bank_id: getVal(bankDetails.bank_id),
+          account_number: bankDetails.account_number || "",
+          bank_iafc_code: bankDetails.bank_iafc_code || "",
+          bank_swift_code: bankDetails.bank_swift_code || "",
+          currency_id: bankDetails.currency_name || "INR",
+
+          reporting_manager_id: getVal(data.reporting_manager_id),
+          head_of_department_id: getVal(data.head_of_department_id),
+          employment_type: data.employment_type
+            ? data.employment_type.toLowerCase()
+            : "permanent",
+          employee_category: data.employee_category
+            ? data.employee_category.toLowerCase()
+            : "staff",
+          attendance_capture_mode: data.attendance_capture_mode,
+
+          // --- Handle numeric fields ---
+          pin_code: data.pin_code === 0 ? "" : data.pin_code,
+          probation_period: data.probation_period || 6,
+          notice_period_days: data.notice_period_days || 0,
+          in_probation:
+            data.in_probation !== undefined ? data.in_probation : true,
+          birthday: data.birthday || null,
+          joining_date: data.joining_date || null,
+          confirmation_date: data.confirmation_date || null,
+          resignation_date: data.resignation_date || null,
+          notice_period_end_date: data.notice_period_end_date || null,
+          probation_end_date: data.probation_end_date || null,
+          group_company_joining_date: data.group_company_joining_date || null,
+          date_of_marriage: data.date_of_marriage || null,
+
+          // --- Handle Files/Images ---
+          // Keep them as null or existing strings; do not overwrite with File objects yet
+          // image_1920: data.image_1920 || null,
+          // driving_license: data.driving_license || null,
+          // upload_passbook: data.upload_passbook || null,
+          image_1920: imgUrl,
+          driving_license: licenseUrl,
+          upload_passbook: passbookUrl,
+          latitude: data.latitude || "",
+          longitude: data.longitude || "",
+
+          random_code_for_reg: data.random_code_for_reg || "", // Pre-fill from API
+
+          // Ensure device fields are also mapped if they weren't already
+          device_id: data.device_id || "",
+          device_unique_id: data.device_unique_id || "",
+          device_name: data.device_name || "",
+          system_version: data.system_version || "",
+          ip_address: data.ip_address || "",
+          device_platform: data.device_platform || "",
+        });
+
+        // let loadedGroupAccess: any[] = [];
+
+        // const cleanGroupId = getVal(data.group_id);
+
+        // if (cleanGroupId) {
+        //   // Create the row using cleaned IDs
+        //   loadedGroupAccess = [
+        //     {
+        //       group_id: cleanGroupId,
+        //       approval_user_id: getVal(data.approval_user_id), // Extracts "41" from [41, "Name"]
+        //       approval_sequance: data.approval_sequance || 0,
+        //     },
+        //   ];
+        // }
+        // // Fallback: If old array format exists (legacy support)
+        // else if (
+        //   data.group_access &&
+        //   Array.isArray(data.group_access) &&
+        //   data.group_access.length > 0
+        // ) {
+        //   loadedGroupAccess = data.group_access;
+        // }
+
+        // // If we found data, load it and fetch the users for the dropdowns
+        // if (loadedGroupAccess.length > 0) {
+        //   const loadInitialUsers = async () => {
+        //     const newOptions: Record<string, Option[]> = { ...groupUserOptions };
+
+        //     for (const line of loadedGroupAccess) {
+        //       const gId = String(line.group_id);
+        //       if (gId && !newOptions[gId]) {
+        //         try {
+        //           // Fetch Users so the dropdown shows the name "Abhigna Desai" instead of just ID
+        //           const response = await getGroupUsers(gId);
+
+        //           // Robust Extraction
+        //           let userList: any[] = [];
+        //           if (response?.data?.users) userList = response.data.users;
+        //           else if (response?.data?.data?.users)
+        //             userList = response.data.data.users;
+        //           else if (response?.users) userList = response.users;
+        //           else if (Array.isArray(response)) userList = response;
+
+        //           newOptions[gId] = userList.map((u: any) => ({
+        //             value: String(u.user_id || u.id),
+        //             label: u.name || u.login,
+        //           }));
+        //         } catch (e) {
+        //           console.error("Error loading group users for edit:", e);
+        //         }
+        //       }
+        //     }
+        //     setGroupUserOptions(newOptions);
+        //     setGroupAccessLines(loadedGroupAccess);
+        //   };
+        //   loadInitialUsers();
+        // } else {
+        //   // Reset to default empty row if no group data found
+        //   setGroupAccessLines([
+        //     { group_id: "", approval_user_id: "", approval_sequance: 0 },
+        //   ]);
+        // }
+        // --- GROUP ACCESS LOGIC START ---
+
+        setActiveTab("legal");
+        let loadedGroupAccess: any[] = [];
+        // A. Check for NEW 'approvals' array (Matches your JSON)
+        if (
+          data.approvals &&
+          Array.isArray(data.approvals) &&
+          data.approvals.length > 0
+        ) {
+          loadedGroupAccess = data.approvals.map((item: any) => ({
+            model: item.model || "leave",
+            group_id: getVal(item.group_id),
+            approval_user_id: getVal(item.approval_user_id),
+            approval_sequance: item.approval_sequance || 0,
+          }));
+        }
+        // B. Fallback: Check for legacy 'group_access' array
+        else if (data.group_access && Array.isArray(data.group_access)) {
+          loadedGroupAccess = data.group_access.map((item: any) => ({
+            ...item,
+            model: item.model || "leave",
+            group_id: getVal(item.group_id),
+            approval_user_id: getVal(item.approval_user_id),
+          }));
+        }
+        // C. Fallback: Check for flat structure
+        else {
+          const cleanGroupId = getVal(data.group_id);
+          if (cleanGroupId) {
+            loadedGroupAccess = [
+              {
+                model: "leave",
+                group_id: cleanGroupId,
+                approval_user_id: getVal(data.approval_user_id),
+                approval_sequance: data.approval_sequance || 0,
+              },
+            ];
+          }
+        }
+
+        // Load Users for the Group Dropdowns
+        if (loadedGroupAccess.length > 0) {
+          const loadInitialUsers = async () => {
+            const newOptions: Record<string, any[]> = { ...groupUserOptions };
+
+            for (const line of loadedGroupAccess) {
+              const gId = String(line.group_id);
+              // Only fetch if we haven't loaded users for this group yet
+              if (gId && gId !== "0" && !newOptions[gId]) {
+                try {
+                  const response = await getGroupUsers(gId);
+                  // ... (Your existing user extraction logic) ...
+                  let userList: any[] = [];
+                  if (response?.data?.users) userList = response.data.users;
+                  else if (response?.users) userList = response.users;
+                  else if (Array.isArray(response)) userList = response;
+
+                  newOptions[gId] = userList.map((u: any) => ({
+                    value: String(u.user_id || u.id),
+                    label: u.name || u.login,
+                  }));
+                } catch (e) {
+                  console.error("Error loading group users:", e);
+                }
               }
             }
-          }
-          setGroupUserOptions(newOptions);
-          setGroupAccessLines(loadedGroupAccess);
-        };
-        loadInitialUsers();
-      } else {
-        // Default empty row
-        setGroupAccessLines([
-          {
-            model: "leave",
-            group_id: "",
-            approval_user_id: "",
-            approval_sequance: 0,
-          },
-        ]);
-      }
-      // 3. Set Visual Previews
-      if (imgUrl) {
-        setImgPreview(imgUrl);
-      } else if (data.image_1920 && typeof data.image_1920 === "string") {
-        const prefix = data.image_1920.startsWith("data:")
-          ? ""
-          : "data:image/png;base64,";
-        setImgPreview(`${prefix}${data.image_1920}`);
-      } else {
-        setImgPreview(null);
+            setGroupUserOptions(newOptions);
+            setGroupAccessLines(loadedGroupAccess);
+          };
+          loadInitialUsers();
+        } else {
+          // Default empty row
+          setGroupAccessLines([
+            {
+              model: "leave",
+              group_id: "",
+              approval_user_id: "",
+              approval_sequance: 0,
+            },
+          ]);
+        }
+        // 3. Set Visual Previews
+        if (imgUrl) {
+          setImgPreview(imgUrl);
+        } else if (data.image_1920 && typeof data.image_1920 === "string") {
+          const prefix = data.image_1920.startsWith("data:")
+            ? ""
+            : "data:image/png;base64,";
+          setImgPreview(`${prefix}${data.image_1920}`);
+        } else {
+          setImgPreview(null);
+        }
       }
     }
   }, [data]);
+
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    const modalElement = document.getElementById("add_employee_modal");
+
+    const handleModalHidden = () => {
+      resetForm();
+      if (onCloseRef.current) onCloseRef.current(); // Use the ref
+    };
+
+    modalElement?.addEventListener("hidden.bs.modal", handleModalHidden);
+
+    return () => {
+      modalElement?.removeEventListener("hidden.bs.modal", handleModalHidden);
+    };
+  }, []);
 
   // Add this inside your component to watch for date changes
   useEffect(() => {
@@ -561,6 +594,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
       }
     }
   }, [formData.joining_date, formData.probation_period]);
+
   useEffect(() => {
     const loadMasterBanks = async () => {
       try {
@@ -629,20 +663,56 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   ];
 
   // Function to strip all non-alphabetical characters
-  // Reusable function to strip numbers and symbols
   const handleAlphaOnlyChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     fieldName: string,
   ) => {
-    // Regex: [^a-zA-Z\s] removes anything that is NOT a letter or a space
     const val = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+
+    // Prevent update if the value hasn't changed (e.g., user typed a number)
+    if (formData[fieldName] === val) return;
 
     setFormData((prev: any) => ({
       ...prev,
       [fieldName]: val,
     }));
 
-    // Clear errors for this field as the user types
+    if (errors[fieldName]) {
+      setErrors((prev: any) => ({ ...prev, [fieldName]: "" }));
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    fieldName: string,
+    config: {
+      type: "numeric" | "alpha" | "alphanumeric" | "pan" | "all";
+      maxLength?: number;
+    },
+  ) => {
+    let val = e.target.value;
+
+    // 1. Apply Character Filtering
+    if (config.type === "numeric") val = val.replace(/\D/g, "");
+    if (config.type === "alpha") val = val.replace(/[^a-zA-Z\s]/g, "");
+    if (config.type === "alphanumeric") val = val.replace(/[^a-zA-Z0-9]/g, "");
+    if (config.type === "pan")
+      val = val.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+    // 2. Apply Length Constraint
+    if (config.maxLength) {
+      val = val.slice(0, config.maxLength);
+    }
+
+    // 3. Prevent unnecessary state updates
+    if (formData[fieldName] === val) return;
+
+    setFormData((prev: any) => ({
+      ...prev,
+      [fieldName]: val,
+    }));
+
+    // 4. Clear errors
     if (errors[fieldName]) {
       setErrors((prev: any) => ({ ...prev, [fieldName]: "" }));
     }
@@ -979,12 +1049,9 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     let tempErrors: any = {};
     let isValid = true;
 
-    // Logic: If one separation field is filled, others become mandatory
-    if (
-      formData.type_of_sepration ||
-      formData.resignation_date ||
-      formData.notice_period_days > 0
-    ) {
+    // ✅ UPDATED LOGIC: Only validate if a separation process has actually started
+    // We removed "formData.notice_period_days > 0" from this check
+    if (formData.type_of_sepration || formData.resignation_date) {
       if (!formData.type_of_sepration) {
         tempErrors.type_of_sepration = "Separation type is required.";
         isValid = false;
@@ -993,6 +1060,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
         tempErrors.resignation_date = "Resignation date is required.";
         isValid = false;
       }
+      // Only require days if a date/type is provided
       if (!formData.notice_period_days || formData.notice_period_days <= 0) {
         tempErrors.notice_period_days = "Please enter valid notice days.";
         isValid = false;
@@ -1433,6 +1501,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     // 🟢 REMOVED the "if (activeTab === 'employment')" check
     fetchEmploymentData();
   }, [data]); // 🟢 Runs whenever the modal data changes (opens)
+
   const loadFilteredDesignations = async (deptId: string) => {
     try {
       const jobs = await getDesignations(deptId);
@@ -1958,6 +2027,71 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   //   }
   // };
 
+  const tabConfig = [
+    { id: "legal", label: "Legal & ID" },
+    { id: "personal", label: "Personal" },
+    { id: "address", label: "Address" },
+    { id: "emergency", label: "Emergency" },
+    { id: "employment", label: "Employment" },
+    { id: "banking", label: "Banking" },
+    { id: "notice", label: "Notice" },
+    { id: "device", label: "Mobile App" },
+    { id: "group_access", label: "Group Access" },
+  ];
+
+  const checkScroll = () => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      const canScrollLeft = scrollLeft > 5;
+      const canScrollRight = scrollLeft < scrollWidth - clientWidth - 5;
+
+      // ✅ Only update if the boolean value has actually changed
+      if (showLeftArrow !== canScrollLeft) setShowLeftArrow(canScrollLeft);
+      if (showRightArrow !== canScrollRight) setShowRightArrow(canScrollRight);
+    }
+  };
+
+  const scrollTabs = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = 200;
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  const handleTabNavigation = (direction: "next" | "prev") => {
+    const currentIndex = tabConfig.findIndex((t) => t.id === activeTab);
+    let newTab = activeTab;
+
+    if (direction === "next" && currentIndex < tabConfig.length - 1) {
+      newTab = tabConfig[currentIndex + 1].id;
+    } else if (direction === "prev" && currentIndex > 0) {
+      newTab = tabConfig[currentIndex - 1].id;
+    }
+
+    setActiveTab(newTab);
+
+    // Smooth scroll the tab bar so the new active tab is visible
+    const tabElement = document.querySelector(`[data-tab-id="${newTab}"]`);
+    tabElement?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+
+    // Also scroll modal body to top so user sees the start of the next form
+    const modalBody = document.querySelector(".modal-body");
+    if (modalBody) modalBody.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Trigger checkScroll when modal opens or active tab changes
+  useEffect(() => {
+    const timer = setTimeout(() => checkScroll(), 300);
+    return () => clearTimeout(timer);
+  }, [activeTab]);
+
   const handleLineChange = (index: number, field: string, value: any) => {
     const list = [...groupAccessLines];
     list[index][field] = value;
@@ -2260,24 +2394,50 @@ const AddEditEmployeeModal: React.FC<Props> = ({
 
   return (
     <>
-      <div className="modal fade" id="add_employee_modal" role="dialog">
-        <div className="modal-dialog modal-dialog-centered modal-xl">
+      <div
+        className="modal fade"
+        id="add_employee_modal"
+        role="dialog"
+        data-bs-backdrop={preventClose ? "static" : "true"}
+        data-bs-keyboard={preventClose ? "false" : "true"}
+      >
+        <div className="modal-dialog modal-dialog-centered modal-extra-wide">
           <div className="modal-content bg-white border-0 shadow-lg">
             {/* UPDATED MODAL HEADER */}
             <div className="modal-header border-bottom bg-light py-2">
               <h5 className="modal-title fw-bold fs-15">
                 <i className="ti ti-user-plus me-2 text-primary"></i>
-                {data ? "Edit Employee" : "Add Employee"}
+                {preventClose
+                  ? "Complete Admin Profile"
+                  : data
+                    ? "Edit Employee"
+                    : "Add Employee"}
               </h5>
-              <button
-                type="button"
-                id="close-emp-modal"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                onClick={resetForm}
-              ></button>
+              {!preventClose && (
+                <button
+                  type="button"
+                  id="close-emp-modal"
+                  className="btn-close"
+                  data-bs-dismiss="modal"
+                  onClick={resetForm}
+                ></button>
+              )}
             </div>
             <div className="modal-body">
+              {preventClose && (
+                <div className="alert alert-soft-danger d-flex align-items-center mb-4">
+                  <i className="ti ti-alert-circle fs-20 me-2"></i>
+                  <div>
+                    <h6 className="mb-0 fw-bold">
+                      Profile Completion Required
+                    </h6>
+                    <p className="mb-0 fs-12">
+                      Please fill in all mandatory fields to unlock full access
+                      to the Kavach HR portal.
+                    </p>
+                  </div>
+                </div>
+              )}
               <form
                 className={`needs-validation ${
                   validated ? "was-validated" : ""
@@ -2311,7 +2471,13 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                           //   setFormData({ ...formData, name: e.target.value });
                           //   if (errors.name) setErrors({ ...errors, name: "" });
                           // }}
-                          onChange={(e) => handleAlphaOnlyChange(e, "name")}
+                          // onChange={(e) => handleAlphaOnlyChange(e, "name")}
+                          onChange={(e) =>
+                            handleInputChange(e, "name", {
+                              type: "alpha",
+                              maxLength: 50,
+                            })
+                          }
                         />
                         {isSubmitted && errors.name && (
                           <div className="text-danger fs-11 mt-1 animate__animated animate__fadeIn">
@@ -2348,7 +2514,10 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                           //     setErrors({ ...errors, father_name: "" });
                           // }}
                           onChange={(e) =>
-                            handleAlphaOnlyChange(e, "father_name")
+                            handleInputChange(e, "father_name", {
+                              type: "alpha",
+                              maxLength: 50,
+                            })
                           }
                         />
                         {isSubmitted && errors.father_name && (
@@ -2748,65 +2917,87 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                   </ul>
                 </div> */}
                 {/* --- TABS NAVIGATION --- */}
-                <div className="employee-tabs-scrollable border-bottom mb-3">
-                  <ul
-                    className="nav nav-tabs flex-nowrap overflow-auto hide-scrollbar"
-                    role="tablist"
-                  >
-                    {[
-                      "Legal",
-                      "Personal",
-                      "Address",
-                      "Emergency",
-                      "Employment",
-                      "Banking",
-                      "Notice",
-                      // "Setting",
-                      "Device",
-                      "Group Access",
-                    ].map((tabLabel) => {
-                      // Convert label "Group Access" -> key "group_access"
-                      const tabKey = tabLabel.toLowerCase().replace(" ", "_");
-                      const isError = hasTabErrors(tabKey);
+                <div className="position-relative border-bottom mb-3 px-8">
+                  {/* Left Arrow */}
+                  {showLeftArrow && (
+                    <button
+                      className="btn btn-sm btn-white position-absolute start-0 top-50 translate-middle-y z-3 shadow-sm border rounded-circle p-1"
+                      onClick={() => scrollTabs("left")}
+                      type="button"
+                      style={{ width: "30px", height: "30px" }}
+                    >
+                      <i className="ti ti-chevron-left fs-14"></i>
+                    </button>
+                  )}
+                  <div className="employee-tabs-scrollable border-bottom mb-3">
+                    <ul
+                      className="nav nav-tabs flex-nowrap overflow-auto hide-scrollbar border-0"
+                      role="tablist"
+                      ref={scrollRef}
+                      onScroll={checkScroll}
+                    >
+                      {[
+                        "Legal",
+                        "Personal",
+                        "Address",
+                        "Emergency",
+                        "Employment",
+                        "Banking",
+                        "Notice",
+                        // "Setting",
+                        "Device",
+                        "Group Access",
+                      ].map((tabLabel) => {
+                        // Convert label "Group Access" -> key "group_access"
+                        const tabKey = tabLabel.toLowerCase().replace(" ", "_");
+                        const isError = hasTabErrors(tabKey);
 
-                      return (
-                        <li className="nav-item" key={tabKey}>
-                          <button
-                            className={`nav-link fw-medium d-flex align-items-center ${
-                              activeTab === tabKey ? "active" : ""
-                            } ${isError ? "text-danger border-danger-subtle bg-danger-subtle" : ""}`}
-                            onClick={() => setActiveTab(tabKey)}
-                            type="button"
-                            style={
-                              isError ? { borderBottomColor: "#dc3545" } : {}
-                            }
-                          >
-                            {/* Tab Label */}
-                            {tabLabel === "Legal"
-                              ? "Legal / Identification"
-                              : tabLabel === "Device"
-                                ? "Mobile App Device" // Changed from "Device Information"
-                                : tabLabel === "Group Access"
-                                  ? "Group Access"
-                                  : tabLabel + " Information"}
+                        return (
+                          <li className="nav-item" key={tabKey}>
+                            <button
+                              className={`nav-link fw-medium d-flex align-items-center ${
+                                activeTab === tabKey ? "active" : ""
+                              } ${isError ? "text-danger border-danger-subtle bg-danger-subtle" : ""}`}
+                              onClick={() => setActiveTab(tabKey)}
+                              type="button"
+                              style={
+                                isError ? { borderBottomColor: "#dc3545" } : {}
+                              }
+                            >
+                              {tabLabel === "Legal"
+                                ? "Legal / Identification"
+                                : tabLabel === "Device"
+                                  ? "Mobile App Device" // Changed from "Device Information"
+                                  : tabLabel === "Group Access"
+                                    ? "Group Access"
+                                    : tabLabel + " Information"}
 
-                            {/* Error Icon Indicator */}
-                            {isError && (
-                              <i
-                                className="ti ti-alert-circle-filled ms-2 fs-16 animate__animated animate__pulse animate__infinite"
-                                title="Contains Errors"
-                              ></i>
-                            )}
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                              {isError && (
+                                <i
+                                  className="ti ti-alert-circle-filled ms-2 fs-16 animate__animated animate__pulse animate__infinite"
+                                  title="Contains Errors"
+                                ></i>
+                              )}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                  {/* Right Arrow */}
+                  {showRightArrow && (
+                    <button
+                      className="btn btn-sm btn-white position-absolute end-0 top-50 translate-middle-y z-3 shadow-sm border rounded-circle p-1"
+                      onClick={() => scrollTabs("right")}
+                      type="button"
+                    >
+                      <i className="ti ti-chevron-right fs-16"></i>
+                    </button>
+                  )}
                 </div>
-
                 {/* --- TABS CONTENT --- */}
                 <div
-                  className="tab-content bg-white"
+                  className="tab-content bg-white mt-4"
                   style={{ minHeight: "130px" }}
                 >
                   {/* 1. Legal / Identification */}
@@ -3028,9 +3219,9 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               placeholder="Enter ESI Number"
                               value={formData.esi_number}
                               onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  esi_number: e.target.value.replace(/\D/g, ""),
+                                handleInputChange(e, "esi_number", {
+                                  type: "numeric",
+                                  maxLength: 17,
                                 })
                               }
                             />
@@ -3079,11 +3270,9 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               placeholder="12 Digit UAN"
                               value={formData.uan_number}
                               onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  uan_number: e.target.value
-                                    .replace(/\D/g, "")
-                                    .slice(0, 12),
+                                handleInputChange(e, "uan_number", {
+                                  type: "numeric",
+                                  maxLength: 12,
                                 })
                               }
                             />
@@ -4375,6 +4564,19 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                   {/* 5. Employment Information */}
                   {activeTab === "employment" && (
                     <div className="employment-wrapper animate__animated animate__fadeIn">
+                      {/* ✅ HIDDEN HONEYPOT INPUTS TO TRICK BROWSER AUTOFILL */}
+                      <input
+                        type="text"
+                        name="prevent_autofill"
+                        style={{ display: "none" }}
+                        tabIndex={-1}
+                      />
+                      <input
+                        type="password"
+                        name="prevent_autofill_pwd"
+                        style={{ display: "none" }}
+                        tabIndex={-1}
+                      />{" "}
                       {/* --- Section 1: Organizational Role --- */}
                       <div className="form-section mb-4">
                         <h6 className="fw-bold text-primary mb-3 d-flex align-items-center">
@@ -4498,6 +4700,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               <input
                                 // DYNAMIC TYPE: Switches between text and password
                                 type={showPassword ? "text" : "password"}
+                                autoComplete="new-password"
                                 className={`form-control ${
                                   isSubmitted
                                     ? errors.employee_password
@@ -4563,9 +4766,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                           </div> */}
                         </div>
                       </div>
-
                       <hr className="my-2 opacity-25" />
-
                       {/* --- Section 2: Tenure & Probation --- */}
                       <div className="form-section mb-4">
                         <h6 className="fw-bold text-primary mb-3 d-flex align-items-center">
@@ -4746,9 +4947,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                           </div>
                         </div>
                       </div>
-
                       <hr className="my-2 opacity-25" />
-
                       {/* --- Section 3: Administration --- */}
                       <div className="form-section">
                         <h6 className="fw-bold text-primary mb-3 d-flex align-items-center">
@@ -5891,20 +6090,26 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                 </div>
 
                 <div className="modal-footer border-0 bg-white px-0 mt-4">
-                  <button
-                    type="button"
-                    className="btn btn-light"
-                    data-bs-dismiss="modal"
-                    onClick={resetForm} // Explicitly reset state on click
-                  >
-                    Cancel
-                  </button>
+                  {!preventClose && (
+                    <button
+                      type="button"
+                      className="btn btn-light"
+                      data-bs-dismiss="modal"
+                      onClick={resetForm}
+                    >
+                      Cancel
+                    </button>
+                  )}
                   <button
                     type="submit"
                     className="btn btn-primary px-5"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Processing..." : "Save Employee Master"}
+                    {isSubmitting
+                      ? "Processing..."
+                      : preventClose
+                        ? "Complete & Save Profile"
+                        : "Save Employee Master"}{" "}
                   </button>
                 </div>
               </form>

@@ -32,14 +32,35 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
     : employee.department_id || "General";
 
   useEffect(() => {
-    const rawSource = employee.image_1920 || employee.image_url;
+    let rawSource = employee.image_1920 || employee.image_url;
+
     if (rawSource && typeof rawSource === "string" && rawSource !== "false") {
-      const trimmed = rawSource.trim();
-      if (trimmed.startsWith("http")) {
-        setImgUrl(`${trimmed}?t=${new Date().getTime()}`);
+      let trimmed = rawSource.trim();
+
+      // 1. Fix the double slash seen in your logs (com//web -> com/web)
+      trimmed = trimmed.replace("konverthr.com//", "konverthr.com/");
+
+      // 2. Force HTTPS to prevent 'Mixed Content' blocking
+      if (trimmed.startsWith("http://")) {
+        trimmed = trimmed.replace("http://", "https://");
+      }
+
+      // 3. Handle relative paths if the domain is missing
+      if (trimmed.startsWith("/")) {
+        trimmed = `https://odooapi.konverthr.com${trimmed}`;
+      }
+
+      if (trimmed.startsWith("https://")) {
+        const separator = trimmed.includes("?") ? "&" : "?";
+        // 4. Set the clean URL with a fresh timestamp
+        setImgUrl(`${trimmed}${separator}t=${new Date().getTime()}`);
       } else if (trimmed.length > 50) {
+        // Handle Base64 strings
         const cleanBase64 = trimmed.replace(/\s/g, "");
-        setImgUrl(`data:image/png;base64,${cleanBase64}`);
+        const prefix = cleanBase64.startsWith("data:image")
+          ? ""
+          : "data:image/png;base64,";
+        setImgUrl(`${prefix}${cleanBase64}`);
       } else {
         setImgUrl(null);
       }
@@ -70,9 +91,19 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
           >
             {imgUrl ? (
               <img
+                // CRITICAL: Forces the browser to discard the old render and start fresh
+                key={imgUrl}
                 src={imgUrl}
                 className="rounded-circle w-100 h-100 object-fit-cover"
                 alt={employee.name}
+                // Mimics a direct browser visit to bypass 'strict-origin' security
+                referrerPolicy="no-referrer"
+                // Help with cross-domain loading
+                crossOrigin="anonymous"
+                onError={(e) => {
+                  console.error("Image 200 OK but render failed:", imgUrl);
+                  setImgUrl(null); // Fallback to initials
+                }}
               />
             ) : (
               <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold w-100 h-100 fs-5">
