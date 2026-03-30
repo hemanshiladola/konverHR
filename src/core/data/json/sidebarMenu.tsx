@@ -81,15 +81,29 @@ const rawSidebarData = [
             submenuItems: [
               { label: "Department", link: routes.departmentsKHR },
               { label: "Designation", link: routes.jobPositionsKHR },
+              { label: "Document", link: routes.documentTamplateKHR },
               { label: "Branch", link: routes.branchKHR },
               { label: "Work Location", link: routes.workLocationKHR },
+            ],
+          },
+          {
+            label: "Document",
+            link: "#",
+            submenu: true,
+            icon: "files",
+            submenuItems: [
+              { label: "Templates", link: routes.documentTamplateKHR },
+              {
+                label: "Genetate Document",
+                link: routes.documentGenerationKHR,
+              },
             ],
           },
           {
             label: "Professional Setup",
             link: "#",
             submenu: true,
-            icon: "user-cog",
+            icon: "file-text",
             submenuItems: [
               { label: "Skills", link: routes.skillsKHR },
               { label: "Industries", link: routes.industriesKHR },
@@ -130,6 +144,7 @@ const rawSidebarData = [
               { label: "Expense Category", link: routes.expenseCategoryKHR },
             ],
           },
+
           // { label: "Attendence Policy", link: routes.AttendancePolicyKHR },
           // { label: "Regularization Category", link: routes.regCategoryKHR },
           // { label: "Department", link: routes.departmentsKHR },
@@ -169,6 +184,7 @@ const rawSidebarData = [
         submenuItems: [
           { label: "Employees", link: routes.employeeKHR },
           { label: "Contracts", link: routes.employeeContractKHR },
+          { label: "My Documents", link: routes.myDocumentsKHR },
           { label: "Expense", link: routes.expenseKHR },
           { label: "Work Site Location", link: routes.geoKHR },
 
@@ -286,7 +302,22 @@ const rawSidebarData = [
           },
         ],
       },
-
+      {
+        label: "Tickets",
+        link: "index",
+        submenu: true,
+        showSubRoute: false,
+        icon: "tickets",
+        base: "dashboard",
+        materialicons: "start",
+        dot: false,
+        submenuItems: [
+          {
+            label: "Tickets",
+            link: routes.ticketKHR,
+          },
+        ],
+      },
       {
         label: "Approval",
         link: routes.approvalKHR,

@@ -375,6 +375,20 @@ export const DepartmentKHR = createLazyComponent(
   () => import("../KHRModules/Master Modules/Department/DepartmentKHR"),
 );
 
+export const DocumentTamplatesKHR = createLazyComponent(
+  () =>
+    import("../KHRModules/Master Modules/DocumentTamplates/DocumentTamplatesKHR"),
+);
+
+export const DocumentGenerationKHR = createLazyComponent(
+  () =>
+    import("../KHRModules/Master Modules/DocumentGenration/DocumentGenrationKHR"),
+);
+
+export const MyDocumentKHR = createLazyComponent(
+  () => import("../KHRModules/EmployeModules/MyDocuments/MyDocumentsKHR"),
+);
+
 export const RegCategoryKHR = createLazyComponent(
   () => import("../KHRModules/Master Modules/RegCategory/RegCategoryKHR"),
 );
@@ -478,6 +492,9 @@ export const PayslipOtherInputTypes = createLazyComponent(
 
 export const PayslipKHR = createLazyComponent(
   () => import("../KHRModules/payRollModules/Payslip/PayslipKHR"),
+);
+export const TickitsKHR = createLazyComponent(
+  () => import("../KHRModules/Helpdesk/HelpDeskTickitsKHR"),
 );
 export const BanksKHR = createLazyComponent(
   () => import("../KHRModules/Master Modules/BanksKHR/BanksKHR"),

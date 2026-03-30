@@ -375,9 +375,9 @@ const Header = React.memo(() => {
                     </div>
                   </div>
                 </div> */}
-                <Link to={routes.profilesettings} className="btn btn-menubar">
+                {/* <Link to={routes.profilesettings} className="btn btn-menubar">
                   <i className="ti ti-settings-cog"></i>
-                </Link>
+                </Link> */}
               </div>
 
               <div

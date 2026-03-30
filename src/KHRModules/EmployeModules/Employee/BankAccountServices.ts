@@ -1,35 +1,33 @@
-import Instance from "../../../api/axiosInstance";
-
-export interface BankAccount {
-  id?: string;
-  acc_number: string;
-  bank_id: string; // From Bank Master
-  acc_holder_name: string;
-  client_id?: string;
-  ifsc_code: string;
-  currency_id?: string;
-  is_trusted: boolean;
+/**
+ * Interface representing the Ticket data from your API response
+ */
+export interface Ticket {
+  id: number;
+  name: string; // Ticket Subject
+  description: string;
+  stage: string; // e.g., "New", "In Progress", "On Hold"
+  attachment: boolean;
+  create_date: string;
+  created_by: number;
 }
 
-const getAuthDetails = () => {
-  const user_id = localStorage.getItem("user_id");
-  return { user_id: user_id ? Number(user_id) : null };
-};
+/**
+ * GET - Helpdesk Ticket List
+ * Based on: https://konverthr.fact-byte.com//api/get_ticket?user_id=3315
+ */
+export const getTickets = async () => {
+  // Get user_id from localStorage (matching your BankAccount service logic)
+  const user_id = localStorage.getItem("user_id") || "3315";
 
-// GET - Bank Account List
-export const getBankAccounts = async () => {
-  const { user_id } = getAuthDetails();
-  const response = await Instance.get("/api/bank-account/list", {
-    params: { user_id },
-  });
-  return response.data.data || [];
-};
+  try {
+    const response = await Instance.get("/get_ticket", {
+      params: { user_id: Number(user_id) },
+    });
 
-// POST - Create Bank Account
-export const addBankAccount = async (formData: BankAccount) => {
-  const { user_id } = getAuthDetails();
-  return await Instance.post("/api/bank-account/create", {
-    ...formData,
-    user_id,
-  });
+    // Per your sample JSON: response.data.status is "success" and data is in response.data.data
+    return response.data.data || [];
+  } catch (error) {
+    console.error("Error fetching KAVACH tickets:", error);
+    throw error;
+  }
 };
