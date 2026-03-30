@@ -321,7 +321,10 @@ import {
   BranchKHR,
   PayslipKHR,
   ResetPasswordInternal,
-
+  DocumentTamplatesKHR,
+  TickitsKHR,
+  DocumentGenerationKHR,
+  MyDocumentKHR,
   // BanksAccountKHR,
 } from "./lazyRoutes";
 
@@ -1609,6 +1612,11 @@ export const publicRoutes = [
     route: Route,
   },
   {
+    path: routes.ticketKHR,
+    element: <TickitsKHR />,
+    route: Route,
+  },
+  {
     path: routes.payrollAddition,
     element: <PayRoll />,
     route: Route,
@@ -1846,6 +1854,21 @@ export const publicRoutes = [
   {
     path: routes.departmentsKHR,
     element: <DepartmentKHR />,
+    route: Route,
+  },
+  {
+    path: routes.documentTamplateKHR,
+    element: <DocumentTamplatesKHR />,
+    route: Route,
+  },
+  {
+    path: routes.documentGenerationKHR,
+    element: <DocumentGenerationKHR />,
+    route: Route,
+  },
+  {
+    path: routes.myDocumentsKHR,
+    element: <MyDocumentKHR />,
     route: Route,
   },
   {

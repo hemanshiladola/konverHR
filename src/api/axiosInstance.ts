@@ -6,7 +6,7 @@ const Instance = axios.create({
 
   headers: {
     "Content-Type": "application/json",
-  },
+  }, 
 });
 console.log(import.meta.env.VITE_BASE_URL);
 const getFreshToken = async () => {

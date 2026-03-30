@@ -2277,3 +2277,69 @@ span.p-dropdown-label.p-inputtext span {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+// Variables based on your sidebar
+$sidebar-width: 252px; // Your specific sidebar width
+$header-height: 60px; // Standard header height
+
+.page-wrapper {
+  position: relative;
+  min-height: 100vh;
+  margin-left: $sidebar-width; // Offsets content area correctly
+  // Removed z-index: 1 to ensure modals are visible
+
+  &::before {
+    content: "";
+    position: fixed;
+
+    // 1. POSITIONING: Anchored to the workspace area only
+    top: $header-height;
+    left: $sidebar-width;
+    right: 0;
+    bottom: 0;
+
+    // 2. IMAGE SETTINGS: Fixed for 100% opacity and sharpness
+    background-image: url("@/assets/img/web bg img (1).svg");
+
+    // Use 'contain' to keep the whole illustration visible without cropping
+    background-size: contain;
+
+    // Anchor to bottom-right as shown in your target layout
+    background-position: bottom right;
+    background-repeat: no-repeat;
+
+    opacity: 1; // Full clarity
+    z-index: -1; // Stays behind folders and cards
+    pointer-events: none;
+  }
+
+  .content {
+    background: transparent !important;
+    position: relative;
+    z-index: 0; // Ensures content sits above background but below modals
+  }
+}
+
+// Global fix for Bootstrap Modals
+.modal {
+  z-index: 1055 !important;
+}
+.modal-backdrop {
+  z-index: 1050 !important;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.kavach-pulse {
+  animation: pulse-glow 2s infinite;
+}

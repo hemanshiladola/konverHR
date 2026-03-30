@@ -29,6 +29,8 @@ import "../src/assets/icon/tabler-icons/webfont/tabler-icons.css";
 // =================== JS ===================
 import "../src/assets/js/bootstrap.bundle.min.js";
 import "react-toastify/dist/ReactToastify.css";
+import KavachHelpdesk from "./KHRModules/Helpdesk/KavachHelpdesk.js";
+import AddHelpDeskTickitsModal from "./KHRModules/Helpdesk/AddHelpDeskTickitsModal.js";
 
 // =================== INIT ===================
 initializePreloading();
@@ -39,12 +41,20 @@ createRoot(document.getElementById("root") as HTMLElement).render(
     <NotificationProvider>
       <PerformanceProvider enableVirtualization={true}>
         <BrowserRouter basename={base_path}>
-          <ErrorBoundary fallback={<div>Oops! An unexpected error occurred.</div>}>
+          <ErrorBoundary
+            fallback={<div>Oops! An unexpected error occurred.</div>}
+          >
             <ToastContainer position="top-right" autoClose={3000} />
             <ALLRoutes />
+            <KavachHelpdesk />
+            <AddHelpDeskTickitsModal
+              onSuccess={() => {
+                // This can be empty here as the modal logic handles navigation
+              }}
+            />
           </ErrorBoundary>
         </BrowserRouter>
       </PerformanceProvider>
     </NotificationProvider>
-  </Provider>
+  </Provider>,
 );

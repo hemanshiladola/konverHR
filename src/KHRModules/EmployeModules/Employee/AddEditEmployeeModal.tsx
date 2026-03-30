@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { DatePicker, Radio, Slider, Checkbox } from "antd";
 import dayjs from "dayjs";
+import { createPortal } from "react-dom";
 import CommonSelect from "../../../core/common/commonSelect";
 import { toast } from "react-toastify";
 import {
@@ -23,8 +24,6 @@ import {
   getApprovalGroups,
   getGroupUsers,
 } from "./EmployeeServices";
-import CommonAlertCard from "@/CommonComponent/AlertKHR/CommonAlertCard";
-import { AddEditBankAccountModal } from "./AddEditBankAccountModal";
 import { getBanks } from "@/KHRModules/Master Modules/BanksKHR/BanksServices";
 
 interface Props {
@@ -91,13 +90,21 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   ]);
   // Form State matching API Schema
   // Complete Form State matching all Tab fields and API Schema
+
+  // Inside AddEditEmployeeModal
+  const [showExpModal, setShowExpModal] = useState(false);
+  const [experienceDocs, setExperienceDocs] = useState<any[]>([]);
+  const [tempDoc, setTempDoc] = useState({
+    category: "",
+    file: null as File | null,
+  });
   const [formData, setFormData] = useState<any>({
     // 1. Header Section
     name: "",
     father_name: "",
     name_of_client: "",
     attendance_policy_id: "",
-    employee_category: "Staff",
+    employee_category: "",
     resource_calendar_id: "",
     shift_roster_id: "",
     next_shift_change: "",
@@ -265,6 +272,14 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     device_platform: "",
   };
 
+  const docCategories = [
+    { value: "exp_letter", label: "Experience Letter" },
+    { value: "relieving_letter", label: "Relieving Letter" },
+    { value: "salary_slip", label: "Salary Slip" },
+    { value: "offer_letter", label: "Offer Letter" },
+    { value: "other", label: "Other Docs" },
+  ];
+
   const resetForm = () => {
     const defaultBranch = branches.length > 0 ? branches[0].value : "";
     setFormData({
@@ -286,6 +301,39 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     ]);
   };
 
+  // This ensures the "Stage" button actually adds the object to the array
+  // 1. Updated Staging Logic
+  // Inside AddEditEmployeeModal
+  const handleStageDocument = () => {
+    if (tempDoc.category && tempDoc.file) {
+      // Create a temporary local URL for the "View" functionality
+      const previewUrl = URL.createObjectURL(tempDoc.file);
+
+      setExperienceDocs((prev) => [
+        ...prev,
+        { ...tempDoc, previewUrl }, // Store the URL with the doc
+      ]);
+
+      setTempDoc({ category: "", file: null });
+      const fileInput = document.getElementById(
+        "vault-file-input-single",
+      ) as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
+    }
+  };
+
+  const handleViewFile = (doc: any) => {
+    if (doc.previewUrl) {
+      // If it's an existing file from server or a newly staged file with a previewUrl
+      window.open(doc.previewUrl, "_blank");
+    } else if (doc.file instanceof File) {
+      // Fallback for newly added files before staging generates a URL
+      const url = URL.createObjectURL(doc.file);
+      window.open(url, "_blank");
+    } else {
+      toast.error("Unable to open file preview");
+    }
+  };
   const getCurrentUserId = () => {
     const id = localStorage.getItem("user_id");
     return id ? Number(id) : null;
@@ -318,6 +366,28 @@ const AddEditEmployeeModal: React.FC<Props> = ({
         const licenseUrl = data.driving_license_url || null;
         const passbookUrl = data.passbook_url || null;
 
+        // --- NEW ATTACHMENT MAPPING START ---
+        if (data.attachments && Array.isArray(data.attachments)) {
+          const existingDocs = data.attachments.map((att: any) => ({
+            // Map document_type to your local docCategories (exp_letter, relieving_letter, etc.)
+            category: att.document_type || "",
+            // Create a File-like object for the UI to display name and mimetype
+            file: {
+              name: att.name || "Untitled Document",
+              type: att.mimetype || "application/pdf",
+            },
+            // Store the download_url or raw data for the "View" button
+            // Odoo usually requires prepending the base URL if download_url is relative
+            previewUrl: att.download_url
+              ? `https://odooapi.konverthr.com${att.download_url}`
+              : null,
+            isExisting: true, // Internal flag to identify server-side files
+            id: att.id, // Store the attachment ID for reference
+          }));
+          setExperienceDocs(existingDocs);
+        } else {
+          setExperienceDocs([]); // Clear if no attachments
+        }
         // 2. Set the Form Data
         setFormData({
           ...initialFormData, // Start with defaults
@@ -1070,6 +1140,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     setErrors((prev: any) => ({ ...prev, ...tempErrors }));
     return isValid;
   };
+
   const validateSettingsTab = () => {
     let tempErrors: any = {};
     let isValid = true;
@@ -2168,6 +2239,30 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     setShowErrorAlert(false); // Hide alert if it was previously shown
 
     try {
+      const processedAttachments = await Promise.all(
+        experienceDocs.map(async (doc) => {
+          // Case A: New local File object uploaded via the Vault
+          if (doc.file instanceof File) {
+            const base64Data = await fileToBase64(doc.file);
+            return {
+              name: doc.file.name,
+              file_data: base64Data,
+              mimetype: doc.file.type,
+              document_type: doc.category,
+            };
+          }
+
+          // Case B: Existing attachment (already on server) being sent back during update
+          // If it's just a URL or existing data, we pass it through or re-fetch as needed
+          return {
+            name: doc.file?.name || "existing_file",
+            file_data: doc.file_data || null, // API should handle null as 'no change'
+            mimetype: doc.mimetype || "application/pdf",
+            document_type: doc.category,
+          };
+        }),
+      );
+
       const processToPayload = async (fieldValue: any) => {
         if (!fieldValue) return null;
 
@@ -2201,39 +2296,13 @@ const AddEditEmployeeModal: React.FC<Props> = ({
           ? fieldValue.split("base64,")[1]
           : fieldValue;
       };
-      // Handle File Conversions (OCR/Document logic)
-      // let licenseBase64 = null;
-      // let passbookBase64 = null;
-      // let imageBase64 = null;
 
-      // if (formData.driving_license instanceof File) {
-      //   // Case A: User uploaded a NEW file
-      //   licenseBase64 = await processToPayload(formData.driving_license);
-      // } else if (typeof formData.driving_license === "string") {
-      //   // Case B: Keeping the EXISTING file from API (which is a base64 string)
-      //   licenseBase64 = formData.driving_license;
-      // }
-
-      // if (formData.upload_passbook instanceof File) {
-      //   passbookBase64 = await processToPayload(formData.upload_passbook);
-      // } else if (typeof formData.upload_passbook === "string") {
-      //   passbookBase64 = formData.upload_passbook;
-      // }
-      // if (formData.image_1920 instanceof File) {
-      //   imageBase64 = await processToPayload(formData.image_1920);
-      // } else if (typeof formData.image_1920 === "string") {
-      //   // API often sends image with or without prefix, ensure we send raw base64 if needed
-      //   // If your API expects RAW base64 (no 'data:image...'), strip it if present:
-      //   const imgStr = formData.image_1920;
-      //   imageBase64 = imgStr.includes("base64,")
-      //     ? imgStr.split("base64,")[1]
-      //     : imgStr;
-      // }
       const [licenseBase64, passbookBase64, imageBase64] = await Promise.all([
         processToPayload(formData.driving_license),
         processToPayload(formData.upload_passbook),
         processToPayload(formData.image_1920),
       ]);
+
       const groupData = groupAccessLines.length > 0 ? groupAccessLines[0] : {};
 
       // 4. Construct Final Payload (Mapping values as per your API requirements)
@@ -2324,7 +2393,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
         driving_license: licenseBase64,
         upload_passbook: passbookBase64,
         image_1920: imageBase64, // Update with base64 string
-
+        attachments: processedAttachments,
         // ...(imageBase64 && { image_1920: imageBase64 }),
         // ...(licenseBase64 && { driving_license: licenseBase64 }),
         // ...(passbookBase64 && { upload_passbook: passbookBase64 }),
@@ -2392,7 +2461,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     }
   };
 
-  return (
+  return createPortal(
     <>
       <div
         className="modal fade"
@@ -2413,15 +2482,33 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                     ? "Edit Employee"
                     : "Add Employee"}
               </h5>
-              {!preventClose && (
-                <button
-                  type="button"
-                  id="close-emp-modal"
-                  className="btn-close"
-                  data-bs-dismiss="modal"
-                  onClick={resetForm}
-                ></button>
-              )}
+              <div className="d-flex align-items-center gap-2">
+                {/* Attachment Button for Staff */}
+                {formData.employee_category?.toLowerCase() === "staff" && (
+                  <button
+                    type="button"
+                    className="btn btn-soft-primary btn-sm d-flex align-items-center px-2 py-1"
+                    onClick={() => setShowExpModal(true)}
+                    title="Attach Experience Documents"
+                  >
+                    <i className="ti ti-paperclip me-1 fs-16"></i>
+                    <span className="fs-12">
+                      {experienceDocs.length > 0
+                        ? `${experienceDocs.length} Attached`
+                        : "Attach Docs"}
+                    </span>
+                  </button>
+                )}
+                {!preventClose && (
+                  <button
+                    type="button"
+                    id="close-emp-modal"
+                    className="btn-close"
+                    data-bs-dismiss="modal"
+                    onClick={resetForm}
+                  ></button>
+                )}
+              </div>
             </div>
             <div className="modal-body">
               {preventClose && (
@@ -3567,14 +3654,20 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                                   }`}
                                   placeholder="Enter Spouse Name"
                                   value={formData.spouse_name}
-                                  onChange={(e) => {
-                                    setFormData({
-                                      ...formData,
-                                      spouse_name: e.target.value,
-                                    });
-                                    if (errors.spouse_name)
-                                      setErrors({ ...errors, spouse_name: "" });
-                                  }}
+                                  // onChange={(e) => {
+                                  //   setFormData({
+                                  //     ...formData,
+                                  //     spouse_name: e.target.value,
+                                  //   });
+                                  //   if (errors.spouse_name)
+                                  //     setErrors({ ...errors, spouse_name: "" });
+                                  // }}
+                                  onChange={(e) =>
+                                    handleInputChange(e, "spouse_name", {
+                                      type: "alpha",
+                                      maxLength: 50,
+                                    })
+                                  }
                                 />
                                 {isSubmitted && errors.spouse_name && (
                                   <div className="invalid-feedback">
@@ -3771,9 +3864,10 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               //   })
                               // }
                               onChange={(e) =>
-                                handleAlphaOnlyChange(
+                                handleInputChange(
                                   e,
                                   "name_of_post_graduation",
+                                  { type: "alpha", maxLength: 100 },
                                 )
                               }
                             />
@@ -3793,9 +3887,10 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               //   })
                               // }
                               onChange={(e) =>
-                                handleAlphaOnlyChange(
+                                handleInputChange(
                                   e,
                                   "name_of_any_other_education",
+                                  { type: "alpha", maxLength: 100 },
                                 )
                               }
                             />
@@ -3965,6 +4060,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                                       : ""
                                   : ""
                               }`}
+                              maxLength={100}
                               placeholder="example@gmail.com"
                               value={formData.private_email}
                               onChange={(e) => {
@@ -4031,7 +4127,10 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               className="form-control"
                               value={formData.religion}
                               onChange={(e) =>
-                                handleAlphaOnlyChange(e, "religion")
+                                handleInputChange(e, "religion", {
+                                  type: "alpha",
+                                  maxLength: 20,
+                                })
                               }
                               // onChange={(e) =>
                               //   setFormData({
@@ -4198,6 +4297,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                                       : ""
                                   : ""
                               }`}
+                              maxLength={500}
                               placeholder="House no, Building, Street..."
                               value={formData.present_address}
                               onChange={(e) => {
@@ -4234,6 +4334,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                                       : ""
                                   : ""
                               }`}
+                              maxLength={500}
                               placeholder="Same as present or different..."
                               value={formData.permanent_address}
                               onChange={(e) => {
@@ -4417,10 +4518,10 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               //     });
                               // }}
                               onChange={(e) =>
-                                handleAlphaOnlyChange(
-                                  e,
-                                  "emergency_contact_name",
-                                )
+                                handleInputChange(e, "emergency_contact_name", {
+                                  type: "alpha",
+                                  maxLength: 50,
+                                })
                               }
                             />
                             {isSubmitted && errors.emergency_contact_name && (
@@ -4461,9 +4562,10 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               //     });
                               // }}
                               onChange={(e) =>
-                                handleAlphaOnlyChange(
+                                handleInputChange(
                                   e,
                                   "emergency_contact_relation",
+                                  { type: "alpha", maxLength: 20 },
                                 )
                               }
                             />
@@ -4535,6 +4637,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                                   ? "is-valid"
                                   : ""
                               }`}
+                              maxLength={500}
                               placeholder="Full Residential Address of the contact person"
                               value={formData.emergency_contact_address}
                               onChange={(e) =>
@@ -4712,18 +4815,24 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                                 }`}
                                 placeholder="System Access Password"
                                 value={formData.employee_password}
-                                onChange={(e) => {
-                                  setFormData({
-                                    ...formData,
-                                    employee_password: e.target.value,
-                                  });
-                                  if (errors.employee_password) {
-                                    setErrors({
-                                      ...errors,
-                                      employee_password: "",
-                                    });
-                                  }
-                                }}
+                                // onChange={(e) => {
+                                //   setFormData({
+                                //     ...formData,
+                                //     employee_password: e.target.value,
+                                //   });
+                                //   if (errors.employee_password) {
+                                //     setErrors({
+                                //       ...errors,
+                                //       employee_password: "",
+                                //     });
+                                //   }
+                                // }}
+                                onChange={(e) =>
+                                  handleInputChange(e, "employee_password", {
+                                    type: "all",
+                                    maxLength: 20,
+                                  })
+                                }
                               />
 
                               {/* TOGGLE BUTTON */}
@@ -5109,6 +5218,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               placeholder="Reason for hold..."
                               disabled={!formData.hold_status}
                               value={formData.hold_remarks}
+                              maxLength={150}
                               onChange={(e) => {
                                 setFormData({
                                   ...formData,
@@ -5317,6 +5427,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                             <input
                               type="text"
                               className="form-control"
+                              disabled={true}
                               value={formData.device_unique_id}
                               placeholder="e.g. 3d60c7079ea1ea51"
                               onChange={(e) =>
@@ -5336,6 +5447,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                             <input
                               type="text"
                               className="form-control"
+                              disabled={true}
                               value={formData.device_name}
                               placeholder="e.g. Pixel 6 Pro"
                               onChange={(e) =>
@@ -5356,6 +5468,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               type="text"
                               className="form-control"
                               value={formData.device_id}
+                              disabled={true}
                               onChange={(e) =>
                                 setFormData({
                                   ...formData,
@@ -5375,6 +5488,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               className="form-control"
                               value={formData.device_platform}
                               placeholder="Android / iOS"
+                              disabled={true}
                               onChange={(e) =>
                                 setFormData({
                                   ...formData,
@@ -5393,6 +5507,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               className="form-control"
                               value={formData.system_version}
                               placeholder="e.g. 15"
+                              disabled={true}
                               onChange={(e) =>
                                 setFormData({
                                   ...formData,
@@ -6117,7 +6232,191 @@ const AddEditEmployeeModal: React.FC<Props> = ({
           </div>
         </div>
       </div>
-    </>
+      {showExpModal && (
+        <div
+          className="modal fade show d-block animate__animated animate__fadeIn"
+          style={{
+            backgroundColor: "rgba(0,0,0,0.4)",
+            zIndex: 1100,
+            backdropFilter: "blur(4px)",
+          }}
+        >
+          <div className="modal-dialog modal-dialog-centered modal-lg">
+            <div
+              className="modal-content border-0 shadow-lg"
+              style={{ borderRadius: "12px" }}
+            >
+              {/* Decent Header */}
+              <div className="modal-header bg-white border-bottom px-4 py-3">
+                <h6 className="modal-title fw-bold text-dark d-flex align-items-center">
+                  <i className="ti ti-folder-open me-2 text-primary fs-20"></i>
+                  Experience Documents Vault
+                </h6>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowExpModal(false)}
+                ></button>
+              </div>
+
+              <div className="modal-body p-4 bg-light-subtle">
+                {/* --- UPLOAD SECTION (Standard Select for stability) --- */}
+                <div className="bg-white p-3 rounded border shadow-sm mb-4">
+                  <div className="row g-3 align-items-end">
+                    <div className="col-md-5">
+                      <label className="form-label fs-12 fw-bold text-muted">
+                        Category
+                      </label>
+                      <select
+                        className="form-select fs-13"
+                        value={tempDoc.category}
+                        onChange={(e) =>
+                          setTempDoc({ ...tempDoc, category: e.target.value })
+                        }
+                        style={{ height: "40px", borderRadius: "8px" }}
+                      >
+                        <option value="">Select Category...</option>
+                        {docCategories.map((cat) => (
+                          <option key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="col-md-5">
+                      <label className="form-label fs-12 fw-bold text-muted">
+                        Source File
+                      </label>
+                      <input
+                        type="file"
+                        id="vault-file-input-single"
+                        className="form-control fs-13"
+                        style={{ height: "40px", borderRadius: "8px" }}
+                        onChange={(e) =>
+                          setTempDoc({
+                            ...tempDoc,
+                            file: e.target.files?.[0] || null,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="col-md-2">
+                      <button
+                        type="button"
+                        className="btn btn-primary w-100 fw-bold fs-13"
+                        style={{ height: "40px", borderRadius: "8px" }}
+                        disabled={!tempDoc.category || !tempDoc.file}
+                        onClick={() => {
+                          setExperienceDocs([
+                            ...experienceDocs,
+                            { ...tempDoc },
+                          ]);
+                          setTempDoc({ category: "", file: null });
+                          const input = document.getElementById(
+                            "vault-file-input-single",
+                          ) as HTMLInputElement;
+                          if (input) input.value = "";
+                        }}
+                      >
+                        ADD
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* --- FOLDER GALLERY --- */}
+                <p className="fs-11 fw-bold text-uppercase text-muted mb-3 tracking-wider">
+                  Staged Documents ({experienceDocs.length})
+                </p>
+
+                <div
+                  className="row g-3 hide-scrollbar"
+                  style={{ maxHeight: "320px", overflowY: "auto" }}
+                >
+                  {experienceDocs.length > 0 ? (
+                    experienceDocs.map((doc, index) => (
+                      <div key={index} className="col-md-4">
+                        <div
+                          className="card h-100 border-0 shadow-sm text-center p-3 position-relative bg-white"
+                          style={{ borderRadius: "10px" }}
+                        >
+                          {/* Delete Icon */}
+                          <button
+                            className="btn btn-ghost-danger btn-icon btn-sm position-absolute"
+                            style={{ top: "5px", right: "5px" }}
+                            onClick={() =>
+                              setExperienceDocs(
+                                experienceDocs.filter((_, i) => i !== index),
+                              )
+                            }
+                          >
+                            <i className="ti ti-trash fs-16"></i>
+                          </button>
+
+                          <div className="mb-2">
+                            <i className="ti ti-folder-filled text-warning fs-40"></i>
+                          </div>
+
+                          <h6
+                            className="fs-12 fw-bold text-dark mb-1 text-truncate"
+                            title={doc.file?.name}
+                          >
+                            {doc.file?.name}
+                          </h6>
+
+                          <div className="d-flex flex-column gap-2 mt-2">
+                            <span className="badge bg-light text-primary border border-primary-subtle fs-10 text-capitalize py-1 px-2 rounded-pill mx-auto">
+                              {doc.category.replace("_", " ")}
+                            </span>
+
+                            {/* VIEW BUTTON */}
+                            <button
+                              type="button"
+                              className="btn btn-soft-info btn-sm fs-10 fw-bold py-1 mx-auto"
+                              onClick={() => handleViewFile(doc)} // Pass the entire doc object
+                            >
+                              <i className="ti ti-eye me-1"></i> VIEW
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-12 text-center py-5 border rounded border-dashed bg-white opacity-75">
+                      <p className="text-muted fs-12 mb-0">
+                        No documents staged for upload.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div
+                className="modal-footer border-top bg-white p-3"
+                style={{ borderRadius: "0 0 12px 12px" }}
+              >
+                <button
+                  type="button"
+                  className="btn btn-light btn-sm px-4 fw-bold"
+                  onClick={() => setShowExpModal(false)}
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm px-4 fw-bold shadow-sm"
+                  onClick={() => setShowExpModal(false)}
+                >
+                  Sync Documents
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>,
+    document.body,
   );
 };
 

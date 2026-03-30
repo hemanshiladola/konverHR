@@ -8,6 +8,9 @@ import { all_routes } from "@/router/all_routes";
 import EmployeeCard from "./EmployeeCard";
 import DatatableKHR from "@/CommonComponent/DataTableKHR/DatatableKHR";
 import ArchiveEmployeeModal from "./ArchiveEmployeeModal";
+import AddEditEmployeeModal2 from "./AddEditEmployeeModal2";
+import dayjs from "dayjs";
+import { createPortal } from "react-dom";
 
 const EmployeeKHR = () => {
   const navigate = useNavigate();
@@ -20,13 +23,35 @@ const EmployeeKHR = () => {
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]); // ✅ Added for filtering
   const [loading, setLoading] = useState(true);
   const [editData, setEditData] = useState<any>(null);
+  const [selectedDraft, setSelectedDraft] = useState<any>(null); // ✅ NEW: State for loading a specific draft
+
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
   const [archiveId, setArchiveId] = useState<number | null>(null);
-
   // ✅ Filter States
   const [searchText, setSearchText] = useState("");
   const [filterDept, setFilterDept] = useState("");
   const [filterStatus, setFilterStatus] = useState(""); // ✅ Added Status Filter State
+
+  // ✅ NEW: Draft Management States
+  const [savedDrafts, setSavedDrafts] = useState<any[]>([]);
+
+  // Load drafts when the page loads
+  const loadDraftsFromStorage = () => {
+    const stored = localStorage.getItem("emp_form_drafts");
+    if (stored) {
+      try {
+        setSavedDrafts(JSON.parse(stored));
+      } catch (e) {
+        setSavedDrafts([]);
+      }
+    } else {
+      setSavedDrafts([]);
+    }
+  };
+
+  useEffect(() => {
+    loadDraftsFromStorage();
+  }, []);
 
   // const fetchEmployees = async () => {
   //   setLoading(true);
@@ -173,6 +198,27 @@ const EmployeeKHR = () => {
       const modal = new (window as any).bootstrap.Modal(modalElement);
       modal.show();
     }
+  };
+
+  const handleResumeDraft = (draft: any) => {
+    setEditData(null); // Clear normal edit data
+    setSelectedDraft(draft); // Set the draft data
+
+    // Close drafts modal and open the Add modal
+    const draftsModal = document.getElementById("drafts_list_modal");
+    const addModal = document.getElementById("add_employee_modal2");
+
+    if (draftsModal)
+      (window as any).bootstrap.Modal.getInstance(draftsModal)?.hide();
+    if (addModal) new (window as any).bootstrap.Modal(addModal).show();
+  };
+
+  // Handle clicking "Delete" (Trash icon)
+  const handleDeleteDraft = (draftId: string) => {
+    const updatedDrafts = savedDrafts.filter((d) => d.id !== draftId);
+    localStorage.setItem("emp_form_drafts", JSON.stringify(updatedDrafts));
+    setSavedDrafts(updatedDrafts);
+    toast.success("Draft deleted.");
   };
 
   const columns = [
@@ -452,6 +498,33 @@ const EmployeeKHR = () => {
           modalTarget={isAdmin ? "#add_employee_modal" : ""}
         />
 
+        {/* ✅ NEW DRAFTS BUTTON */}
+        {savedDrafts.length > 0 && isAdmin && (
+          <div className="alert alert-warning d-flex align-items-center justify-content-between mb-4 shadow-sm border-warning border-start border-4 py-3 animate__animated animate__fadeInDown">
+            <div className="d-flex align-items-center">
+              <div className="bg-warning-subtle p-2 rounded-circle me-3">
+                <i className="ti ti-file-pencil fs-24 text-warning"></i>
+              </div>
+              <div>
+                <h6 className="mb-0 fw-bold text-dark">
+                  Unsaved Drafts Available
+                </h6>
+                <p className="mb-0 fs-13 text-muted">
+                  You have {savedDrafts.length} incomplete employee forms saved
+                  to your browser.
+                </p>
+              </div>
+            </div>
+            <button
+              className="btn btn-warning fw-bold shadow-sm rounded-pill px-4"
+              data-bs-toggle="modal"
+              data-bs-target="#drafts_list_modal"
+            >
+              View Drafts <i className="ti ti-arrow-right ms-2"></i>
+            </button>
+          </div>
+        )}
+
         {/* --- STATS SUMMARY SECTION --- */}
         <div className="row mb-4">
           <div className="col-md-4">
@@ -604,7 +677,69 @@ const EmployeeKHR = () => {
             )}
           </>
         )}
-
+        {createPortal(
+          <div className="modal fade" id="drafts_list_modal" tabIndex={-1}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div className="modal-header bg-white border-bottom px-4 py-3">
+                  <h5 className="modal-title fw-bold d-flex align-items-center">
+                    <i className="ti ti-file-pencil text-warning me-2 fs-20"></i>{" "}
+                    Saved Drafts
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    data-bs-dismiss="modal"
+                  ></button>
+                </div>
+                <div className="modal-body p-0 bg-light-subtle">
+                  {savedDrafts.length === 0 ? (
+                    <div className="p-5 text-center text-muted">
+                      No drafts available.
+                    </div>
+                  ) : (
+                    <ul className="list-group list-group-flush">
+                      {savedDrafts.map((draft) => (
+                        <li
+                          key={draft.id}
+                          className="list-group-item d-flex justify-content-between align-items-center p-4 bg-transparent border-bottom"
+                        >
+                          <div>
+                            <h6 className="mb-1 fw-bold text-dark">
+                              {draft.title}
+                            </h6>
+                            <div className="fs-12 text-muted">
+                              <i className="ti ti-clock me-1"></i>
+                              Saved{" "}
+                              {dayjs(draft.lastModified).format(
+                                "DD MMM YYYY, hh:mm A",
+                              )}
+                            </div>
+                          </div>
+                          <div className="d-flex gap-2">
+                            <button
+                              className="btn btn-sm btn-primary px-3 fw-bold rounded-pill shadow-sm"
+                              onClick={() => handleResumeDraft(draft)}
+                            >
+                              Resume
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-danger btn-icon rounded-circle"
+                              onClick={() => handleDeleteDraft(draft.id)}
+                            >
+                              <i className="ti ti-trash"></i>
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
         <ArchiveEmployeeModal
           employeeId={archiveId}
           onSuccess={() => {
@@ -613,16 +748,17 @@ const EmployeeKHR = () => {
           }}
           onClose={() => setArchiveId(null)}
         />
-        {/* <AddEditEmployeeModal
+        <AddEditEmployeeModal
           data={editData}
           onSuccess={() => {
             fetchEmployees();
             setEditData(null);
           }}
           onClose={() => setEditData(null)}
-        /> */}
-        <AddEditEmployeeModal
+        />
+        {/* <AddEditEmployeeModal2
           data={editData}
+          draftData={selectedDraft}
           // 2. LOGOUT FLOW ON SUCCESS
           onSuccess={() => {
             const isLocked =
@@ -646,10 +782,16 @@ const EmployeeKHR = () => {
             } else {
               getEmployees();
               setEditData(null);
+              setSelectedDraft(null);
+              loadDraftsFromStorage(); // Refresh drafts list
             }
           }}
-          onClose={() => setEditData(null)}
-        />
+          onClose={() => {
+            setEditData(null);
+            setSelectedDraft(null);
+            loadDraftsFromStorage(); // Refresh drafts list
+          }}
+        /> */}
       </div>
     </div>
   );
