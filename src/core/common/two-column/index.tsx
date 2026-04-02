@@ -160,7 +160,7 @@ const TwoColumnSidebar = () => {
                                               className={`${
                                                 subMenus?.subMenus
                                                   ?.map(
-                                                    (link: any) => link?.route
+                                                    (link: any) => link?.route,
                                                   )
                                                   .includes(Location.pathname)
                                                   ? "active"
@@ -172,7 +172,7 @@ const TwoColumnSidebar = () => {
                                               }`}
                                               onClick={() =>
                                                 toggleSidebar(
-                                                  subMenus.menuValue
+                                                  subMenus.menuValue,
                                                 )
                                               }
                                             >
@@ -190,7 +190,7 @@ const TwoColumnSidebar = () => {
                                               {subMenus.subMenusTwo.map(
                                                 (
                                                   subMenuTwo: any,
-                                                  k: number
+                                                  k: number,
                                                 ) => (
                                                   <li
                                                     key={`submenu-two-${j}-${k}`}
@@ -207,7 +207,7 @@ const TwoColumnSidebar = () => {
                                                       {subMenuTwo.menuValue}
                                                     </Link>
                                                   </li>
-                                                )
+                                                ),
                                               )}
                                             </ul>
                                           </li>
@@ -229,7 +229,7 @@ const TwoColumnSidebar = () => {
                                       </>
                                     )}
                                   </React.Fragment>
-                                )
+                                ),
                               )}
                             </>
                           )}

@@ -224,7 +224,7 @@ const rawSidebarData = [
           {
             label: "Employees Attendance",
             link: routes.attendaceEmployeeKHR,
-            roles: [ROLES.EMPLOYEE], // Both
+            roles: [ROLES.ADMIN], // Both
           },
         ],
       },

@@ -43,7 +43,7 @@ const KavachHelpdesk = () => {
     <div
       style={{
         position: "fixed",
-        bottom: "30px",
+        bottom: "70px",
         right: "30px",
         zIndex: 999999,
       }}

@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { createPayslip, computePayslip } from "./PayslipServices";
 import { getEmployeesBasicInfo } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
 import { getContracts } from "@/KHRModules/EmployeeContract/contractService";
+import { createPortal } from "react-dom";
 
 interface Props {
   onSuccess: () => void;
@@ -123,7 +124,7 @@ const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
     return `badge fs-10 px-2 fw-bold ${map[cat] || "bg-soft-secondary text-secondary"}`;
   };
 
-  return (
+  return createPortal(
     <div className="modal fade" id="add_payslip_modal" role="dialog">
       <div className="modal-dialog modal-dialog-centered modal-lg">
         <div className="modal-content border-0 shadow-lg">
@@ -377,7 +378,8 @@ const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

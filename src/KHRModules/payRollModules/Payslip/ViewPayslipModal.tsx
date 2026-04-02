@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import ImageWithBasePath from "../../../core/common/imageWithBasePath";
+import { createPortal } from "react-dom";
 
 interface Props {
   data: any | null;
@@ -53,7 +54,7 @@ const ViewPayslipModal: React.FC<Props> = ({ data, onClose }) => {
   // 2. Attendance Data
   const workedDays = data.worked_days_line_ids || [];
 
-  return (
+  return createPortal(
     <div
       className="modal fade"
       id="view_payslip_modal"
@@ -267,7 +268,8 @@ const ViewPayslipModal: React.FC<Props> = ({ data, onClose }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

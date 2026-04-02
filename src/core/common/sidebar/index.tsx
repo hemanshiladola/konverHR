@@ -227,10 +227,10 @@ const Sidebar = React.memo(() => {
             />
           </Link>
           <Link to={all_routes.adminDashboard} className="logo-small">
-            <ImageWithBasePath src="assets/img/Small-logo.png" alt="Logo" />
+            <ImageWithBasePath src="assets/img/k logo.svg" alt="Logo" />
           </Link>
           <Link to={all_routes.adminDashboard} className="dark-logo">
-            <ImageWithBasePath src="assets/img/Small-logo.png" alt="Logo" />
+            <ImageWithBasePath src="assets/img/k logo.svg" alt="Logo" />
           </Link>
         </div>
         <div className="modern-profile p-3 pb-0">

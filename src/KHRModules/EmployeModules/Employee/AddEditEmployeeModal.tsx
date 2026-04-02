@@ -33,6 +33,13 @@ interface Props {
   preventClose?: boolean;
 }
 
+interface Bank {
+  id: number | string;
+  account_number?: string;
+  bank_name?: string;
+  bank_id?: [number, string] | any;
+}
+
 const AddEditEmployeeModal: React.FC<Props> = ({
   onSuccess,
   onClose,
@@ -441,7 +448,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
           probation_end_date: data.probation_end_date || null,
           group_company_joining_date: data.group_company_joining_date || null,
           date_of_marriage: data.date_of_marriage || null,
-
+          employee_code: data.employee_code || "",
           // --- Handle Files/Images ---
           // Keep them as null or existing strings; do not overwrite with File objects yet
           // image_1920: data.image_1920 || null,
@@ -1386,16 +1393,46 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   }, []);
 
   // FIX: Updated Banking Data Loader to handle 'bank_name'
+  // useEffect(() => {
+  //   const loadBankingData = async () => {
+  //     try {
+  //       const bankList = await getBanks();
+
+  //       // Transform API response to { value, label }
+  //       const formattedBanks = bankList.map((b: any) => ({
+  //         value: String(b.id),
+  //         // FIX: Check 'b.bank_name' first, then fall back to array check
+  //         label: `${b.account_number} - ${
+  //           b.bank_name ||
+  //           (Array.isArray(b.bank_id) ? b.bank_id[1] : "Unknown Bank")
+  //         }`,
+  //       }));
+
+  //       setBanks(formattedBanks);
+  //     } catch (error) {
+  //       console.error("Error loading banks:", error);
+  //     }
+  //   };
+
+  //   loadBankingData();
+  // }, []);
+
   useEffect(() => {
     const loadBankingData = async () => {
       try {
-        const bankList = await getBanks();
+        const response: any = await getBanks(); // Cast to any to handle nested Odoo objects
 
-        // Transform API response to { value, label }
+        // SAFE DATA EXTRACTION: Check if it's an array or if data is inside response.data
+        const bankList = Array.isArray(response)
+          ? response
+          : response?.data && Array.isArray(response.data)
+            ? response.data
+            : [];
+
+        // TRANSFORM (Only runs if bankList is an array)
         const formattedBanks = bankList.map((b: any) => ({
           value: String(b.id),
-          // FIX: Check 'b.bank_name' first, then fall back to array check
-          label: `${b.account_number} - ${
+          label: `${b.account_number || "No Account"} - ${
             b.bank_name ||
             (Array.isArray(b.bank_id) ? b.bank_id[1] : "Unknown Bank")
           }`,
@@ -1404,6 +1441,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
         setBanks(formattedBanks);
       } catch (error) {
         console.error("Error loading banks:", error);
+        setBanks([]); // Fallback to empty array to prevent UI crash
       }
     };
 
@@ -1848,6 +1886,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     employment: ["employee_password", "hold_remarks"],
     banking: ["bank_id", "account_number", "bank_iafc_code"],
     notice: ["type_of_sepration", "resignation_date", "notice_period_days"],
+    device: ["device_unique_id"],
     // header fields (name, father_name) are always visible, so no tab mapping needed for them
   };
 
@@ -3570,7 +3609,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                               type="text"
                               className="form-control bg-light border-dashed"
                               disabled
-                              value="AUTO-GEN-2025"
+                              value={formData.employee_code}
                             />
                           </div>
 
