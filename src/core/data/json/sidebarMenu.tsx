@@ -38,8 +38,16 @@ const rawSidebarData = [
         dot: false,
         submenuItems: [
           // { label: "Attendence Policy", link: routes.AttendancePolicyKHR },
-          { label: "Admin Dashboard", link: routes.adminDashboard },
-          { label: "Employee Dashboard", link: routes.employeeDashboard },
+          {
+            label: "Admin Dashboard",
+            link: routes.adminDashboard,
+            roles: [ROLES.ADMIN],
+          },
+          {
+            label: "Employee Dashboard",
+            link: routes.employeeDashboard,
+            roles: [ROLES.EMPLOYEE],
+          },
         ],
       },
     ],
@@ -49,7 +57,7 @@ const rawSidebarData = [
     icon: "airplay",
     showAsTab: true,
     separateRoute: false,
-    roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only Section
+    roles: [ROLES.ADMIN], // 🔥 Admin Only Section
     dot: true,
     submenuItems: [
       {
@@ -182,27 +190,31 @@ const rawSidebarData = [
         dot: false,
         roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
         submenuItems: [
-          { label: "Employees", link: routes.employeeKHR },
-          { label: "Contracts", link: routes.employeeContractKHR },
-          { label: "My Documents", link: routes.myDocumentsKHR },
-          { label: "Expense", link: routes.expenseKHR },
-          { label: "Work Site Location", link: routes.geoKHR },
-
-          // { label: "Calander", link: routes.employeeCalenderKHR },
-          // {
-          //   label: "Work Site Setup",
-          //   link: "index",
-          //   submenu: true,
-          //   showSubRoute: false,
-          //   icon: "location-pin",
-          //   base: "dashboard",
-          //   materialicons: "start",
-          //   dot: false,
-          //   roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
-          //   submenuItems: [
-          //     { label: "Geo Configurations", link: routes.geoKHR },
-          //   ],
-          // },
+          {
+            label: "Employees",
+            link: routes.employeeKHR,
+            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+          },
+          {
+            label: "Contracts",
+            link: routes.employeeContractKHR,
+            roles: [ROLES.ADMIN],
+          },
+          {
+            label: "My Documents",
+            link: routes.myDocumentsKHR,
+            roles: [ROLES.EMPLOYEE],
+          },
+          {
+            label: "Expense",
+            link: routes.expenseKHR,
+            roles: [ROLES.EMPLOYEE],
+          },
+          {
+            label: "Work Site Location",
+            link: routes.geoKHR,
+            roles: [ROLES.ADMIN],
+          },
         ],
       },
       {
@@ -224,7 +236,7 @@ const rawSidebarData = [
           {
             label: "Employees Attendance",
             link: routes.attendaceEmployeeKHR,
-            roles: [ROLES.ADMIN], // Both
+            roles: [ROLES.EMPLOYEE], // Both
           },
         ],
       },
@@ -284,6 +296,8 @@ const rawSidebarData = [
         base: "dashboard",
         materialicons: "start",
         dot: false,
+        roles: [ROLES.ADMIN], // 🔥 Admin Only
+
         submenuItems: [
           // {
           //   label: "Salary Structure Types",
@@ -307,14 +321,17 @@ const rawSidebarData = [
         link: "index",
         submenu: true,
         showSubRoute: false,
-        icon: "tickets",
+        icon: "ticket",
         base: "dashboard",
         materialicons: "start",
         dot: false,
+        roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
+
         submenuItems: [
           {
             label: "Tickets",
             link: routes.ticketKHR,
+            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
           },
         ],
       },
@@ -322,8 +339,10 @@ const rawSidebarData = [
         label: "Approval",
         link: routes.approvalKHR,
         submenu: false,
+        icon: "checkup-list",
         showSubRoute: false,
         base: "form-horizontal",
+        roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
       },
     ],
   },
@@ -348,6 +367,7 @@ const rawSidebarData = [
     tittle: "Authentication",
     showAsTab: false,
     separateRoute: false,
+    roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
     submenuItems: [
       {
         label: "Forgot Password",
@@ -363,20 +383,20 @@ const rawSidebarData = [
         showSubRoute: false,
         submenu: false,
       },
-      {
-        label: "Email Verification",
-        link: routes.emailVerification,
-        icon: "mail-exclamation",
-        showSubRoute: false,
-        submenu: false,
-      },
-      {
-        label: "Lock Screen",
-        link: routes.lockScreen,
-        icon: "lock-square",
-        showSubRoute: false,
-        submenu: false,
-      },
+      // {
+      //   label: "Email Verification",
+      //   link: routes.emailVerification,
+      //   icon: "mail-exclamation",
+      //   showSubRoute: false,
+      //   submenu: false,
+      // },
+      // {
+      //   label: "Lock Screen",
+      //   link: routes.lockScreen,
+      //   icon: "lock-square",
+      //   showSubRoute: false,
+      //   submenu: false,
+      // },
     ],
   },
   // {
