@@ -17,7 +17,7 @@ import {
   getReportingManagers,
   getShiftRosters,
   getStates,
-  getTimezones,
+  // getTimezones,
   getWorkingSchedules,
   getWorkLocations,
   updateEmployee,
@@ -265,7 +265,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   };
 
   // ✅ SAVE MULTIPLE DRAFTS
-// ✅ BULLETPROOF: SAVE MULTIPLE DRAFTS
+  // ✅ BULLETPROOF: SAVE MULTIPLE DRAFTS
   const handleSaveDraft = () => {
     try {
       // 1. Exclude ALL File objects explicitly
@@ -277,7 +277,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
         ...restFormData
       } = formData;
 
-      // 2. Deep clean the data: This completely strips out any accidental Event objects, 
+      // 2. Deep clean the data: This completely strips out any accidental Event objects,
       // circular references, or complex DayJS instances that crash JSON.stringify.
       const safeFormData = JSON.parse(JSON.stringify(restFormData));
 
@@ -285,7 +285,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       const draftId = loadedDraftId || Date.now().toString();
 
       // Give it a human readable title
-      const draftTitle = safeFormData.name || safeFormData.private_email || "Unnamed Employee";
+      const draftTitle =
+        safeFormData.name || safeFormData.private_email || "Unnamed Employee";
 
       const newDraftPayload = {
         id: draftId,
@@ -298,14 +299,17 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       // 3. Get existing drafts array safely
       const existingDraftsStr = localStorage.getItem("emp_form_drafts");
       let drafts = [];
-      
+
       if (existingDraftsStr) {
         try {
           const parsed = JSON.parse(existingDraftsStr);
           // Ensure it is strictly an array, otherwise default to empty array
           drafts = Array.isArray(parsed) ? parsed : [];
         } catch (parseError) {
-          console.error("Corrupted drafts found, clearing storage.", parseError);
+          console.error(
+            "Corrupted drafts found, clearing storage.",
+            parseError,
+          );
           drafts = [];
         }
       }
@@ -323,13 +327,14 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       localStorage.setItem("emp_form_drafts", JSON.stringify(drafts));
       toast.success("Draft saved! Documents and images were skipped.");
       executeClose();
-      
     } catch (error) {
       console.error("CRITICAL ERROR saving draft:", error);
-      toast.error("Failed to save draft. Form contains invalid or corrupted data.");
+      toast.error(
+        "Failed to save draft. Form contains invalid or corrupted data.",
+      );
     }
   };
-  
+
   const handleDiscardDraft = () => {
     // If they were editing a specific draft and discard it, remove it from array
     if (loadedDraftId) {

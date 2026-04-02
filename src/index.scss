@@ -1965,7 +1965,7 @@ span.p-dropdown-label.p-inputtext span {
 @media (min-width: 991.98px) {
   [data-layout="default"] {
     .sidebar {
-      padding-top: 66px;
+      padding-top: 76px;
 
       .sidebar-logo {
         top: 0;
@@ -2326,20 +2326,4 @@ $header-height: 60px; // Standard header height
 }
 .modal-backdrop {
   z-index: 1050 !important;
-}
-
-@keyframes pulse-glow {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
-}
-
-.kavach-pulse {
-  animation: pulse-glow 2s infinite;
 }

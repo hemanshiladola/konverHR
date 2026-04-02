@@ -1092,7 +1092,7 @@ const AdminAttandanceKHR = () => {
                     </p>
                   </div>
                 </div>
-                <div className="col-md-7">
+                {/* <div className="col-md-7">
                   <div className="d-flex align-items-center justify-content-md-end">
                     <h6>
                       {selectedEmployeeId
@@ -1145,7 +1145,7 @@ const AdminAttandanceKHR = () => {
                       </div>
                     )}
                   </div>
-                </div>
+                </div> */}
               </div>
               <div className="border rounded">
                 <div className="row flex-fill">

@@ -34,8 +34,8 @@ export const all_routes = {
   expenseKHR: "/KHR-expense",
   employeeCalenderKHR: "/KHR-employee-Calender",
 
-  internalResetPassword: "KHR-internal-password",
-  internalforgotPassword: "KHR-internal-forgot-password",
+  internalResetPassword: "/KHR-internal-password",
+  internalforgotPassword: "/KHR-internal-forgot-password",
 
   // Leave Modules
   leaveAdminKHR: "/KHR-leave-admin",

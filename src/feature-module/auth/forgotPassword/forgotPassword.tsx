@@ -51,7 +51,10 @@ const ForgotPassword = () => {
 
       // Navigate to Reset Password page with email as a query parameter
       setTimeout(() => {
-        navigate(`${routes.resetPassword}?email=${encodeURIComponent(email)}`);
+        navigate(
+          `/${routes.resetPassword}?email=${encodeURIComponent(email)}`,
+          { replace: true },
+        );
       }, 1500);
     } catch (err: any) {
       toast.error(
