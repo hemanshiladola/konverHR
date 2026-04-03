@@ -17,7 +17,7 @@ import {
   getReportingManagers,
   getShiftRosters,
   getStates,
-  // getTimezones,
+  getTimezones,
   getWorkingSchedules,
   getWorkLocations,
   updateEmployee,
