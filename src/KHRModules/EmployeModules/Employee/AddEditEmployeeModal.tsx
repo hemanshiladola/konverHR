@@ -538,6 +538,84 @@ const AddEditEmployeeModal: React.FC<Props> = ({
         setActiveTab("legal");
         let loadedGroupAccess: any[] = [];
         // A. Check for NEW 'approvals' array (Matches your JSON)
+        // if (
+        //   data.approvals &&
+        //   Array.isArray(data.approvals) &&
+        //   data.approvals.length > 0
+        // ) {
+        //   loadedGroupAccess = data.approvals.map((item: any) => ({
+        //     model: item.model || "leave",
+        //     group_id: getVal(item.group_id),
+        //     approval_user_id: getVal(item.approval_user_id),
+        //     approval_sequance: item.approval_sequance || 0,
+        //   }));
+        // }
+        // // B. Fallback: Check for legacy 'group_access' array
+        // else if (data.group_access && Array.isArray(data.group_access)) {
+        //   loadedGroupAccess = data.group_access.map((item: any) => ({
+        //     ...item,
+        //     model: item.model || "leave",
+        //     group_id: getVal(item.group_id),
+        //     approval_user_id: getVal(item.approval_user_id),
+        //   }));
+        // }
+        // // C. Fallback: Check for flat structure
+        // else {
+        //   const cleanGroupId = getVal(data.group_id);
+        //   if (cleanGroupId) {
+        //     loadedGroupAccess = [
+        //       {
+        //         model: "leave",
+        //         group_id: cleanGroupId,
+        //         approval_user_id: getVal(data.approval_user_id),
+        //         approval_sequance: data.approval_sequance || 0,
+        //       },
+        //     ];
+        //   }
+        // }
+
+        // // Load Users for the Group Dropdowns
+        // if (loadedGroupAccess.length > 0) {
+        //   const loadInitialUsers = async () => {
+        //     const newOptions: Record<string, any[]> = { ...groupUserOptions };
+
+        //     for (const line of loadedGroupAccess) {
+        //       const gId = String(line.group_id);
+        //       // Only fetch if we haven't loaded users for this group yet
+        //       if (gId && gId !== "0" && !newOptions[gId]) {
+        //         try {
+        //           const response = await getGroupUsers(gId);
+        //           // ... (Your existing user extraction logic) ...
+        //           let userList: any[] = [];
+        //           if (response?.data?.users) userList = response.data.users;
+        //           else if (response?.users) userList = response.users;
+        //           else if (Array.isArray(response)) userList = response;
+
+        //           newOptions[gId] = userList.map((u: any) => ({
+        //             value: String(u.user_id || u.id),
+        //             label: u.name || u.login,
+        //           }));
+        //         } catch (e) {
+        //           console.error("Error loading group users:", e);
+        //         }
+        //       }
+        //     }
+        //     setGroupUserOptions(newOptions);
+        //     setGroupAccessLines(loadedGroupAccess);
+        //   };
+        //   loadInitialUsers();
+        // } else {
+        //   // Default empty row
+        //   setGroupAccessLines([
+        //     {
+        //       model: "leave",
+        //       group_id: "",
+        //       approval_user_id: "",
+        //       approval_sequance: 0,
+        //     },
+        //   ]);
+        // }
+
         if (
           data.approvals &&
           Array.isArray(data.approvals) &&
@@ -549,69 +627,55 @@ const AddEditEmployeeModal: React.FC<Props> = ({
             approval_user_id: getVal(item.approval_user_id),
             approval_sequance: item.approval_sequance || 0,
           }));
-        }
-        // B. Fallback: Check for legacy 'group_access' array
-        else if (data.group_access && Array.isArray(data.group_access)) {
+        } else if (data.group_access && Array.isArray(data.group_access)) {
           loadedGroupAccess = data.group_access.map((item: any) => ({
-            ...item,
             model: item.model || "leave",
             group_id: getVal(item.group_id),
             approval_user_id: getVal(item.approval_user_id),
+            approval_sequance: item.approval_sequance || 0,
           }));
         }
-        // C. Fallback: Check for flat structure
-        else {
-          const cleanGroupId = getVal(data.group_id);
-          if (cleanGroupId) {
-            loadedGroupAccess = [
-              {
-                model: "leave",
-                group_id: cleanGroupId,
-                approval_user_id: getVal(data.approval_user_id),
-                approval_sequance: data.approval_sequance || 0,
-              },
-            ];
-          }
-        }
 
-        // Load Users for the Group Dropdowns
         if (loadedGroupAccess.length > 0) {
-          const loadInitialUsers = async () => {
+          const syncAndLoadUsers = async () => {
+            // 2. Pre-fetch all user lists for the specific groups found in 'loadedGroupAccess'
             const newOptions: Record<string, any[]> = { ...groupUserOptions };
 
             for (const line of loadedGroupAccess) {
               const gId = String(line.group_id);
-              // Only fetch if we haven't loaded users for this group yet
               if (gId && gId !== "0" && !newOptions[gId]) {
                 try {
                   const response = await getGroupUsers(gId);
-                  // ... (Your existing user extraction logic) ...
-                  let userList: any[] = [];
-                  if (response?.data?.users) userList = response.data.users;
-                  else if (response?.users) userList = response.users;
-                  else if (Array.isArray(response)) userList = response;
+                  const rawUsers =
+                    response?.data?.users ||
+                    response?.users ||
+                    (Array.isArray(response) ? response : []);
 
-                  newOptions[gId] = userList.map((u: any) => ({
+                  newOptions[gId] = rawUsers.map((u: any) => ({
                     value: String(u.user_id || u.id),
                     label: u.name || u.login,
                   }));
                 } catch (e) {
-                  console.error("Error loading group users:", e);
+                  console.error(`Failed to load users for Group ${gId}`, e);
                 }
               }
             }
+
+            // 3. CRITICAL: Update OPTIONS FIRST, then the LINES
+            // This ensures that when the dropdowns render, the labels already exist
             setGroupUserOptions(newOptions);
             setGroupAccessLines(loadedGroupAccess);
           };
-          loadInitialUsers();
+
+          syncAndLoadUsers();
         } else {
-          // Default empty row
+          // Default row if none exist
           setGroupAccessLines([
             {
               model: "leave",
               group_id: "",
               approval_user_id: "",
-              approval_sequance: 0,
+              approval_sequance: 1,
             },
           ]);
         }

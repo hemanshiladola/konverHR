@@ -1,93 +1,65 @@
 import Instance from "../../../api/axiosInstance";
 
-// 1. UI Interface (How the data looks in your React components)
-export interface DocumentTemplate {
-  id?: number;
+// 1. UI Interface
+export interface BusinessType {
+  id?: string;
   name: string;
-  type: string;
-  content: string;
-  last_updated?: string;
+  created_date: string;
+  key?: string;
 }
 
-// 2. API Interface (Matching your Odoo/Backend response)
-export interface APIDocumentTemplate {
+// 2. API Interface
+export interface APIBusinessType {
   id: number;
-  name: string;
-  document_type: string;
-  html_content: string;
-  write_date?: string;
-  create_date?: string;
+  name: string | false;
+  create_date: string;
 }
 
 // Helper to get user_id from localStorage
 const getUserId = () => {
   const id = localStorage.getItem("user_id");
-  return id ? Number(id) : 2; // Default to 2 as per your example if not found
+  return id ? Number(id) : null;
 };
 
 // 3. SERVICE FUNCTIONS
 
-/**
- * GET: http://localhost:9090/api/document-template/list?user_id=2
- */
-export const getDocumentTemplates = async (): Promise<
-  APIDocumentTemplate[]
-> => {
+// GET: http://localhost:4000/employee/business-types?user_id=219
+export const getBusinessTypes = async (): Promise<APIBusinessType[]> => {
   try {
-    const response = await Instance.get("/api/document-template/list", {
+    const response = await Instance.get("/employee/business-types", {
       params: { user_id: getUserId() },
     });
-    // Odoo typical response handling (data.data or data)
     return response.data.data || response.data || [];
   } catch (error) {
-    console.error("Error fetching document templates:", error);
+    console.error("Error fetching business types:", error);
     return [];
   }
 };
 
-/**
- * POST: http://localhost:9090/api/document-template/create?user_id=2
- */
-export const createDocumentTemplate = async (data: {
-  name: string;
-  document_type: string;
-  html_content: string;
-}) => {
+// POST: http://localhost:4000/employee/create/business-type
+export const addBusinessType = async (data: { name: string }) => {
   const payload = {
     ...data,
-    model_id: 1, // Required as per your request
     user_id: getUserId(),
   };
-  return await Instance.post("/api/document-template/create", payload, {
-    params: { user_id: getUserId() },
-  });
+  return await Instance.post("/employee/create/business-type", payload);
 };
 
-/**
- * PUT: http://localhost:9090/api/document-template/update/2?user_id=2
- */
-export const updateDocumentTemplate = async (
-  id: number,
-  data: {
-    name: string;
-    document_type: string;
-    html_content: string;
-  },
+// PUT: http://localhost:4000/employee/business-type/10
+export const updateBusinessType = async (
+  id: string,
+  data: { name: string }
 ) => {
   const payload = {
     ...data,
     user_id: getUserId(),
   };
-  return await Instance.put(`/api/document-template/update/${id}`, payload, {
-    params: { user_id: getUserId() },
-  });
+  return await Instance.put(`/employee/business-type/${id}`, payload);
 };
 
-/**
- * DELETE: http://localhost:9090/api/document-template/delete/2?user_id=2
- */
-export const deleteDocumentTemplate = async (id: number) => {
-  return await Instance.delete(`/api/document-template/delete/${id}`, {
+// DELETE: http://localhost:4000/employee/business-type/10?user_id=219
+export const deleteBusinessType = async (id: string) => {
+  return await Instance.delete(`/employee/business-type/${id}`, {
     params: { user_id: getUserId() },
   });
 };

@@ -11,7 +11,6 @@ import ArchiveEmployeeModal from "./ArchiveEmployeeModal";
 import AddEditEmployeeModal2 from "./AddEditEmployeeModal2";
 import dayjs from "dayjs";
 import { createPortal } from "react-dom";
-import Instance from "@/api/axiosInstance";
 
 const EmployeeKHR = () => {
   const navigate = useNavigate();
@@ -223,134 +222,35 @@ const EmployeeKHR = () => {
   };
 
   const columns = [
-    // {
-    //   title: "Name",
-    //   dataIndex: "name",
-    //   render: (text: string, record: any) => {
-    //     const loggedInUserId = localStorage.getItem("user_id");
-    //     const userRole = localStorage.getItem("user_role");
-    //     const recordUserId = Array.isArray(record.user_id)
-    //       ? String(record.user_id[0])
-    //       : String(record.user_id);
-    //     const isSelfAdmin =
-    //       recordUserId === loggedInUserId && userRole === "REGISTER_ADMIN";
-    //     const rawImg = record.image_1920 || record.image_url;
-    //     const getListImg = () => {
-    //       if (!rawImg || rawImg === "false") return null;
-    //       if (rawImg.startsWith("http")) return rawImg; // Don't add timestamp in list view to save performance
-    //       if (rawImg.length > 50)
-    //         return `data:image/png;base64,${rawImg.replace(/\s/g, "")}`;
-    //       return null;
-    //     };
-    //     const finalImg = getListImg();
-    //     return (
-    //       <div className="d-flex align-items-center">
-    //         <div className="avatar avatar-md me-2">
-    //           <img
-    //             src={finalImg || "assets/img/profiles/avatar-02.jpg"}
-    //             className="rounded-circle object-fit-cover"
-    //             alt="User"
-    //             onError={(e) => {
-    //               // Fallback if the URL fails to load
-    //               e.currentTarget.src = "assets/img/profiles/avatar-02.jpg";
-    //             }}
-    //           />
-    //         </div>
-    //         <div>
-    //           <h6 className="fs-14 fw-medium mb-0">
-    //             {text}{" "}
-    //             {recordUserId === loggedInUserId && (
-    //               <small className="text-primary">(Me)</small>
-    //             )}
-    //           </h6>
-    //           {/* ✅ ATTRACTIVE ADMIN BADGE IN LIST VIEW */}
-    //           {isSelfAdmin && (
-    //             <span
-    //               className="badge rounded-pill mt-1"
-    //               style={{
-    //                 background:
-    //                   "linear-gradient(135deg, #E42128 0%, #b21a1f 100%)",
-    //                 color: "#fff",
-    //                 fontSize: "9px",
-    //                 padding: "2px 8px",
-    //                 border: "1px solid #fff",
-    //               }}
-    //             >
-    //               <i className="ti ti-shield-check me-1"></i> ADMIN
-    //             </span>
-    //           )}
-    //         </div>
-    //       </div>
-    //     );
-    //   },
-    // },
     {
       title: "Name",
       dataIndex: "name",
       render: (text: string, record: any) => {
-        const [tableImg, setTableImg] = useState<string | null>(null);
         const loggedInUserId = localStorage.getItem("user_id");
         const userRole = localStorage.getItem("user_role");
         const recordUserId = Array.isArray(record.user_id)
           ? String(record.user_id[0])
           : String(record.user_id);
-
         const isSelfAdmin =
           recordUserId === loggedInUserId && userRole === "REGISTER_ADMIN";
-        const rawImg = record.image_1920 || record.image_url;
-
-        useEffect(() => {
-          if (!rawImg || rawImg === "false") {
-            setTableImg(null);
-            return;
-          }
-
-          // Logic to fetch image with authentication headers
-          const fetchImg = async () => {
-            if (rawImg.startsWith("http") || rawImg.startsWith("/")) {
-              try {
-                let cleanUrl = rawImg.replace(
-                  "konverthr.com//",
-                  "konverthr.com/",
-                );
-                if (cleanUrl.startsWith("/")) {
-                  cleanUrl = `https://odooapi.konverthr.com${cleanUrl}`;
-                }
-
-                // Fetch as blob using authenticated axios instance
-                const response = await Instance.get(cleanUrl, {
-                  responseType: "blob",
-                });
-                const blobUrl = URL.createObjectURL(response.data);
-                setTableImg(blobUrl);
-              } catch (error) {
-                setTableImg(null);
-              }
-            } else if (rawImg.length > 50) {
-              // Handle Base64 strings
-              const prefix = rawImg.startsWith("data:image")
-                ? ""
-                : "data:image/png;base64,";
-              setTableImg(`${prefix}${rawImg.replace(/\s/g, "")}`);
-            }
-          };
-
-          fetchImg();
-
-          // Cleanup to prevent memory leaks
-          return () => {
-            if (tableImg?.startsWith("blob:")) URL.revokeObjectURL(tableImg);
-          };
-        }, [rawImg]);
-
+        const rawImg = record.image_url || record.image_url;
+        const getListImg = () => {
+          if (!rawImg || rawImg === "false") return null;
+          if (rawImg.startsWith("http")) return rawImg; // Don't add timestamp in list view to save performance
+          if (rawImg.length > 50)
+            return `data:image/png;base64,${rawImg.replace(/\s/g, "")}`;
+          return null;
+        };
+        const finalImg = getListImg();
         return (
           <div className="d-flex align-items-center">
             <div className="avatar avatar-md me-2">
               <img
-                src={tableImg || "assets/img/profiles/avatar-02.jpg"}
+                src={finalImg || "assets/img/profiles/avatar-02.jpg"}
                 className="rounded-circle object-fit-cover"
                 alt="User"
                 onError={(e) => {
+                  // Fallback if the URL fails to load
                   e.currentTarget.src = "assets/img/profiles/avatar-02.jpg";
                 }}
               />
@@ -362,8 +262,19 @@ const EmployeeKHR = () => {
                   <small className="text-primary">(Me)</small>
                 )}
               </h6>
+              {/* ✅ ATTRACTIVE ADMIN BADGE IN LIST VIEW */}
               {isSelfAdmin && (
-                <span className="badge rounded-pill mt-1 admin-badge-style">
+                <span
+                  className="badge rounded-pill mt-1"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #E42128 0%, #b21a1f 100%)",
+                    color: "#fff",
+                    fontSize: "9px",
+                    padding: "2px 8px",
+                    border: "1px solid #fff",
+                  }}
+                >
                   <i className="ti ti-shield-check me-1"></i> ADMIN
                 </span>
               )}
@@ -584,7 +495,7 @@ const EmployeeKHR = () => {
           viewType={viewType}
           onViewChange={setViewType}
           buttonText={isAdmin ? "Add New Employee" : ""}
-          modalTarget={isAdmin ? "#add_employee_modal2" : ""}
+          modalTarget={isAdmin ? "#add_employee_modal" : ""}
         />
 
         {/* ✅ NEW DRAFTS BUTTON */}
