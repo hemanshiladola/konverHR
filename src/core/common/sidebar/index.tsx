@@ -583,7 +583,7 @@ const Sidebar = React.memo(() => {
                     className="fs-10 fw-bold text-uppercase text-muted mb-0"
                     style={{ letterSpacing: "1px" }}
                   >
-                    Environment
+                    Version
                   </p>
                   <h6 className="fs-12 fw-bold mb-0 text-dark">
                     v{import.meta.env.VITE_APP_VERSION}

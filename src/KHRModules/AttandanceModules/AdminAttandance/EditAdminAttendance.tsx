@@ -28,10 +28,8 @@ const EditAttendanceModal: React.FC<Props> = ({
   onClose,
   onSuccess,
 }) => {
-  const {
-    isUpdateAdminAttendanceApi,
-    isUpdateAdminAttendanceApiFetching,
-  } = useSelector(TBSelector);
+  const { isUpdateAdminAttendanceApi, isUpdateAdminAttendanceApiFetching } =
+    useSelector(TBSelector);
 
   const dispatch = useDispatch();
   const [formData, setFormData] = useState<any>({
@@ -74,7 +72,7 @@ const EditAttendanceModal: React.FC<Props> = ({
         check_out: parseTime(attendance.CheckOut),
         late_time_display: parseLate(attendance.Late),
       });
-      
+
       // Reset validation state when attendance changes
       setErrors({});
       setIsSubmitted(false);
@@ -92,7 +90,7 @@ const EditAttendanceModal: React.FC<Props> = ({
       newErrors.date = "Date is required";
     }
 
-    // Check In validation
+    // Check In validation  
     if (!formData.check_in) {
       newErrors.check_in = "Check In time is required";
     }
@@ -110,7 +108,10 @@ const EditAttendanceModal: React.FC<Props> = ({
     }
 
     // Late minutes validation (optional but must be valid if provided)
-    if (formData.late_time_display !== "" && formData.late_time_display !== null) {
+    if (
+      formData.late_time_display !== "" &&
+      formData.late_time_display !== null
+    ) {
       const lateValue = Number(formData.late_time_display);
       if (isNaN(lateValue) || lateValue < 0) {
         newErrors.late_time_display = "Late minutes must be a positive number";
@@ -123,12 +124,13 @@ const EditAttendanceModal: React.FC<Props> = ({
 
   const handleSubmit = async () => {
     setIsSubmitted(true);
-    
+
     if (!validateForm()) {
       return;
     }
 
-    const date = formData.date?.format("YYYY-MM-DD") || dayjs().format("YYYY-MM-DD");
+    const date =
+      formData.date?.format("YYYY-MM-DD") || dayjs().format("YYYY-MM-DD");
 
     const checkIn = formData.check_in
       ? `${date} ${formData.check_in.format("HH:mm:ss")}`
@@ -149,7 +151,7 @@ const EditAttendanceModal: React.FC<Props> = ({
       UpdateAdminAttendanceApi({
         payload: payload,
         attendanceId: attendance.id,
-      }) as any
+      }) as any,
     );
   };
 
@@ -159,7 +161,7 @@ const EditAttendanceModal: React.FC<Props> = ({
       // Close modal programmatically
       const closeModal = (window as any)["closeModal_edit_attendance"];
       if (closeModal) closeModal();
-      
+
       onSuccess();
       onClose();
       dispatch(updateState({ isUpdateAdminAttendanceApi: false }));
@@ -183,7 +185,11 @@ const EditAttendanceModal: React.FC<Props> = ({
           value={formData.date}
           onChange={(value) => {
             setFormData({ ...formData, date: value });
-            if (isSubmitted) setErrors({ ...errors, date: value ? undefined : "Date is required" });
+            if (isSubmitted)
+              setErrors({
+                ...errors,
+                date: value ? undefined : "Date is required",
+              });
           }}
           disabled={isUpdateAdminAttendanceApiFetching}
           status={isSubmitted && errors.date ? "error" : undefined}
@@ -208,7 +214,11 @@ const EditAttendanceModal: React.FC<Props> = ({
             value={formData.check_in}
             onChange={(value) => {
               setFormData({ ...formData, check_in: value });
-              if (isSubmitted) setErrors({ ...errors, check_in: value ? undefined : "Check In time is required" });
+              if (isSubmitted)
+                setErrors({
+                  ...errors,
+                  check_in: value ? undefined : "Check In time is required",
+                });
             }}
             disabled={isUpdateAdminAttendanceApiFetching}
             status={isSubmitted && errors.check_in ? "error" : undefined}
@@ -234,7 +244,10 @@ const EditAttendanceModal: React.FC<Props> = ({
               if (isSubmitted) {
                 let error = undefined;
                 if (!value) error = "Check Out time is required";
-                else if (formData.check_in && value.isBefore(formData.check_in)) {
+                else if (
+                  formData.check_in &&
+                  value.isBefore(formData.check_in)
+                ) {
                   error = "Check Out must be after Check In";
                 }
                 setErrors({ ...errors, check_out: error });
@@ -269,9 +282,10 @@ const EditAttendanceModal: React.FC<Props> = ({
                 const val = Number(e.target.value);
                 setErrors({
                   ...errors,
-                  late_time_display: e.target.value && (isNaN(val) || val < 0) 
-                    ? "Late minutes must be a positive number" 
-                    : undefined
+                  late_time_display:
+                    e.target.value && (isNaN(val) || val < 0)
+                      ? "Late minutes must be a positive number"
+                      : undefined,
                 });
               }
             }}

@@ -93,7 +93,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     { id: "personal", label: "Personal Info", icon: "ti-user-circle" },
     { id: "address", label: "Address Details", icon: "ti-map-pin" },
     { id: "emergency", label: "Emergency Contact", icon: "ti-phone-call" },
-    { id: "employment", label: "Employment", icon: "ti-briefcase" },
+    { id: "employment", label: "Employment Information", icon: "ti-briefcase" },
     { id: "banking", label: "Banking & Salary", icon: "ti-building-bank" },
     { id: "notice", label: "Separation / Notice", icon: "ti-door-exit" },
     { id: "device", label: "Mobile App Access", icon: "ti-device-mobile" },
@@ -436,8 +436,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
 
     if (incomingId !== currentId && data) {
       const getVal = (field: any) => {
-        if (Array.isArray(field)) return String(field[0]);
-        if (field === false || field === null || field === 0) return "";
+        if (Array.isArray(field)) return String(field[0]); // Extracts 74 from [74, "Name"]
+        if (field === false || field === null || field === undefined) return "";
         return String(field);
       };
 
@@ -450,8 +450,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
 
       const bankDetails = data.bank_account_details || {};
       const imgUrl = data.image_url || null;
-      const licenseUrl = data.driving_license_url || null;
-      const passbookUrl = data.passbook_url || null;
+      // const licenseUrl = data.driving_license_url || null;
+      const licenseUrl =
+        typeof data.driving_license === "string" ? data.driving_license : null;
+      // const passbookUrl = data.passbook_url || null;
+      const passbookUrl =
+        typeof data.upload_passbook === "string" ? data.upload_passbook : null;
 
       if (data.attachments && Array.isArray(data.attachments)) {
         setExperienceDocs(
@@ -563,27 +567,75 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       if (loadedGroupAccess.length > 0) {
         const loadInitialUsers = async () => {
           const newOptions: Record<string, any[]> = { ...groupUserOptions };
+
           for (const line of loadedGroupAccess) {
             const gId = String(line.group_id);
+            const targetUserId = String(line.approval_user_id); // The ID from the DB
+
             if (gId && gId !== "0" && !newOptions[gId]) {
               try {
                 const response = await getGroupUsers(gId);
-                let userList: any[] = [];
-                if (response?.data?.users) userList = response.data.users;
-                else if (response?.users) userList = response.users;
-                else if (Array.isArray(response)) userList = response;
-                newOptions[gId] = userList.map((u: any) => ({
+
+                // ROBUST EXTRACTION
+                let rawUsers: any[] = [];
+                if (response?.data?.users && Array.isArray(response.data.users))
+                  rawUsers = response.data.users;
+                else if (
+                  response?.data?.data?.users &&
+                  Array.isArray(response.data.data.users)
+                )
+                  rawUsers = response.data.data.users;
+                else if (response?.users && Array.isArray(response.users))
+                  rawUsers = response.users;
+                else if (Array.isArray(response?.data))
+                  rawUsers = response.data;
+                else if (Array.isArray(response)) rawUsers = response;
+                else if (
+                  response?.data?.result &&
+                  Array.isArray(response.data.result)
+                )
+                  rawUsers = response.data.result;
+                else if (
+                  response?.data?.data &&
+                  Array.isArray(response.data.data)
+                )
+                  rawUsers = response.data.data;
+                else if (response?.result && Array.isArray(response.result))
+                  rawUsers = response.result;
+
+                const formattedOptions = rawUsers.map((u: any) => ({
                   value: String(u.user_id || u.id),
-                  label: u.name || u.login,
+                  label: u.name || u.login || "Unknown User",
                 }));
+
+                // FALLBACK INJECTION (Prevents empty dropdown if DB has an old user ID)
+                if (
+                  targetUserId &&
+                  targetUserId !== "0" &&
+                  targetUserId !== ""
+                ) {
+                  const userExists = formattedOptions.some(
+                    (opt: any) => opt.value === targetUserId,
+                  );
+                  if (!userExists) {
+                    formattedOptions.push({
+                      value: targetUserId,
+                      label: `Historical User (${targetUserId})`,
+                    });
+                  }
+                }
+
+                newOptions[gId] = formattedOptions;
               } catch (e) {
                 console.error("Error loading group users:", e);
               }
             }
           }
+
           setGroupUserOptions(newOptions);
           setGroupAccessLines(loadedGroupAccess);
         };
+
         loadInitialUsers();
       } else {
         setGroupAccessLines([
@@ -700,11 +752,11 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     if (!formData.aadhaar_number || formData.aadhaar_number.length !== 12)
       tempErrors.aadhaar_number = "12-digit Aadhaar number is required.";
     if (
-      formData.passport_no &&
-      (formData.passport_no.length !== 8 ||
-        !/^[A-Z][0-9]{7}$/.test(formData.passport_no))
+      formData.passport_id &&
+      (formData.passport_id.length !== 8 ||
+        !/^[A-Z][0-9]{7}$/.test(formData.passport_id))
     )
-      tempErrors.passport_no = "Invalid Passport format.";
+      tempErrors.passport_id = "Invalid Passport format.";
     if (
       formData.voter_id &&
       (formData.voter_id.length !== 10 ||
@@ -912,29 +964,79 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     }
   };
 
+  // const handleGroupSelect = async (index: number, groupId: string) => {
+  //   const list = [...groupAccessLines];
+  //   list[index].group_id = groupId;
+  //   list[index].approval_user_id = "";
+  //   setGroupAccessLines(list);
+  //   setIsDirty(true);
+
+  //   if (groupId && !groupUserOptions[groupId]) {
+  //     try {
+  //       const response = await getGroupUsers(groupId);
+  //       let userList: any[] = [];
+  //       if (response?.data?.users) userList = response.data.users;
+  //       else if (response?.data?.data?.users)
+  //         userList = response.data.data.users;
+  //       else if (response?.users) userList = response.users;
+  //       else if (Array.isArray(response)) userList = response;
+
+  //       setGroupUserOptions((prev) => ({
+  //         ...prev,
+  //         [groupId]: userList.map((u: any) => ({
+  //           value: String(u.user_id),
+  //           label: u.name || u.login,
+  //         })),
+  //       }));
+  //     } catch (error) {
+  //       console.error("Failed to load group users", error);
+  //     }
+  //   }
+  // };
+
   const handleGroupSelect = async (index: number, groupId: string) => {
+    // 1. Update the line state immediately
     const list = [...groupAccessLines];
     list[index].group_id = groupId;
-    list[index].approval_user_id = "";
+    list[index].approval_user_id = ""; // Reset user when group changes
     setGroupAccessLines(list);
     setIsDirty(true);
 
-    if (groupId && !groupUserOptions[groupId]) {
+    // 2. Fetch users for the newly selected group
+    if (groupId && groupId !== "0" && !groupUserOptions[groupId]) {
       try {
         const response = await getGroupUsers(groupId);
-        let userList: any[] = [];
-        if (response?.data?.users) userList = response.data.users;
-        else if (response?.data?.data?.users)
-          userList = response.data.data.users;
-        else if (response?.users) userList = response.users;
-        else if (Array.isArray(response)) userList = response;
 
+        // --- BULLETPROOF EXTRACTION LOGIC ---
+        let rawUsers: any[] = [];
+        if (response?.data?.users && Array.isArray(response.data.users))
+          rawUsers = response.data.users;
+        else if (
+          response?.data?.data?.users &&
+          Array.isArray(response.data.data.users)
+        )
+          rawUsers = response.data.data.users;
+        else if (response?.users && Array.isArray(response.users))
+          rawUsers = response.users;
+        else if (Array.isArray(response?.data)) rawUsers = response.data;
+        else if (Array.isArray(response)) rawUsers = response;
+        else if (response?.data?.result && Array.isArray(response.data.result))
+          rawUsers = response.data.result;
+        else if (response?.data?.data && Array.isArray(response.data.data))
+          rawUsers = response.data.data;
+        else if (response?.result && Array.isArray(response.result))
+          rawUsers = response.result;
+
+        // 3. CRITICAL FIX: Extract user_id OR id safely
+        const formattedOptions = rawUsers.map((u: any) => ({
+          value: String(u.user_id || u.id),
+          label: u.name || u.login || "Unknown User",
+        }));
+
+        // 4. Update the options state so the User dropdown populates
         setGroupUserOptions((prev) => ({
           ...prev,
-          [groupId]: userList.map((u: any) => ({
-            value: String(u.user_id),
-            label: u.name || u.login,
-          })),
+          [groupId]: formattedOptions,
         }));
       } catch (error) {
         console.error("Failed to load group users", error);
@@ -947,6 +1049,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     list[index][field] = value;
     setGroupAccessLines(list);
     setIsDirty(true);
+  };
+
+  const handleRemoveLine = (indexToRemove: number) => {
+    setGroupAccessLines((prevLines) =>
+      prevLines.filter((_, index) => index !== indexToRemove),
+    );
   };
 
   // API Data Loading Effects
@@ -1216,7 +1324,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
         aadhaar_number: formData.aadhaar_number,
         pan_number: formData.pan_number,
         voter_id: formData.voter_id,
-        passport_id: formData.passport_no,
+        passport_id: formData.passport_id,
         esi_number: formData.esi_number,
         category: formData.category,
         is_uan_number_applicable: formData.is_uan_number_applicable,
@@ -1408,6 +1516,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                 noValidate
                 onSubmit={handleSubmit}
               >
+                {/* 👇 These hidden inputs "catch" the browser's autofill so your real fields stay clean 👇 */}
+                <input type="text" style={{ display: "none" }} />
+                <input type="password" style={{ display: "none" }} />
                 <div
                   className="d-flex flex-row flex-grow-1"
                   style={{ minHeight: "65vh" }}
@@ -1601,11 +1712,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   <CommonSelect
                                     options={workingSchedules}
                                     placeholder="Select Hours"
-                                    defaultValue={workingSchedules.find(
-                                      (opt) =>
-                                        opt.value ===
-                                        formData.resource_calendar_id,
-                                    )}
+                                    value={
+                                      workingSchedules.find(
+                                        (o) =>
+                                          String(o.value) ===
+                                          String(formData.resource_calendar_id),
+                                      ) || null
+                                    }
                                     onChange={(opt) =>
                                       updateFormData({
                                         resource_calendar_id: opt?.value || "",
@@ -1814,59 +1927,31 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   <input
                                     type="text"
                                     maxLength={8}
-                                    className={`form-control text-uppercase ${isSubmitted && errors.passport_no ? "is-invalid" : ""}`}
+                                    className={`form-control text-uppercase ${isSubmitted && errors.passport_id ? "is-invalid" : ""}`}
                                     placeholder="A1234567"
-                                    value={formData.passport_no}
+                                    value={formData.passport_id}
                                     onChange={(e) => {
                                       const val = e.target.value
                                         .toUpperCase()
                                         .replace(/[^A-Z0-9]/g, "");
-                                      updateFormData({ passport_no: val });
-                                      if (errors.passport_no)
+                                      updateFormData({ passport_id: val });
+                                      if (errors.passport_id)
                                         setErrors((prev: any) => ({
                                           ...prev,
-                                          passport_no: "",
+                                          passport_id: "",
                                         }));
                                     }}
                                   />
-                                  {isSubmitted && errors.passport_no && (
+                                  {isSubmitted && errors.passport_id && (
                                     <div className="invalid-feedback">
-                                      {errors.passport_no}
+                                      {errors.passport_id}
                                     </div>
                                   )}
                                 </div>
                                 <div className="col-12">
                                   <hr className="my-1 opacity-25" />
                                 </div>
-                                <div className="col-md-3">
-                                  <label className="form-label fs-13">
-                                    Category
-                                  </label>
-                                  <CommonSelect
-                                    options={[
-                                      { value: "general", label: "General" },
-                                      { value: "sc", label: "SC" },
-                                      { value: "st", label: "ST" },
-                                      { value: "obc", label: "OBC" },
-                                      { value: "others", label: "Others" },
-                                    ]}
-                                    placeholder="Select Category"
-                                    defaultValue={
-                                      formData.category
-                                        ? {
-                                            value: formData.category,
-                                            label:
-                                              formData.category.toUpperCase(),
-                                          }
-                                        : undefined
-                                    }
-                                    onChange={(opt) =>
-                                      updateFormData({
-                                        category: opt?.value || "",
-                                      })
-                                    }
-                                  />
-                                </div>
+
                                 <div className="col-md-3">
                                   <label className="form-label fs-13">
                                     ESI Number
@@ -1938,7 +2023,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                 </div>
                                 <div className="col-md-3">
                                   <label className="form-label fs-12 mb-1">
-                                    License Copy
+                                    Upload Driving License
                                   </label>
                                   <div className="d-flex align-items-center gap-2">
                                     <div className="position-relative">
@@ -1968,7 +2053,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         ></i>
                                       </label>
                                     </div>
-                                    {formData.driving_license && (
+                                    {/* {formData.driving_license && (
                                       <div className="d-flex align-items-center animate__animated animate__fadeIn">
                                         {typeof formData.driving_license ===
                                           "string" && (
@@ -1984,6 +2069,32 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {formData.driving_license instanceof
                                           File && (
                                           <i className="ti ti-circle-check-filled text-success fs-20 ms-1"></i>
+                                        )}
+                                      </div>
+                                    )} */}
+                                    {formData.driving_license && (
+                                      <div className="d-flex align-items-center animate__animated animate__fadeIn">
+                                        {/* 1. Show EYE ICON if the value is a URL string from the backend */}
+                                        {typeof formData.driving_license ===
+                                          "string" && (
+                                          <a
+                                            href={formData.driving_license}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                            title="View Current License"
+                                          >
+                                            <i className="ti ti-eye fs-18"></i>
+                                          </a>
+                                        )}
+
+                                        {/* 2. Show CHECKMARK if a new File object has been selected */}
+                                        {formData.driving_license instanceof
+                                          File && (
+                                          <i
+                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                            title="New file selected"
+                                          ></i>
                                         )}
                                       </div>
                                     )}
@@ -2210,17 +2321,46 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     </div>
                                   )}
                                 </div>
+                                <div className="col-md-3">
+                                  <label className="form-label fs-13">
+                                    Category
+                                  </label>
+                                  <CommonSelect
+                                    options={[
+                                      { value: "general", label: "General" },
+                                      { value: "sc", label: "SC" },
+                                      { value: "st", label: "ST" },
+                                      { value: "obc", label: "OBC" },
+                                      { value: "others", label: "Others" },
+                                    ]}
+                                    placeholder="Select Category"
+                                    defaultValue={
+                                      formData.category
+                                        ? {
+                                            value: formData.category,
+                                            label:
+                                              formData.category.toUpperCase(),
+                                          }
+                                        : undefined
+                                    }
+                                    onChange={(opt) =>
+                                      updateFormData({
+                                        category: opt?.value || "",
+                                      })
+                                    }
+                                  />
+                                </div>
                                 <div className="col-12">
                                   <hr className="my-1 opacity-25" />
                                 </div>
                                 <div className="col-md-4">
                                   <label className="form-label fs-13">
-                                    Post Graduation
+                                    Educational Qualification
                                   </label>
                                   <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="MBA, etc."
+                                    placeholder="BCA, MBA, etc."
                                     value={formData.name_of_post_graduation}
                                     onChange={(e) =>
                                       handleInputChange(
@@ -2671,7 +2811,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                           )}
 
                           {activeTab === "employment" && (
-                            <div className="animate__animated animate__fadeIn">
+                            <div className="animate__animated animate__fadeIn ">
                               <input
                                 type="text"
                                 name="prevent_autofill"
@@ -3173,7 +3313,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         className={`ti ${formData.upload_passbook ? "ti-book" : "ti-upload"} fs-18`}
                                       ></i>
                                     </label>
-                                    {formData.upload_passbook && (
+                                    {/* {formData.upload_passbook && (
                                       <div className="d-flex align-items-center animate__animated animate__fadeIn">
                                         {typeof formData.upload_passbook ===
                                           "string" && (
@@ -3189,6 +3329,32 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {formData.upload_passbook instanceof
                                           File && (
                                           <i className="ti ti-circle-check-filled text-success fs-20 ms-1"></i>
+                                        )}
+                                      </div>
+                                    )} */}
+                                    {formData.upload_passbook && (
+                                      <div className="d-flex align-items-center animate__animated animate__fadeIn">
+                                        {/* 1. Show EYE ICON if the value is an existing URL string */}
+                                        {typeof formData.upload_passbook ===
+                                          "string" && (
+                                          <a
+                                            href={formData.upload_passbook}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                            title="View Current Passbook"
+                                          >
+                                            <i className="ti ti-eye fs-18"></i>
+                                          </a>
+                                        )}
+
+                                        {/* 2. Show CHECKMARK if a new File object has been selected */}
+                                        {formData.upload_passbook instanceof
+                                          File && (
+                                          <i
+                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                            title="New file selected"
+                                          ></i>
                                         )}
                                       </div>
                                     )}
@@ -3453,10 +3619,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
 
                           {activeTab === "group_access" && (
                             <div className="animate__animated animate__fadeIn">
-                              <div className="border rounded-3 shadow-sm bg-white overflow-hidden">
+                              <div className="border rounded-3 shadow-sm bg-white ">
                                 <div
                                   className="table-responsive"
-                                  style={{ overflow: "visible" }}
+                                  style={{
+                                    overflow: "visible",
+                                  }}
                                 >
                                   <table className="table table-borderless align-middle mb-0">
                                     <thead className="bg-light border-bottom">
@@ -3488,6 +3656,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                           style={{ width: "15%" }}
                                         >
                                           Sequence
+                                        </th>
+                                        <th className="pe-4 text-center">
+                                          Action
                                         </th>
                                       </tr>
                                     </thead>
@@ -3612,6 +3783,18 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               }
                                             />
                                           </td>
+                                          <td className="py-3 pe-4 text-center">
+                                            <button
+                                              type="button"
+                                              className="btn btn-icon btn-sm btn-outline-danger rounded-circle"
+                                              onClick={() =>
+                                                handleRemoveLine(index)
+                                              }
+                                              title="Remove Approval Step"
+                                            >
+                                              <i className="ti ti-trash" />
+                                            </button>
+                                          </td>
                                         </tr>
                                       ))}
                                       {groupAccessLines.length === 0 && (
@@ -3664,7 +3847,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                     </div>
 
                     {/* --- WIZARD FOOTER (Sticky) --- */}
-                    <div className="p-3 bg-white border-top shadow-lg d-flex justify-content-between align-items-center sticky-bottom z-3 mt-auto">
+                    <div className="p-3 bg-white border-top shadow-lg d-flex justify-content-between align-items-center sticky-bottom mt-auto">
                       <div>
                         <button
                           type="button"

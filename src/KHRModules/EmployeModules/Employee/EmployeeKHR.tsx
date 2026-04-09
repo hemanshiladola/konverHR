@@ -193,7 +193,7 @@ const EmployeeKHR = () => {
 
   const handleEditClick = (employee: any) => {
     setEditData(employee);
-    const modalElement = document.getElementById("add_employee_modal");
+    const modalElement = document.getElementById("add_employee_modal2");
     if (modalElement) {
       const modal = new (window as any).bootstrap.Modal(modalElement);
       modal.show();
@@ -495,7 +495,7 @@ const EmployeeKHR = () => {
           viewType={viewType}
           onViewChange={setViewType}
           buttonText={isAdmin ? "Add New Employee" : ""}
-          modalTarget={isAdmin ? "#add_employee_modal" : ""}
+          modalTarget={isAdmin ? "#add_employee_modal2" : ""}
         />
 
         {/* ✅ NEW DRAFTS BUTTON */}
@@ -748,15 +748,15 @@ const EmployeeKHR = () => {
           }}
           onClose={() => setArchiveId(null)}
         />
-        <AddEditEmployeeModal
+        {/* <AddEditEmployeeModal
           data={editData}
           onSuccess={() => {
             fetchEmployees();
             setEditData(null);
           }}
           onClose={() => setEditData(null)}
-        />
-        {/* <AddEditEmployeeModal2
+        /> */}
+        <AddEditEmployeeModal2
           data={editData}
           draftData={selectedDraft}
           // 2. LOGOUT FLOW ON SUCCESS
@@ -791,7 +791,7 @@ const EmployeeKHR = () => {
             setSelectedDraft(null);
             loadDraftsFromStorage(); // Refresh drafts list
           }}
-        /> */}
+        />
       </div>
     </div>
   );

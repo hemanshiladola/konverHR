@@ -243,21 +243,22 @@ const AdminDashboard = () => {
   //   };
   // }, [isProfileLocked]); // ❌ CRITICAL: Remove 'editData' from here to stop the infinite loop
 
-useEffect(() => {
-  if (isProfileLocked && editData) {
-    const modalElement = document.getElementById("add_employee_modal");
-    if (modalElement && !modalInstanceRef.current) {
-      const modal = new (window as any).bootstrap.Modal(modalElement, {
-        backdrop: "static",
-        keyboard: false,
-      });
-      modalInstanceRef.current = modal;
-      modal.show();
+  useEffect(() => {
+    if (isProfileLocked && editData) {
+      const modalElement = document.getElementById("add_employee_modal");
+      if (modalElement && !modalInstanceRef.current) {
+        const modal = new (window as any).bootstrap.Modal(modalElement, {
+          backdrop: "static",
+          keyboard: false,
+        });
+        modalInstanceRef.current = modal;
+        modal.show();
+      }
     }
-  }
-  return () => { modalInstanceRef.current = null; };
-}, [isProfileLocked]); // Only re-run if the lock status changes, NOT on every editData change
-
+    return () => {
+      modalInstanceRef.current = null;
+    };
+  }, [isProfileLocked]); // Only re-run if the lock status changes, NOT on every editData change
 
   useEffect(() => {
     const fetchDeptRangeData = async () => {
@@ -723,7 +724,7 @@ useEffect(() => {
               </nav>
             </div>
             <div className="d-flex my-xl-auto right-content align-items-center flex-wrap ">
-              <div className="me-2 mb-2">
+              {/* <div className="me-2 mb-2">
                 <div className="dropdown">
                   <Link
                     to="#"
@@ -748,7 +749,7 @@ useEffect(() => {
                     </li>
                   </ul>
                 </div>
-              </div>
+              </div> */}
               {/* <div className="mb-2">
                 <div className="input-icon w-120 position-relative">
                   <span className="input-icon-addon">
@@ -800,7 +801,7 @@ useEffect(() => {
                   </p> */}
                 </div>
               </div>
-              <div className="d-flex align-items-center flex-wrap mb-1">
+              {/* <div className="d-flex align-items-center flex-wrap mb-1">
                 <Link
                   to="#"
                   className="btn btn-secondary btn-md me-2 mb-2"
@@ -821,7 +822,7 @@ useEffect(() => {
                   <i className="ti ti-square-rounded-plus me-1" />
                   Add Requests
                 </Link>
-              </div>
+              </div> */}
             </div>
           </div>
           {/* /Welcome Wrap */}

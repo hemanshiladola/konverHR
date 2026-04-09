@@ -218,7 +218,7 @@ const rawSidebarData = [
         ],
       },
       {
-        label: "Attandance ",
+        label: "Attendance ",
         link: "index",
         submenu: true,
         showSubRoute: false,
