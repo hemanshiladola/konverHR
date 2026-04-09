@@ -27,6 +27,15 @@ const BranchKHR = () => {
         ...item,
         id: String(item.id),
         key: String(item.id),
+        city_name: Array.isArray(item.city_id)
+          ? item.city_id[1]
+          : item.city_id || "-",
+        state_name: Array.isArray(item.state_id)
+          ? item.state_id[1]
+          : item.state_id || "-",
+        client_name:
+          item.client_name ||
+          (Array.isArray(item.client_id) ? item.client_id[1] : "-"),
         created_date: item.create_date || "-",
       }));
       setData(mappedData);
@@ -76,18 +85,22 @@ const BranchKHR = () => {
     },
     {
       title: "Location",
-      dataIndex: "city_name",
-      render: (_: any, record: any) => (
-        <div className="d-flex align-items-center">
-          <i className="ti ti-map-pin-2 me-2 text-primary fs-16"></i>
-          <div className="d-flex flex-column">
-            <span className="fs-13 fw-medium text-secondary">
-              {record.city_name || "-"}
-            </span>
-            <small className="text-muted">{record.state_name || "-"}</small>
+      dataIndex: "city_id",
+      render: (_: any, record: any) => {
+        // Extract names safely
+        const city = Array.isArray(record.city_id) ? record.city_id[1] : "-";
+        const state = Array.isArray(record.state_id) ? record.state_id[1] : "-";
+
+        return (
+          <div className="d-flex align-items-center">
+            <i className="ti ti-map-pin-2 me-2 text-primary fs-16"></i>
+            <div className="d-flex flex-column">
+              <span className="fs-13 fw-medium text-secondary">{city}</span>
+              <small className="text-muted">{state}</small>
+            </div>
           </div>
-        </div>
-      ),
+        );
+      },
     },
     {
       title: "Full Address",

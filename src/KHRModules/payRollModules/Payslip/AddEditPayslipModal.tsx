@@ -14,7 +14,12 @@ interface Props {
   data: any | null;
 }
 
-const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
+const AddEditPayslipModal: React.FC<Props> = ({
+  onSuccess,
+  onClose,
+  data,
+}: any) => {
+  const modalRef = React.useRef<HTMLDivElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [currentStep, setCurrentStep] = useState<"create" | "compute">(
@@ -64,6 +69,16 @@ const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
     loadDropdownData();
   }, []);
 
+  useEffect(() => {
+    return () => {
+      // Runs when component unmounts
+      const backdrops = document.querySelectorAll(".modal-backdrop");
+      backdrops.forEach((b) => b.remove());
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const handleEmployeeChange = (opt: any) => {
     const employeeName = opt?.label || "";
     const month = dayjs(formData.date_from).format("MMM YYYY");
@@ -106,12 +121,42 @@ const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
     }
   };
 
+  // const resetAndClose = () => {
+  //   setFormData(initialFormState);
+  //   setCurrentStep("create");
+  //   setCreatedSlipData(null);
+  //   setComputedData(null);
+  //   onClose();
+  // };
+
   const resetAndClose = () => {
-    setFormData(initialFormState);
-    setCurrentStep("create");
-    setCreatedSlipData(null);
-    setComputedData(null);
-    onClose();
+    // 1. Get or Create the Bootstrap Modal instance
+    const modalElement = document.getElementById("add_payslip_modal");
+    if (modalElement) {
+      const modalInstance = (
+        window as any
+      ).bootstrap?.Modal.getOrCreateInstance(modalElement);
+      if (modalInstance) {
+        modalInstance.hide(); // Triggers the slide/fade out animation
+      }
+    }
+
+    // 2. Wait for the animation (150ms) before removing the component from the DOM
+    setTimeout(() => {
+      // 3. NUCLEAR CLEANUP: Force remove any stuck backdrops and reset body scrolling
+      const backdrops = document.querySelectorAll(".modal-backdrop");
+      backdrops.forEach((b) => b.remove());
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+
+      // 4. Reset React state and notify parent
+      setFormData(initialFormState);
+      setCurrentStep("create");
+      setCreatedSlipData(null);
+      setComputedData(null);
+      onClose();
+    }, 150);
   };
 
   // Helper for Category Styling
@@ -125,7 +170,14 @@ const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
   };
 
   return createPortal(
-    <div className="modal fade" id="add_payslip_modal" role="dialog">
+    <div
+      className="modal fade"
+      id="add_payslip_modal"
+      ref={modalRef}
+      role="dialog"
+      tabIndex={-1}
+      aria-hidden="true"
+    >
       <div className="modal-dialog modal-dialog-centered modal-lg">
         <div className="modal-content border-0 shadow-lg">
           {/* ORIGINAL HEADER PRESERVED */}
@@ -139,6 +191,7 @@ const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
             <button
               type="button"
               className="btn-close"
+              data-bs-dismiss="modal"
               onClick={resetAndClose}
             ></button>
           </div>
@@ -351,6 +404,7 @@ const AddEditPayslipModal: React.FC<Props> = ({ onSuccess, onClose, data }) => {
                 <button
                   type="button"
                   className="btn btn-outline-secondary px-4 me-2"
+                  data-bs-dismiss="modal"
                   onClick={resetAndClose}
                 >
                   {computedData ? "Close" : "Discard"}

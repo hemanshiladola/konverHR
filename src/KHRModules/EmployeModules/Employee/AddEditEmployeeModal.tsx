@@ -308,9 +308,6 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     ]);
   };
 
-  // This ensures the "Stage" button actually adds the object to the array
-  // 1. Updated Staging Logic
-  // Inside AddEditEmployeeModal
   const handleStageDocument = () => {
     if (tempDoc.category && tempDoc.file) {
       // Create a temporary local URL for the "View" functionality
@@ -331,10 +328,8 @@ const AddEditEmployeeModal: React.FC<Props> = ({
 
   const handleViewFile = (doc: any) => {
     if (doc.previewUrl) {
-      // If it's an existing file from server or a newly staged file with a previewUrl
       window.open(doc.previewUrl, "_blank");
     } else if (doc.file instanceof File) {
-      // Fallback for newly added files before staging generates a URL
       const url = URL.createObjectURL(doc.file);
       window.open(url, "_blank");
     } else {
@@ -346,10 +341,101 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     return id ? Number(id) : null;
   };
 
-  // ✅ USE THIS CONSOLIDATED EFFECT
   useEffect(() => {
     const incomingId = data?.id ? String(data.id) : null;
     const currentId = formData.id ? String(formData.id) : null;
+
+    const getVal = (field: any) => {
+      if (Array.isArray(field)) return String(field[0]); // Extract ID from Odoo [id, name] array
+      if (field === false || field === null || field === 0) return "";
+      return String(field);
+    };
+
+    const setupGroupAccess = async () => {
+      // 2. Prepare structure safely using getVal
+      const rawApprovals = data.approvals || data.group_access || [];
+      const mappedLines = rawApprovals.map((item: any) => ({
+        model: item.model || "leave",
+        group_id: getVal(item.group_id),
+        approval_user_id: getVal(item.approval_user_id),
+        approval_sequance: item.approval_sequance || 0,
+      }));
+
+      if (mappedLines.length > 0) {
+        const updatedOptions = { ...groupUserOptions };
+
+        // 3. Pre-fetch user labels for all groups in the list
+        for (const line of mappedLines) {
+          const gid = String(line.group_id);
+          if (gid && gid !== "0" && !updatedOptions[gid]) {
+            try {
+              const res = await getGroupUsers(gid);
+              let rawUsers: any[] = [];
+              if (res?.data?.users && Array.isArray(res.data.users))
+                rawUsers = res.data.users;
+              else if (
+                res?.data?.data?.users &&
+                Array.isArray(res.data.data.users)
+              )
+                rawUsers = res.data.data.users;
+              else if (res?.users && Array.isArray(res.users))
+                rawUsers = res.users;
+              else if (Array.isArray(res?.data)) rawUsers = res.data;
+              else if (Array.isArray(res)) rawUsers = res;
+              else if (res?.data?.result && Array.isArray(res.data.result))
+                rawUsers = res.data.result;
+              else if (res?.data?.data && Array.isArray(res.data.data))
+                rawUsers = res.data.data;
+              else if (res?.result && Array.isArray(res.result))
+                rawUsers = res.result;
+
+              // const rawUsers =
+              //   res?.data?.users ||
+              //   res?.users ||
+              //   (Array.isArray(res) ? res : []);
+
+              updatedOptions[gid] = rawUsers.map((u: any) => ({
+                value: String(u.user_id || u.id),
+                label: u.name || u.login,
+              }));
+
+              const targetUserId = String(line.approval_user_id);
+              if (targetUserId && targetUserId !== "0" && targetUserId !== "") {
+                const userExists = updatedOptions[gid].some(
+                  (opt: any) => opt.value === targetUserId,
+                );
+                if (!userExists) {
+                  console.warn(
+                    `User ${targetUserId} not found in Group ${gid}. Injecting fallback!`,
+                  );
+                  updatedOptions[gid].push({
+                    value: targetUserId,
+                    label: `Historical User (${targetUserId})`, // Fallback name
+                  });
+                }
+              }
+            } catch (e) {
+              console.error(`Error loading group ${gid}:`, e);
+            }
+          }
+        }
+
+        // 4. Update labels first, then lines to ensure name displays correctly
+        setGroupUserOptions(updatedOptions);
+        setGroupAccessLines(mappedLines);
+      } else {
+        console.log("2. NO DATA FOUND: Setting default empty row.");
+        setGroupAccessLines([
+          {
+            model: "leave",
+            group_id: "",
+            approval_user_id: "",
+            approval_sequance: 1,
+          },
+        ]);
+      }
+    };
+
     if (incomingId !== currentId) {
       if (data) {
         // Add this ID check
@@ -536,8 +622,8 @@ const AddEditEmployeeModal: React.FC<Props> = ({
         // --- GROUP ACCESS LOGIC START ---
 
         setActiveTab("legal");
-        let loadedGroupAccess: any[] = [];
-        // A. Check for NEW 'approvals' array (Matches your JSON)
+        // let loadedGroupAccess: any[] = [];
+        // // A. Check for NEW 'approvals' array (Matches your JSON)
         // if (
         //   data.approvals &&
         //   Array.isArray(data.approvals) &&
@@ -615,20 +701,14 @@ const AddEditEmployeeModal: React.FC<Props> = ({
         //     },
         //   ]);
         // }
+        // 1. Prepare the structure from incoming data
+        // Find the Group Access logic inside useEffect(() => { ... }, [data])
+        setupGroupAccess();
+        let loadedGroupAccess: any[] = [];
+        const rawApprovals = data.approvals || data.group_access || [];
 
-        if (
-          data.approvals &&
-          Array.isArray(data.approvals) &&
-          data.approvals.length > 0
-        ) {
-          loadedGroupAccess = data.approvals.map((item: any) => ({
-            model: item.model || "leave",
-            group_id: getVal(item.group_id),
-            approval_user_id: getVal(item.approval_user_id),
-            approval_sequance: item.approval_sequance || 0,
-          }));
-        } else if (data.group_access && Array.isArray(data.group_access)) {
-          loadedGroupAccess = data.group_access.map((item: any) => ({
+        if (Array.isArray(rawApprovals) && rawApprovals.length > 0) {
+          loadedGroupAccess = rawApprovals.map((item: any) => ({
             model: item.model || "leave",
             group_id: getVal(item.group_id),
             approval_user_id: getVal(item.approval_user_id),
@@ -638,12 +718,15 @@ const AddEditEmployeeModal: React.FC<Props> = ({
 
         if (loadedGroupAccess.length > 0) {
           const syncAndLoadUsers = async () => {
-            // 2. Pre-fetch all user lists for the specific groups found in 'loadedGroupAccess'
-            const newOptions: Record<string, any[]> = { ...groupUserOptions };
+            // Clone existing options to avoid mutation
+            const updatedOptions: Record<string, any[]> = {
+              ...groupUserOptions,
+            };
 
+            // Fetch user lists for every group involved in the edit data
             for (const line of loadedGroupAccess) {
               const gId = String(line.group_id);
-              if (gId && gId !== "0" && !newOptions[gId]) {
+              if (gId && gId !== "0" && !updatedOptions[gId]) {
                 try {
                   const response = await getGroupUsers(gId);
                   const rawUsers =
@@ -651,7 +734,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                     response?.users ||
                     (Array.isArray(response) ? response : []);
 
-                  newOptions[gId] = rawUsers.map((u: any) => ({
+                  updatedOptions[gId] = rawUsers.map((u: any) => ({
                     value: String(u.user_id || u.id),
                     label: u.name || u.login,
                   }));
@@ -661,15 +744,15 @@ const AddEditEmployeeModal: React.FC<Props> = ({
               }
             }
 
-            // 3. CRITICAL: Update OPTIONS FIRST, then the LINES
-            // This ensures that when the dropdowns render, the labels already exist
-            setGroupUserOptions(newOptions);
+            // CRITICAL: Update OPTIONS FIRST, then the LINES
+            // This ensures labels exist before the dropdown tries to display the value
+            setGroupUserOptions(updatedOptions);
             setGroupAccessLines(loadedGroupAccess);
           };
 
           syncAndLoadUsers();
         } else {
-          // Default row if none exist
+          // Fallback for new employees
           setGroupAccessLines([
             {
               model: "leave",
@@ -6210,13 +6293,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                                       style={{ overflow: "visible" }}
                                     >
                                       <CommonSelect
-                                        key={`user-select-${index}-${line.group_id}-${
-                                          (
-                                            groupUserOptions[
-                                              String(line.group_id)
-                                            ] || []
-                                          ).length
-                                        }`}
+                                        key={`user-select-${index}-${line.group_id}-${(groupUserOptions[String(line.group_id)] || []).length}`}
                                         options={
                                           groupUserOptions[
                                             String(line.group_id)

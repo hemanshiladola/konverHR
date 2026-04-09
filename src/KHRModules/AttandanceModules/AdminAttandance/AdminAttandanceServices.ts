@@ -67,7 +67,6 @@ export const updateAdminAttendance = async (
     throw error;
   }
 };
-
 // Export attendance to Excel
 export const exportAttendanceToExcel = async (
   dateFrom: string,
@@ -77,15 +76,16 @@ export const exportAttendanceToExcel = async (
     const { user_id } = getAuthDetails();
     const token = localStorage.getItem("authToken");
 
+    // UPDATED: Using the new /api/export/attendance/excel endpoint
     const response = await axios.get(
-      `${CONFIG.BASE_URL_ALL}/api/admin/attendances/export/excel`,
+      `${CONFIG.BASE_URL_ALL}/api/export/attendance/excel`,
       {
         params: {
           user_id,
           date_from: dateFrom,
           date_to: dateTo,
         },
-        responseType: "blob",
+        responseType: "blob", // Critical for file downloads
         headers: {
           Authorization: token || "",
         },
@@ -119,15 +119,16 @@ export const exportAttendanceToPdf = async (
     const { user_id } = getAuthDetails();
     const token = localStorage.getItem("authToken");
 
+    // UPDATED: Using the new /api/export/attendance/pdf endpoint
     const response = await axios.get(
-      `${CONFIG.BASE_URL_ALL}api/admin/attendances/export/pdf`,
+      `${CONFIG.BASE_URL_ALL}/api/export/attendance/pdf`,
       {
         params: {
           user_id,
           date_from: dateFrom,
           date_to: dateTo,
         },
-        responseType: "blob",
+        responseType: "blob", // Critical for file downloads
         headers: {
           Authorization: token || "",
         },

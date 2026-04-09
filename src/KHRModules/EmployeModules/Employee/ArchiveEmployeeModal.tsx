@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import CommonSelect from "../../../core/common/commonSelect";
 import { getDepartureReasons, archiveEmployee } from "./EmployeeServices";
 import { toast } from "react-toastify";
+import { createPortal } from "react-dom";
 
 interface Props {
   employeeId: number | null;
@@ -62,7 +63,7 @@ const ArchiveEmployeeModal: React.FC<Props> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div
       className="modal fade"
       id="archive_employee_modal"
@@ -145,7 +146,8 @@ const ArchiveEmployeeModal: React.FC<Props> = ({
           </form>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 

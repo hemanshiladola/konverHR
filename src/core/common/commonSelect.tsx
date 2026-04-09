@@ -80,6 +80,10 @@ const CommonSelect: React.FC<SelectProps> = ({
         borderColor: "#2e37a4",
       },
     }),
+    menuPortal: (base: any) => ({
+      ...base,
+      zIndex: 9999, // Ensures it floats above the modal and table
+    }),
     option: (base: any, state: any) => {
       // Determine background color to avoid any default "Red"
       let backgroundColor = "#ffffff";
@@ -138,7 +142,10 @@ const CommonSelect: React.FC<SelectProps> = ({
           primary: "#2e37a4", // Globally sets the focus color to your Navy Blue
         },
       })}
-      styles={customStyles}
+      styles={{
+        ...customStyles,
+        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+      }}
       options={options}
       value={selectedOption}
       onChange={handleChange}

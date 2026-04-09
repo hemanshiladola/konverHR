@@ -2285,7 +2285,7 @@ $header-height: 60px; // Standard header height
 .page-wrapper {
   position: relative;
   min-height: 100vh;
-  margin-left: $sidebar-width; // Offsets content area correctly
+  // margin-left: $sidebar-width; // Offsets content area correctly
   // Removed z-index: 1 to ensure modals are visible
 
   &::before {
