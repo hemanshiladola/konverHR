@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { NodeGlobalsPolyfillPlugin } from "@esbuild-plugins/node-globals-polyfill";
 import path from "path";
 import { execSync } from "child_process";
+import pkg from "./package.json";
 
 const getGitHash = () => {
   try {
@@ -23,7 +24,7 @@ export default defineConfig({
   plugins: [react()],
 
   define: {
-    "import.meta.env.VITE_APP_VERSION": JSON.stringify("1.5.7"),
+    "import.meta.env.VITE_APP_VERSION": JSON.stringify(pkg.version),
     "import.meta.env.VITE_GIT_HASH": JSON.stringify(getGitHash()),
     "import.meta.env.VITE_BUILD_DATE": JSON.stringify(buildDate),
   },
@@ -282,6 +283,10 @@ export default defineConfig({
     port: 3002,
     open: true,
     host: true,
-    allowedHosts: ["odoosaas.konverthr.com", "odooproduction.konverthr.com","cloud.konverthr.com"],
+    allowedHosts: [
+      "odoosaas.konverthr.com",
+      "odooproduction.konverthr.com",
+      "cloud.konverthr.com",
+    ],
   },
 });

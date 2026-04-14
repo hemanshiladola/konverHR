@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+node bump-version.js
+
+# 3. Amend the current commit to include the version bump 
+# (This avoids creating a separate "bump" commit)
+git commit --amend --no-edit --no-verify

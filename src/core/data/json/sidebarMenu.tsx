@@ -5,6 +5,7 @@ const routes = all_routes;
 const ROLES = {
   ADMIN: "REGISTER_ADMIN",
   EMPLOYEE: "EMPLOYEE_RELATED_OWN_USER",
+  MANAGER: "EMPLOYEE_RELATED_REPORTING_MANAGER",
 };
 
 // 2. Get current role safely (handles SSR or missing localstorage)
@@ -24,7 +25,7 @@ const rawSidebarData = [
     icon: "airplay",
     showAsTab: true,
     separateRoute: false,
-    roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only Section
+    roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER], // 🔥 Admin Only Section
     dot: true,
     submenuItems: [
       {
@@ -46,7 +47,7 @@ const rawSidebarData = [
           {
             label: "Employee Dashboard",
             link: routes.employeeDashboard,
-            roles: [ROLES.EMPLOYEE],
+            roles: [ROLES.EMPLOYEE, ROLES.MANAGER],
           },
         ],
       },
@@ -188,12 +189,12 @@ const rawSidebarData = [
         base: "dashboard",
         materialicons: "start",
         dot: false,
-        roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
+        roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER], // 🔥 Admin Only
         submenuItems: [
           {
             label: "Employees",
             link: routes.employeeKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+            roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER],
           },
           {
             label: "Contracts",
@@ -203,12 +204,12 @@ const rawSidebarData = [
           {
             label: "My Documents",
             link: routes.myDocumentsKHR,
-            roles: [ROLES.EMPLOYEE],
+            roles: [ROLES.EMPLOYEE, ROLES.MANAGER],
           },
           {
             label: "Expense",
             link: routes.expenseKHR,
-            roles: [ROLES.EMPLOYEE],
+            roles: [ROLES.EMPLOYEE, ROLES.MANAGER],
           },
           {
             label: "Work Site Location",
@@ -236,7 +237,7 @@ const rawSidebarData = [
           {
             label: "Employees Attendance",
             link: routes.attendaceEmployeeKHR,
-            roles: [ROLES.EMPLOYEE], // Both
+            roles: [ROLES.EMPLOYEE, ROLES.MANAGER], // Both
           },
         ],
       },
@@ -258,7 +259,7 @@ const rawSidebarData = [
           {
             label: "My Leaves",
             link: routes.leaveEmployeeKHR,
-            roles: [ROLES.EMPLOYEE],
+            roles: [ROLES.EMPLOYEE, ROLES.MANAGER],
           },
           // {
           //   label: "Leave Allocation",
@@ -268,7 +269,7 @@ const rawSidebarData = [
           {
             label: "Leave Request",
             link: routes.leaveRequestKHR,
-            roles: [ROLES.EMPLOYEE],
+            roles: [ROLES.EMPLOYEE, ROLES.MANAGER],
           },
           // {
           //   label: "Leave Types",
@@ -325,13 +326,13 @@ const rawSidebarData = [
         base: "dashboard",
         materialicons: "start",
         dot: false,
-        roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
+        roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER], // 🔥 Admin Only
 
         submenuItems: [
           {
             label: "Tickets",
             link: routes.ticketKHR,
-            roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+            roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER],
           },
         ],
       },
@@ -342,7 +343,7 @@ const rawSidebarData = [
         icon: "checkup-list",
         showSubRoute: false,
         base: "form-horizontal",
-        roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
+        roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER], // 🔥 Admin Only
       },
     ],
   },
@@ -359,7 +360,7 @@ const rawSidebarData = [
         submenu: false,
         icon: "calendar",
         showSubRoute: false,
-        roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+        roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER],
       },
     ],
   },
@@ -367,7 +368,7 @@ const rawSidebarData = [
     tittle: "Authentication",
     showAsTab: false,
     separateRoute: false,
-    roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+    roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER],
     submenuItems: [
       {
         label: "Forgot Password",
