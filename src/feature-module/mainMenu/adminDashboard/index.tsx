@@ -29,6 +29,7 @@ import { toast } from "react-toastify";
 import dayjs from "dayjs";
 import { getEmployees } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
 import AddEditEmployeeModal from "@/KHRModules/EmployeModules/Employee/AddEditEmployeeModal";
+import AddEditEmployeeModal2 from "@/KHRModules/EmployeModules/Employee/AddEditEmployeeModal2";
 
 const AdminDashboard = () => {
   const routes = all_routes;
@@ -245,7 +246,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (isProfileLocked && editData) {
-      const modalElement = document.getElementById("add_employee_modal");
+      const modalElement = document.getElementById("add_employee_modal2");
       if (modalElement && !modalInstanceRef.current) {
         const modal = new (window as any).bootstrap.Modal(modalElement, {
           backdrop: "static",
@@ -1115,17 +1116,21 @@ const AdminDashboard = () => {
           <div className="row">
             <div className="col-12">
               <div className="card shadow-sm border-0">
-                <div className="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
-                  <h5 className="card-title mb-0">Live Clock-In/Out Status</h5>
-                  <div className="d-flex gap-2">
+                <div
+                  className="card-header bg-transparent border-0 d-flex justify-content-between align-items-center"
+                  style={{ position: "relative", zIndex: 1021 }}
+                >
+                  <h5 className="card-title mb-0 ">Live Clock-In/Out Status</h5>
+                  <div className="d-flex flax-col gap-2 justify-content-md-end">
                     <div className="dropdown">
                       <button
-                        className="btn btn-white btn-sm border dropdown-toggle"
+                        className="btn btn-white btn-sm border dropdown-toggle w-100"
                         data-bs-toggle="dropdown"
+                        // aria-expanded="false"
                       >
                         {selectedDept}
                       </button>
-                      <ul className="dropdown-menu">
+                      <ul className="dropdown-menu dropdown-menu-end shadow-sm">
                         <li>
                           <button
                             className="dropdown-item"
@@ -1251,7 +1256,7 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
-      <AddEditEmployeeModal
+      <AddEditEmployeeModal2
         data={editData}
         preventClose={isProfileLocked}
         onSuccess={handleModalSuccess} // Use the stable function

@@ -765,7 +765,14 @@ const Header = React.memo(() => {
               <Link className="dropdown-item" to={routes.knowledgebase}>
                 <i className="ti ti-question-mark me-1"></i>Knowledge Base
               </Link> */}
-              <Link className="dropdown-item" to={routes.login}>
+              <Link
+                className="dropdown-item"
+                to={routes.login}
+                onClick={() => {
+                  localStorage.clear();
+                  sessionStorage.clear();
+                }}
+              >
                 <i className="ti ti-login me-2"></i>Logout
               </Link>
             </div>

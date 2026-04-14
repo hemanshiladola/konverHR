@@ -99,6 +99,8 @@ const AddHelpDeskTickitsModal = ({ onSuccess, data }: ModalProps) => {
       if (response.status === "success" || response.id) {
         toast.success("Ticket created successfully!");
         onSuccess();
+        const successEvent = new CustomEvent("ticketCreatedSuccess");
+        document.dispatchEvent(successEvent);
         document.getElementById("close-ticket-modal")?.click();
       } else {
         toast.error(response.message || "Failed to create ticket");

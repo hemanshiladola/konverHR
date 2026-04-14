@@ -188,6 +188,34 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
         {`
           #add_attendance_policy { z-index: 1080 !important; }
           .is-invalid + .invalid-feedback { display: block; }
+
+
+          .modal-content {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+
+    /* Force the select and input fields to respect the container width */
+    .form-select, .form-control {
+      max-width: 100%;
+      word-wrap: break-word;
+    }
+
+    /* Fix for long text in select options on mobile */
+    .form-select option {
+      white-space: normal;
+    }
+    
+    @media (max-width: 576px) {
+      .modal-dialog {
+        margin: 10px; /* Give it a little breathing room on the edges */
+      }
+      .modal-body {
+        padding: 1.5rem !important; /* Slightly tighter padding for small screens */
+      }
+    }
+  
+
         `}
       </style>
 
@@ -255,9 +283,10 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     </label>
                     <select
                       name="absent_if"
-                      className="form-select"
+                      className="form-select fs-13"
                       value={formData.absent_if}
                       onChange={handleChange}
+                      style={{ textOverflow: "ellipsis" }}
                     >
                       <option value="in_out_abs">
                         Any of In or Out Entry not done then absent

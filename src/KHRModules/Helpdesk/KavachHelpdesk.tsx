@@ -18,21 +18,35 @@ const KavachHelpdesk = () => {
       );
       modalInstance.show();
 
-      // 3. Define the navigation logic
-      const handleCloseAndNavigate = () => {
-        // We only navigate once the modal is hidden
-        // This works because your AddHelpDeskTickitsModal calls closeBtn.click() on success
+      const handleSuccessNavigation = () => {
         navigate(routes.ticketKHR);
 
-        // Cleanup the listener
-        modalElement.removeEventListener(
-          "hidden.bs.modal",
-          handleCloseAndNavigate,
+        // Cleanup the custom listener
+        document.removeEventListener(
+          "ticketCreatedSuccess",
+          handleSuccessNavigation,
         );
       };
 
-      // Add the listener for when the modal closes
-      modalElement.addEventListener("hidden.bs.modal", handleCloseAndNavigate);
+      // 3. Define the navigation logic
+      // const handleCloseAndNavigate = () => {
+      //   // We only navigate once the modal is hidden
+      //   // This works because your AddHelpDeskTickitsModal calls closeBtn.click() on success
+      //   navigate(routes.ticketKHR);
+
+      //   // Cleanup the listener
+      //   modalElement.removeEventListener(
+      //     "hidden.bs.modal",
+      //     handleCloseAndNavigate,
+      //   );
+      // };
+
+      // // Add the listener for when the modal closes
+      // modalElement.addEventListener("hidden.bs.modal", handleCloseAndNavigate);
+      document.addEventListener(
+        "ticketCreatedSuccess",
+        handleSuccessNavigation,
+      );
     } else {
       // If the modal isn't found in the DOM, show a warning instead of navigating away instantly
       toast.error("Support Modal not found. Please refresh the page.");
@@ -41,29 +55,31 @@ const KavachHelpdesk = () => {
 
   return (
     <div
-      style={{
-        position: "fixed",
-        bottom: "70px",
-        right: "30px",
-        zIndex: 999999,
-      }}
+      className="floating-helpdesk-container"
+      // style={{
+      //   position: "fixed",
+      //   bottom: "70px",
+      //   right: "30px",
+      //   zIndex: 999999,
+      // }}
     >
       <motion.button
         whileHover={{ scale: 1.1, y: -5 }}
         whileTap={{ scale: 0.9 }}
+        className="helpdesk-fab"
         onClick={handleTriggerPortal}
-        style={{
-          width: "60px",
-          height: "60px",
-          backgroundColor: "#fe6137",
-          border: "none",
-          borderRadius: "20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: "pointer",
-          boxShadow: "0 10px 25px rgba(254, 97, 55, 0.4)",
-        }}
+        // style={{
+        //   width: "60px",
+        //   height: "60px",
+        //   backgroundColor: "#fe6137",
+        //   border: "none",
+        //   borderRadius: "20px",
+        //   display: "flex",
+        //   alignItems: "center",
+        //   justifyContent: "center",
+        //   cursor: "pointer",
+        //   boxShadow: "0 10px 25px rgba(254, 97, 55, 0.4)",
+        // }}
       >
         <i className="ti ti-headset text-white" style={{ fontSize: "28px" }} />
       </motion.button>

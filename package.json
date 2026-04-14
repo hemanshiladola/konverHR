@@ -1,7 +1,7 @@
 {
   "name": "template-new",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest --watch",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
@@ -120,6 +121,7 @@
     "vitest": "^2.1.8",
     "weather-icons-react": "^1.2.0",
     "web-vitals": "^4.2.4",
-    "yet-another-react-lightbox": "^3.23.4"
+    "yet-another-react-lightbox": "^3.23.4",
+    "husky": "^8.0.0"
   }
 }

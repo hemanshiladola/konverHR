@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# 1. Bump version
+node bump-version.js
+
+git add package.json
+# Remove --amend to prevent history conflicts
+git commit -m "chore: bump version to $(node -p "require('./package.json').version")" --no-verify
