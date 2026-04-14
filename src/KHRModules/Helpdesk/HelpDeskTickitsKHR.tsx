@@ -48,12 +48,25 @@ const HelpDeskTickitsKHR = () => {
         />
 
         {loading ? (
-          <div className="text-center p-5 mt-5">
-            <div className="spinner-grow text-primary" role="status"></div>
+          <div
+            className="d-flex align-items-center justify-content-center mt-5"
+            style={{ minHeight: "300px" }}
+          >
+            <div className="text-center">
+              <div
+                className="spinner-border text-primary"
+                role="status"
+                style={{ width: "3rem", height: "3rem" }}
+              >
+                <span className="visually-hidden">Loading Tickets...</span>
+              </div>
+              {/* <p className="mt-3 text-muted fw-bold">
+                Fetching Support Tickets...
+              </p> */}
+            </div>
           </div>
         ) : (
           <div className="mt-3">
-            {/* --- GRID UPDATED TO col-xxl-2 (approx 6 per row) --- */}
             <div className="row g-3">
               {data.map((ticket) => {
                 const accentColor = getStatusColor(ticket.stage || "");

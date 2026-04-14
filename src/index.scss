@@ -2327,3 +2327,126 @@ $header-height: 60px; // Standard header height
 .modal-backdrop {
   z-index: 1050 !important;
 }
+
+// Global Toastify Overrides for Mobile Perfection
+.Toastify__toast-container {
+  z-index: 1090 !important; // Higher than modal (1080)
+  width: 90vw !important;
+  max-width: 400px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+
+  .Toastify__toast {
+    border-radius: 12px !important;
+    font-family: inherit !important;
+    font-size: 13px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    min-height: 55px;
+
+    &--success {
+      background: #03c95a !important;
+      color: #fff !important;
+
+      .Toastify__toast-icon svg {
+        fill: #fff;
+      }
+    }
+
+    &--error {
+      background: #e70d0d !important;
+      color: #fff !important;
+
+      .Toastify__toast-icon svg {
+        fill: #fff;
+      }
+    }
+
+    .Toastify__close-button {
+      color: #fff;
+      opacity: 0.7;
+    }
+  }
+}
+
+.kavach-helpdesk-container {
+  position: fixed;
+  bottom: 70px;
+  right: 30px;
+  z-index: 999999;
+
+  // Mobile Adjustments
+  @media (max-width: 768px) {
+    bottom: 5px; // Move closer to bottom on mobile
+    right: 5px;
+  }
+
+  .helpdesk-trigger {
+    width: 60px;
+    height: 60px;
+    background-color: #fe6137;
+    border: none;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(254, 97, 55, 0.4);
+
+    @media (max-width: 576px) {
+      width: 50px; // Slightly smaller on very small screens
+      height: 50px;
+      border-radius: 15px;
+
+      i {
+        font-size: 22px !important;
+      }
+    }
+
+    i {
+      font-size: 28px;
+      color: white;
+    }
+  }
+}
+
+.floating-helpdesk-container {
+  position: fixed;
+  bottom: 80px; // Default Desktop position
+  right: 30px;
+  z-index: 9999;
+
+  .helpdesk-fab {
+    width: 60px;
+    height: 60px;
+    background-color: #fe6137;
+    border: none;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(254, 97, 55, 0.4);
+    color: white;
+
+    i {
+      font-size: 28px;
+    }
+  }
+
+  // --- MOBILE RESPONSIVE FIX ---
+  @media (max-width: 767px) {
+    bottom: 100px; // Moved higher to avoid footer action buttons (Image 10)
+    right: 20px; // Tucked closer to the edge
+
+    .helpdesk-fab {
+      width: 48px; // Reduced size as suggested
+      height: 48px;
+      border-radius: 14px;
+      box-shadow: 0 6px 15px rgba(254, 97, 55, 0.3);
+
+      i {
+        font-size: 22px; // Scaled icon size
+      }
+    }
+  }
+}

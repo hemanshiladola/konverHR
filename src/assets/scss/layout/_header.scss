@@ -2,7 +2,7 @@
 @use "../utils/variables";
 
 .header {
-  height: 50px;
+  height: 55px;
   z-index: 999;
   background: variables.$white;
   position: fixed;
@@ -116,7 +116,7 @@
         text-align: center;
         width: 100%;
         img {
-          width: 140px;
+          width: 100px;
         }
       }
       .dark-logo {
@@ -1073,6 +1073,57 @@
     color: variables.$primary;
     i {
       color: variables.$primary !important;
+    }
+  }
+}
+
+// Targeted fix for Mobile Profile Dropdown
+.mobile-user-menu {
+  .dropdown-menu {
+    @include mixins.respond-below(lg) {
+      width: 220px !important; // Enforces a compact width for mobile
+      min-width: 220px !important;
+      right: 10px !important;
+      left: auto !important;
+      border-radius: 12px !important;
+      padding: 0 !important;
+      overflow: hidden;
+
+      .dropdown-header {
+        padding: 12px 15px !important;
+        border-bottom: 1px solid variables.$gray-200;
+
+        h6 {
+          font-size: 14px;
+          font-weight: 700;
+          margin-bottom: 0 !important; // Removes the gap below name
+          line-height: 1.2; // Tightens vertical space
+          color: variables.$gray-900;
+        }
+
+        p {
+          font-size: 11px;
+          margin-top: 2px !important; // Tiny nudge below the name
+          line-height: 1;
+          color: variables.$gray-500;
+        }
+      }
+
+      .dropdown-item {
+        padding: 10px 15px !important;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+
+        i {
+          font-size: 16px;
+          margin-right: 8px;
+        }
+
+        &:hover {
+          background-color: variables.$light-200;
+        }
+      }
     }
   }
 }
