@@ -81,7 +81,7 @@
     "vitest.config.ts",
     "scripts/**/*.ts",
     "scripts/**/*.js"
-  ],
+, "bump-version.js"  ],
   "exclude": [
     "node_modules",
     "dist",

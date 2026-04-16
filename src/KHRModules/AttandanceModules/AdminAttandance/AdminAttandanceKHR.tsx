@@ -139,6 +139,33 @@ const AdminAttandanceKHR = () => {
     };
   };
 
+  // const downloadBase64File = (base64String, fileName, mimeType) => {
+  //   // 1. Remove any whitespace or metadata headers if present
+  //   const pureBase64 = base64String.replace(/\s/g, "");
+
+  //   // 2. Convert Base64 to a Byte Array
+  //   const byteCharacters = atob(pureBase64);
+  //   const byteNumbers = new Array(byteCharacters.length);
+  //   for (let i = 0; i < byteCharacters.length; i++) {
+  //     byteNumbers[i] = byteCharacters.charCodeAt(i);
+  //   }
+  //   const byteArray = new Uint8Array(byteNumbers);
+
+  //   // 3. Create a Blob and a download link
+  //   const blob = new Blob([byteArray], { type: mimeType });
+  //   const url = window.URL.createObjectURL(blob);
+
+  //   const link = document.createElement("a");
+  //   link.href = url;
+  //   link.download = fileName;
+
+  //   // 4. Trigger download and cleanup
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  //   window.URL.revokeObjectURL(url);
+  // };
+
   // Function to fetch employees
   const fetchEmployees = () => {
     dispatch(getEmployeesBasicInfo({}) as any);
@@ -463,11 +490,15 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       const { dateFrom, dateTo } = getDefaultDateRange();
-      await exportAttendanceToExcel(dateFrom, dateTo);
-      // toast.success("Excel exported successfully!");
+      // Assuming your service returns the JSON response you provided
+      const response = await exportAttendanceToExcel(dateFrom, dateTo);
+
+      if (response?.data?.download_url) {
+        // Direct browser download via the URL
+        window.location.href = response.data.download_url;
+      }
     } catch (error) {
-      console.error("Export failed:", error);
-      // toast.error("Failed to export Excel file");
+      console.error("Excel Export failed:", error);
     } finally {
       setIsExporting(false);
     }
@@ -477,16 +508,18 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       const { dateFrom, dateTo } = getDefaultDateRange();
-      await exportAttendanceToPdf(dateFrom, dateTo);
-      // toast.success("PDF exported successfully!");
+      const response = await exportAttendanceToPdf(dateFrom, dateTo);
+
+      if (response?.data?.download_url) {
+        // Opening in a new tab is often better for PDFs so users can preview
+        window.open(response.data.download_url, "_blank");
+      }
     } catch (error) {
-      console.error("Export failed:", error);
-      // toast.error("Failed to export PDF file");
+      console.error("PDF Export failed:", error);
     } finally {
       setIsExporting(false);
     }
   };
-
   const formatTime = (dateTime: string | false) => {
     if (!dateTime) return "-";
     const date = new Date(dateTime.replace(" ", "T"));

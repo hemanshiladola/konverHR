@@ -759,7 +759,6 @@ const EmployeeKHR = () => {
         <AddEditEmployeeModal2
           data={editData}
           draftData={selectedDraft}
-          // 2. LOGOUT FLOW ON SUCCESS
           onSuccess={() => {
             const isLocked =
               localStorage.getItem("is_incomplete_admin_profile") === "true";
@@ -781,6 +780,7 @@ const EmployeeKHR = () => {
               }, 2000);
             } else {
               getEmployees();
+              fetchEmployees();
               setEditData(null);
               setSelectedDraft(null);
               loadDraftsFromStorage(); // Refresh drafts list
