@@ -152,6 +152,8 @@ const CommonSelect: React.FC<SelectProps> = ({
       placeholder={placeholder}
       isDisabled={disabled}
       formatOptionLabel={formatOptionLabel}
+      menuPortalTarget={typeof document !== 'undefined' ? document.body : null}
+      menuPosition="fixed"
     />
   );
 };

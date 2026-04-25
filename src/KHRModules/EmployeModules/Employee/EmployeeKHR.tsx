@@ -11,6 +11,7 @@ import ArchiveEmployeeModal from "./ArchiveEmployeeModal";
 import AddEditEmployeeModal2 from "./AddEditEmployeeModal2";
 import dayjs from "dayjs";
 import { createPortal } from "react-dom";
+import BulkUploadModal from "./BulkUploadModal";
 
 const EmployeeKHR = () => {
   const navigate = useNavigate();
@@ -23,7 +24,8 @@ const EmployeeKHR = () => {
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]); // ✅ Added for filtering
   const [loading, setLoading] = useState(true);
   const [editData, setEditData] = useState<any>(null);
-  const [selectedDraft, setSelectedDraft] = useState<any>(null); // ✅ NEW: State for loading a specific draft
+  const [selectedDraft, setSelectedDraft] = useState<any>(null);
+  const [isViewMode, setIsViewMode] = useState<boolean>(false); // ✅ NEW: State for loading a specific draft
 
   const [viewType, setViewType] = useState<"grid" | "list">("grid");
   const [archiveId, setArchiveId] = useState<number | null>(null);
@@ -191,7 +193,18 @@ const EmployeeKHR = () => {
     }
   };
 
+  const handleViewClick = (employee: any) => {
+    setEditData(employee);
+    setIsViewMode(true);
+    const modalElement = document.getElementById("add_employee_modal2");
+    if (modalElement) {
+      const modal = new (window as any).bootstrap.Modal(modalElement);
+      modal.show();
+    }
+  };
+
   const handleEditClick = (employee: any) => {
+    setIsViewMode(false);
     setEditData(employee);
     const modalElement = document.getElementById("add_employee_modal2");
     if (modalElement) {
@@ -321,6 +334,13 @@ const EmployeeKHR = () => {
       render: (_: any, record: any) =>
         isAdmin && ( // Double check here
           <div className="d-flex align-items-center gap-2">
+            <button
+              className="btn btn-icon btn-sm btn-soft-info"
+              onClick={() => handleViewClick(record)}
+              title="View Details"
+            >
+              <i className="ti ti-eye"></i>
+            </button>
             <button
               className="btn btn-icon btn-sm btn-soft-primary"
               onClick={() => handleEditClick(record)}
@@ -496,6 +516,7 @@ const EmployeeKHR = () => {
           onViewChange={setViewType}
           buttonText={isAdmin ? "Add New Employee" : ""}
           modalTarget={isAdmin ? "#add_employee_modal2" : ""}
+          onAddClick={() => setIsViewMode(false)}
         />
 
         {/* ✅ NEW DRAFTS BUTTON */}
@@ -623,7 +644,16 @@ const EmployeeKHR = () => {
                   <option value="inactive">Inactive Only</option>
                 </select>
               </div>
-              <div className="col-md-auto ms-auto">
+              <div className="col-md-auto ms-auto d-flex gap-2">
+                {isAdmin && (
+                  <button
+                    className="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#bulk_upload_modal"
+                  >
+                    <i className="ti ti-upload me-1"></i> Bulk Upload
+                  </button>
+                )}
                 <button
                   className="btn btn-white border"
                   onClick={() => {
@@ -660,6 +690,7 @@ const EmployeeKHR = () => {
                       employee={emp}
                       onEdit={handleEditClick}
                       onDelete={handleDeleteEmployee}
+                      onView={handleViewClick}
                     />
                   ))
                 ) : (
@@ -758,6 +789,7 @@ const EmployeeKHR = () => {
         /> */}
         <AddEditEmployeeModal2
           data={editData}
+          isViewOnly={isViewMode}
           draftData={selectedDraft}
           onSuccess={() => {
             const isLocked =
@@ -791,6 +823,12 @@ const EmployeeKHR = () => {
             setSelectedDraft(null);
             loadDraftsFromStorage(); // Refresh drafts list
           }}
+        />
+        <BulkUploadModal
+          onSuccess={() => {
+            fetchEmployees();
+          }}
+          onClose={() => { }}
         />
       </div>
     </div>
@@ -847,7 +885,7 @@ export default EmployeeKHR;
 //     }
 //   };
 
-//   const handleEditClick = (employee: any) => {
+//   const handleViewClick = (employee: any) => {\n    setEditData(employee);\n    setIsViewMode(true);\n    const modalElement = document.getElementById('add_employee_modal2');\n    if (modalElement) {\n      const modal = new (window as any).bootstrap.Modal(modalElement);\n      modal.show();\n    }\n  };\n\n  const handleEditClick = (employee: any) => {\n    setIsViewMode(false);
 //     setEditData(employee);
 //     const modalElement = document.getElementById("add_employee_modal");
 //     if (modalElement) {
@@ -1059,7 +1097,7 @@ export default EmployeeKHR;
 //     }
 //   };
 
-//   const handleEditClick = (employee: any) => {
+//   const handleViewClick = (employee: any) => {\n    setEditData(employee);\n    setIsViewMode(true);\n    const modalElement = document.getElementById('add_employee_modal2');\n    if (modalElement) {\n      const modal = new (window as any).bootstrap.Modal(modalElement);\n      modal.show();\n    }\n  };\n\n  const handleEditClick = (employee: any) => {\n    setIsViewMode(false);
 //     setEditData(employee);
 //     // Explicitly open modal
 //     const modalElement = document.getElementById("add_employee_modal");

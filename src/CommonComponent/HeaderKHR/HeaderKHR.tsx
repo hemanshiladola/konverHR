@@ -14,6 +14,7 @@ interface CommonHeaderProps {
   showViewToggle?: boolean;
   viewType?: "list" | "grid";
   onViewChange?: (view: "list" | "grid") => void;
+  onAddClick?: () => void;
 }
 
 const CommonHeader: React.FC<CommonHeaderProps> = ({
@@ -27,6 +28,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
   showViewToggle = false,
   viewType = "grid", // Default state
   onViewChange,
+  onAddClick,
 }) => {
   return (
     <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
@@ -78,6 +80,7 @@ const CommonHeader: React.FC<CommonHeaderProps> = ({
             data-bs-toggle="modal"
             data-bs-target={modalTarget}
             className="btn btn-primary d-flex align-items-center"
+            onClick={onAddClick}
           >
             <i className="ti ti-circle-plus me-2" />
             {buttonText}

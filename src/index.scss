@@ -2450,3 +2450,30 @@ $header-height: 60px; // Standard header height
     }
   }
 }
+
+.cursor-pointer {
+  cursor: pointer;
+}
+.bg-light-subtle {
+  background-color: #f8f9fa !important;
+}
+
+/* Custom Scrollbar for the list */
+.list-group::-webkit-scrollbar {
+  width: 5px;
+}
+.list-group::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+.form-check-input:checked {
+  background-color: #e42128; /* Matches your brand red */
+  border-color: #e42128;
+}
+
+.border-bottom-dashed {
+  border-bottom: 1px dashed #e9ecef !important;
+}
+.bg-soft-danger {
+  background-color: rgba(228, 33, 40, 0.1);
+}

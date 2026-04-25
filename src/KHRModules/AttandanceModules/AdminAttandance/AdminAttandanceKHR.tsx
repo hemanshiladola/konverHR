@@ -799,6 +799,8 @@ const AdminAttandanceKHR = () => {
       dispatch(updateState({ isGetEmployeesBasicInfo: false }));
     }
   }, [isGetEmployeesBasicInfo, getEmployeesBasicInfoData, dispatch]);
+
+  
   useEffect(() => {
     // fetchData();
     if (isApiAuth) {

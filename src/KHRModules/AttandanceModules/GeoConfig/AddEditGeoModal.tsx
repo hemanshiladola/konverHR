@@ -14,6 +14,9 @@ interface Option {
   id: number;
   name: string;
   role: string;
+  department: string; // 🔥 Added
+  department_id?: number; // 🔥 Added
+  job_position?: string; // 🔥 Added
 }
 
 const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
@@ -30,6 +33,8 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [employeesList, setEmployeeList] = useState<Option[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDept, setSelectedDept] = useState("All");
 
   // 1. Fetch Employees
   useEffect(() => {
@@ -43,6 +48,20 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
     };
     fetchEmploymentData();
   }, []);
+
+  const uniqueDepts = [
+    "All",
+    ...new Set(employeesList.map((emp: any) => emp.department).filter(Boolean)),
+  ];
+
+  const getFilteredEmployees = () => {
+    return employeesList.filter(
+      (emp) =>
+        (selectedDept === "All" || emp.department === selectedDept) &&
+        (emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          emp.job_position?.toLowerCase().includes(searchTerm.toLowerCase())),
+    );
+  };
 
   // 2. BOOTSTRAP EVENT LISTENER (Force clear & Parent Reset on close)
   useEffect(() => {
@@ -271,7 +290,7 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
                   </div>
                 </div>
 
-                <div
+                {/* <div
                   className="mb-3"
                   style={{ position: "relative", zIndex: 100 }}
                 >
@@ -292,6 +311,159 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
                   />
                   <div className="form-text text-muted">
                     Leave empty to apply globally or select specific employees.
+                  </div>
+                </div> */}
+
+                <div className="mb-3">
+                  {/* Header with Selection Count */}
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    <label className="form-label fs-13 fw-bold mb-0">
+                      Assigned Employees
+                    </label>
+                    <span className="badge bg-soft-danger text-danger px-2 py-1">
+                      {formData.employees_selection.length} Selected
+                    </span>
+                  </div>
+
+                  {/* Search & Filter Bar */}
+                  <div className="row g-2 mb-2">
+                    <div className="col-md-7">
+                      <div className="input-group input-group-sm shadow-sm">
+                        <span className="input-group-text bg-white border-end-0">
+                          <i className="ti ti-search text-muted"></i>
+                        </span>
+                        <input
+                          type="text"
+                          className="form-control border-start-0 fs-12"
+                          placeholder="Search name or position..."
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-md-5">
+                      <select
+                        className="form-select form-select-sm fs-12 shadow-sm"
+                        onChange={(e) => setSelectedDept(e.target.value)}
+                      >
+                        <option value="All">All Departments</option>
+                        {[
+                          ...new Set(employeesList.map((e) => e.department)),
+                        ].map((dept) => (
+                          <option key={dept} value={dept}>
+                            {dept}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Select All Toggle */}
+                  <div className="d-flex justify-content-between align-items-center p-2 bg-light border border-bottom-0 rounded-top">
+                    <div className="form-check mb-0">
+                      <input
+                        className="form-check-input ms-0"
+                        type="checkbox"
+                        id="selectAllCheck"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            const visible = employeesList.filter(
+                              (emp) =>
+                                (selectedDept === "All" ||
+                                  emp.department === selectedDept) &&
+                                emp.name
+                                  .toLowerCase()
+                                  .includes(searchTerm.toLowerCase()),
+                            );
+                            setFormData({
+                              ...formData,
+                              employees_selection: visible,
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              employees_selection: [],
+                            });
+                          }
+                        }}
+                      />
+                      <label
+                        className="form-check-label fs-12 fw-bold ms-2 cursor-pointer"
+                        htmlFor="selectAllCheck"
+                      >
+                        Select All Visible
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-link btn-sm text-decoration-none p-0 fs-11 text-danger"
+                      onClick={() =>
+                        setFormData({ ...formData, employees_selection: [] })
+                      }
+                    >
+                      Clear All
+                    </button>
+                  </div>
+
+                  {/* Scrollable Checklist */}
+                  <div
+                    className="border rounded-bottom bg-white overflow-auto"
+                    style={{ maxHeight: "200px", borderStyle: "dashed" }}
+                  >
+                    <div className="list-group list-group-flush">
+                      {employeesList
+                        .filter(
+                          (emp) =>
+                            (selectedDept === "All" ||
+                              emp.department === selectedDept) &&
+                            emp.name
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase()),
+                        )
+                        .map((emp) => {
+                          const isChecked = formData.employees_selection.some(
+                            (s: any) => s.id === emp.id,
+                          );
+                          return (
+                            <label
+                              key={emp.id}
+                              className="list-group-item d-flex align-items-center py-2 border-bottom-dashed"
+                            >
+                              <input
+                                className="form-check-input me-3 mt-0"
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={() => {
+                                  const current = [
+                                    ...formData.employees_selection,
+                                  ];
+                                  isChecked
+                                    ? setFormData({
+                                        ...formData,
+                                        employees_selection: current.filter(
+                                          (i: any) => i.id !== emp.id,
+                                        ),
+                                      })
+                                    : setFormData({
+                                        ...formData,
+                                        employees_selection: [...current, emp],
+                                      });
+                                }}
+                              />
+                              <div className="lh-1">
+                                <div className="fs-13 fw-bold text-dark">
+                                  {emp.name}
+                                </div>
+                                <div className="fs-11 text-muted mt-1">
+                                  {emp.job_position} •{" "}
+                                  <span className="text-primary">
+                                    {emp.department}
+                                  </span>
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                    </div>
                   </div>
                 </div>
 

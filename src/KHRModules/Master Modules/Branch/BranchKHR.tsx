@@ -69,7 +69,7 @@ const BranchKHR = () => {
       render: (text: string, record: any) => (
         <div className="d-flex flex-column">
           <h6 className="fs-14 fw-bold text-dark mb-0">{text}</h6>
-          <small className="text-muted fs-11">{record.client_name}</small>
+          {/* <small className="text-muted fs-11">{record.client_name}</small> */}
         </div>
       ),
       sorter: (a: any, b: any) => a.name.localeCompare(b.name),

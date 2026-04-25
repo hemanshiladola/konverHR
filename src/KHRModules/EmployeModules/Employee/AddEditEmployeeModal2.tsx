@@ -32,6 +32,7 @@ interface Props {
   data: any | null; // For editing existing
   draftData?: any | null; // ✅ NEW: For loading a specific draft
   preventClose?: boolean;
+  isViewOnly?: boolean;
 }
 
 const AddEditEmployeeModal2: React.FC<Props> = ({
@@ -40,6 +41,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   data,
   draftData,
   preventClose = false,
+  isViewOnly = false,
 }) => {
   const [activeTab, setActiveTab] = useState("legal");
   const [validated, setValidated] = useState(false);
@@ -119,6 +121,56 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     category: "",
     file: null as File | null,
   });
+
+  // ? Refs to handle stale closures in global event listeners
+  const latestAttemptClose = useRef<() => void>(() => { });
+  const latestIsDirty = useRef<boolean>(false);
+
+  useEffect(() => {
+    latestIsDirty.current = isDirty;
+  }, [isDirty]);
+
+  // ? Bug Fix: Prevent parent bootstrap modal from closing on ESC when inner modals are open
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (showCloseConfirm) {
+          e.stopPropagation();
+          e.preventDefault();
+          setShowCloseConfirm(false);
+        } else if (showExpModal) {
+          e.stopPropagation();
+          e.preventDefault();
+          setShowExpModal(false);
+        } else {
+          // If we hit Escape on the main modal, delegate to attempt close
+          // This will either show the draft confirm or close and reset properly
+          e.stopPropagation();
+          e.preventDefault();
+          latestAttemptClose.current();
+        }
+      }
+    };
+
+    // Attach in capture phase to intercept before Bootstrap modal catches it
+    window.addEventListener("keydown", handleGlobalKeyDown, true);
+    return () =>
+      window.removeEventListener("keydown", handleGlobalKeyDown, true);
+  }, [showCloseConfirm, showExpModal]);
+
+  // ? Prevent data loss on page reload
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (latestIsDirty.current) {
+        e.preventDefault();
+        e.returnValue =
+          "You have unsaved changes. Are you sure you want to leave?";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   const todayStr = dayjs().format("YYYY-MM-DD");
 
@@ -249,12 +301,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   };
 
   const handleAttemptClose = () => {
-    if (isDirty && !preventClose) {
+    if (isDirty && !preventClose && !isViewOnly) {
       setShowCloseConfirm(true);
     } else {
       executeClose();
     }
   };
+  latestAttemptClose.current = handleAttemptClose;
 
   const executeClose = () => {
     setShowCloseConfirm(false);
@@ -784,13 +837,6 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     if (!formData.birthday) tempErrors.birthday = "Date of birth is required.";
     if (!formData.blood_group)
       tempErrors.blood_group = "Blood group is required.";
-    if (!formData.work_phone || !/^[0-9]{10}$/.test(formData.work_phone))
-      tempErrors.work_phone = "Valid 10-digit mobile required.";
-    if (
-      !formData.private_email ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.private_email)
-    )
-      tempErrors.private_email = "Valid email is required.";
     if (formData.marital === "married") {
       if (!formData.spouse_name?.trim())
         tempErrors.spouse_name = "Spouse name is required.";
@@ -813,6 +859,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
 
   const validateEmergencyTab = () => {
     let tempErrors: any = {};
+    if (!formData.work_phone || !/^[0-9]{10}$/.test(formData.work_phone))
+      tempErrors.work_phone = "Valid 10-digit mobile required.";
+    if (
+      !formData.private_email ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.private_email)
+    )
+      tempErrors.private_email = "Valid email is required.";
     if (!formData.emergency_contact_name?.trim())
       tempErrors.emergency_contact_name = "Emergency Contact Name required.";
     if (!formData.emergency_contact_relation?.trim())
@@ -881,18 +934,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   };
 
   const tabFieldsMap: { [key: string]: string[] } = {
-    legal: ["aadhaar_number", "uan_number"],
+    legal: [
+      "aadhaar_number",
+      "passport_id",
+      "passport_no",
+      "voter_id",
+      "pan_number",
+      "uan_number",
+    ],
     personal: [
       "gender",
       "birthday",
       "blood_group",
-      "work_phone",
-      "private_email",
       "spouse_name",
       "date_of_marriage",
     ],
     address: ["present_address", "permanent_address"],
     emergency: [
+      "work_phone",
+      "private_email",
       "emergency_contact_name",
       "emergency_contact_relation",
       "emergency_contact_mobile",
@@ -906,6 +966,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     ],
     banking: ["bank_id", "account_number", "bank_iafc_code"],
     notice: ["type_of_sepration", "resignation_date", "notice_period_days"],
+    device: [],
+    group_access: [],
   };
 
   const hasTabErrors = (tabName: string) => {
@@ -1069,7 +1131,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
         const branchList = Array.isArray(response) ? response : [];
         const formattedBranches = branchList.map((b: any) => ({
           value: String(b.id),
-          label: `${b.RegisteredCompnany} | ${b.address}`,
+          label: `${b.name || b.RegisteredCompnany} | ${b.address}`,
         }));
         setBranches(formattedBranches);
         if (
@@ -1456,11 +1518,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                 <div>
                   {preventClose
                     ? "Complete Admin Profile"
-                    : data
-                      ? "Edit Employee Profile"
-                      : "Onboard New Employee"}
+                    : isViewOnly
+                      ? "View Employee Profile"
+                      : data
+                        ? "Edit Employee Profile"
+                        : "Onboard New Employee"}
                   <div className="fs-12 text-muted fw-normal mt-1">
-                    Fill in the necessary details across the sections below
+                    {isViewOnly
+                      ? "Viewing the details of this employee profile"
+                      : "Fill in the necessary details across the sections below"}
                   </div>
                 </div>
               </h5>
@@ -1515,10 +1581,21 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                 className={`needs-validation h-100 d-flex flex-column ${validated ? "was-validated" : ""}`}
                 noValidate
                 onSubmit={handleSubmit}
+                autoComplete="off"
               >
                 {/* 👇 These hidden inputs "catch" the browser's autofill so your real fields stay clean 👇 */}
-                <input type="text" style={{ display: "none" }} />
-                <input type="password" style={{ display: "none" }} />
+                <input
+                  disabled={isViewOnly || isSubmitting}
+                  readOnly={isViewOnly}
+                  type="text"
+                  style={{ display: "none" }}
+                />
+                <input
+                  disabled={isViewOnly || isSubmitting}
+                  readOnly={isViewOnly}
+                  type="password"
+                  style={{ display: "none" }}
+                />
                 <div
                   className="d-flex flex-row flex-grow-1"
                   style={{ minHeight: "65vh" }}
@@ -1599,6 +1676,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className={`form-control ${isSubmitted ? (errors.name ? "is-invalid" : formData.name ? "is-valid" : "") : ""}`}
                                     placeholder="Enter Fullname here"
@@ -1623,6 +1702,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className={`form-control ${isSubmitted ? (errors.father_name ? "is-invalid" : formData.father_name ? "is-valid" : "") : ""}`}
                                     placeholder="Enter Father's Name"
@@ -1646,6 +1727,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Branch
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     key={`branch-field-${formData.name_of_client}-${branches.length}`}
                                     options={branches}
                                     placeholder="Select Branch"
@@ -1685,6 +1767,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Employee Category
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     options={[
                                       { value: "staff", label: "Staff" },
                                       { value: "contract", label: "Contract" },
@@ -1710,6 +1793,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Working Hours
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     options={workingSchedules}
                                     placeholder="Select Hours"
                                     value={
@@ -1785,11 +1869,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     alt="Preview"
                                   />
                                 ) : (
-                                  <div className="d-flex flex-column align-items-center justify-content-center h-100">
-                                    <i className="ti ti-camera fs-32 text-muted"></i>
-                                    <span className="fs-10 text-muted">
-                                      Photo
-                                    </span>
+                                  <div className="d-flex flex-column align-items-center justify-content-center h-100 bg-light rounded">
+                                    <i className="ti ti-user fs-48 text-muted opacity-50"></i>
                                   </div>
                                 )}
                                 <label
@@ -1810,6 +1891,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   <i className="ti ti-upload fs-12"></i>
                                 </label>
                                 <input
+                                  disabled={isViewOnly || isSubmitting}
+                                  readOnly={isViewOnly}
                                   type="file"
                                   id="emp_img_header"
                                   className="d-none"
@@ -1842,6 +1925,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className={`form-control ${isSubmitted ? (errors.aadhaar_number ? "is-invalid" : formData.aadhaar_number ? "is-valid" : "") : ""}`}
                                     placeholder="12 Digit Aadhaar"
@@ -1869,6 +1954,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     PAN Number
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className={`form-control text-uppercase ${isSubmitted ? (errors.pan_number ? "is-invalid" : formData.pan_number ? "is-valid" : "") : ""}`}
                                     maxLength={10}
@@ -1897,6 +1984,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Voter ID
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className={`form-control text-uppercase ${isSubmitted && errors.voter_id ? "is-invalid" : ""}`}
                                     placeholder="ABC1234567"
@@ -1925,6 +2014,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Passport No
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     maxLength={8}
                                     className={`form-control text-uppercase ${isSubmitted && errors.passport_id ? "is-invalid" : ""}`}
@@ -1957,6 +2048,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     ESI Number
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
                                     placeholder="Enter ESI Number"
@@ -1972,6 +2065,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                 <div className="col-md-2 d-flex align-items-center pt-4">
                                   <div className="form-check">
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type="checkbox"
                                       className="form-check-input"
                                       id="uanCheckLegal"
@@ -2001,11 +2096,14 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     )}
                                   </label>
                                   <input
-                                    type="text"
-                                    className={`form-control ${isSubmitted && formData.is_uan_number_applicable ? (errors.uan_number ? "is-invalid" : "is-valid") : ""}`}
                                     disabled={
+                                      isViewOnly ||
+                                      isSubmitting ||
                                       !formData.is_uan_number_applicable
                                     }
+                                    readOnly={isViewOnly}
+                                    type="text"
+                                    className={`form-control ${isSubmitted && formData.is_uan_number_applicable ? (errors.uan_number ? "is-invalid" : "is-valid") : ""}`}
                                     placeholder="12 Digit UAN"
                                     value={formData.uan_number}
                                     onChange={(e) =>
@@ -2028,6 +2126,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   <div className="d-flex align-items-center gap-2">
                                     <div className="position-relative">
                                       <input
+                                        disabled={isViewOnly || isSubmitting}
+                                        readOnly={isViewOnly}
                                         type="file"
                                         id="license_upload_input"
                                         className="d-none"
@@ -2077,25 +2177,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {/* 1. Show EYE ICON if the value is a URL string from the backend */}
                                         {typeof formData.driving_license ===
                                           "string" && (
-                                          <a
-                                            href={formData.driving_license}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
-                                            title="View Current License"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.driving_license}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                              title="View Current License"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
 
                                         {/* 2. Show CHECKMARK if a new File object has been selected */}
                                         {formData.driving_license instanceof
                                           File && (
-                                          <i
-                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
-                                            title="New file selected"
-                                          ></i>
-                                        )}
+                                            <i
+                                              className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                              title="New file selected"
+                                            ></i>
+                                          )}
                                       </div>
                                     )}
                                   </div>
@@ -2112,10 +2212,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Employee Code
                                   </label>
                                   <input
+                                    disabled={
+                                      isViewOnly || isSubmitting || true
+                                    }
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control bg-light border-dashed"
-                                    disabled
-                                    value="AUTO-GEN-2025"
+                                    value="ex. EMP001"
                                   />
                                 </div>
                                 <div className="col-md-3">
@@ -2123,6 +2226,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Marital Status
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     options={[
                                       { value: "single", label: "Single" },
                                       { value: "married", label: "Married" },
@@ -2137,9 +2241,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       value: formData.marital,
                                       label: formData.marital
                                         ? formData.marital
-                                            .charAt(0)
-                                            .toUpperCase() +
-                                          formData.marital.slice(1)
+                                          .charAt(0)
+                                          .toUpperCase() +
+                                        formData.marital.slice(1)
                                         : "Select",
                                     }}
                                     onChange={(opt) => {
@@ -2165,6 +2269,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         <span className="text-danger">*</span>
                                       </label>
                                       <input
+                                        disabled={isViewOnly || isSubmitting}
+                                        readOnly={isViewOnly}
                                         type="text"
                                         className={`form-control ${isSubmitted ? (errors.spouse_name ? "is-invalid" : formData.spouse_name ? "is-valid" : "") : ""}`}
                                         placeholder="Spouse Name"
@@ -2188,6 +2294,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         <span className="text-danger">*</span>
                                       </label>
                                       <DatePicker
+                                        disabled={isViewOnly}
                                         className={`form-control w-100 ${isSubmitted ? (errors.date_of_marriage ? "is-invalid" : formData.date_of_marriage ? "is-valid" : "") : ""}`}
                                         value={
                                           formData.date_of_marriage
@@ -2220,6 +2327,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <DatePicker
+                                    disabled={isViewOnly}
                                     className={`form-control w-100 ${isSubmitted ? (errors.birthday ? "is-invalid" : formData.birthday ? "is-valid" : "") : ""}`}
                                     value={
                                       formData.birthday
@@ -2255,6 +2363,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     }
                                   >
                                     <CommonSelect
+                                      disabled={isViewOnly}
                                       options={[
                                         "A+",
                                         "A-",
@@ -2268,9 +2377,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       defaultValue={
                                         formData.blood_group
                                           ? {
-                                              value: formData.blood_group,
-                                              label: formData.blood_group,
-                                            }
+                                            value: formData.blood_group,
+                                            label: formData.blood_group,
+                                          }
                                           : undefined
                                       }
                                       onChange={(opt) => {
@@ -2326,6 +2435,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Category
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     options={[
                                       { value: "general", label: "General" },
                                       { value: "sc", label: "SC" },
@@ -2337,10 +2447,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     defaultValue={
                                       formData.category
                                         ? {
-                                            value: formData.category,
-                                            label:
-                                              formData.category.toUpperCase(),
-                                          }
+                                          value: formData.category,
+                                          label:
+                                            formData.category.toUpperCase(),
+                                        }
                                         : undefined
                                     }
                                     onChange={(opt) =>
@@ -2358,6 +2468,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Educational Qualification
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
                                     placeholder="BCA, MBA, etc."
@@ -2376,6 +2488,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     University Name
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
                                     value={formData.name_of_any_other_education}
@@ -2394,6 +2508,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   </label>
                                   <div className="d-flex align-items-center gap-2">
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type="file"
                                       id="cv_upload_input"
                                       accept=".pdf,.doc,.docx"
@@ -2430,15 +2546,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         )}
                                         {typeof formData.cv_file ===
                                           "string" && (
-                                          <a
-                                            href={formData.cv_file}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-2"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.cv_file}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-2"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
                                       </div>
                                     )}
                                   </div>
@@ -2450,12 +2566,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                           {activeTab === "address" && (
                             <div className="animate__animated animate__fadeIn">
                               <div className="row g-4">
-                                <div className="col-md-6">
+                                {/* <div className="col-md-6">
                                   <label className="form-label fs-13">
                                     Present Address{" "}
                                     <span className="text-danger">*</span>
                                   </label>
-                                  <textarea
+                                  <textarea disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
                                     rows={3}
                                     className={`form-control ${isSubmitted ? (errors.present_address ? "is-invalid" : formData.present_address ? "is-valid" : "") : ""}`}
                                     maxLength={500}
@@ -2483,11 +2599,122 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Permanent Address{" "}
                                     <span className="text-danger">*</span>
                                   </label>
-                                  <textarea
+                                  <textarea disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
                                     rows={3}
                                     className={`form-control ${isSubmitted ? (errors.permanent_address ? "is-invalid" : formData.permanent_address ? "is-valid" : "") : ""}`}
                                     maxLength={500}
                                     placeholder="Same as present or different..."
+                                    value={formData.permanent_address}
+                                    onChange={(e) => {
+                                      updateFormData({
+                                        permanent_address: e.target.value,
+                                      });
+                                      if (errors.permanent_address)
+                                        setErrors({
+                                          ...errors,
+                                          permanent_address: "",
+                                        });
+                                    }}
+                                  />
+                                  {isSubmitted && errors.permanent_address && (
+                                    <div className="invalid-feedback">
+                                      {errors.permanent_address}
+                                    </div>
+                                  )}
+                                </div> */}
+                                <div className="col-md-6">
+                                  <label className="form-label fs-13">
+                                    Present Address{" "}
+                                    <span className="text-danger">*</span>
+                                  </label>
+                                  <textarea
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
+                                    rows={3}
+                                    className={`form-control ${isSubmitted ? (errors.present_address ? "is-invalid" : formData.present_address ? "is-valid" : "") : ""}`}
+                                    maxLength={500}
+                                    placeholder="House no, Building, Street..."
+                                    value={formData.present_address}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      // Update present address, and if checkbox is checked, sync permanent address too
+                                      updateFormData({
+                                        present_address: val,
+                                        ...(formData.is_same_address
+                                          ? { permanent_address: val }
+                                          : {}),
+                                      });
+                                      if (errors.present_address)
+                                        setErrors({
+                                          ...errors,
+                                          present_address: "",
+                                        });
+                                    }}
+                                  />
+                                  {isSubmitted && errors.present_address && (
+                                    <div className="invalid-feedback">
+                                      {errors.present_address}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Permanent Address */}
+                                <div className="col-md-6">
+                                  <div className="d-flex justify-content-between align-items-center mb-2">
+                                    <label className="form-label fs-13 mb-0">
+                                      Permanent Address{" "}
+                                      <span className="text-danger">*</span>
+                                    </label>
+                                    <div className="form-check mb-0">
+                                      <input
+                                        disabled={isViewOnly || isSubmitting}
+                                        readOnly={isViewOnly}
+                                        className="form-check-input"
+                                        type="checkbox"
+                                        id="sameAsAbove"
+                                        checked={formData.is_same_address}
+                                        onChange={(e) => {
+                                          const checked = e.target.checked;
+                                          updateFormData({
+                                            is_same_address: checked,
+                                            permanent_address: checked
+                                              ? formData.present_address
+                                              : formData.permanent_address,
+                                          });
+                                          if (
+                                            checked &&
+                                            errors.permanent_address
+                                          ) {
+                                            setErrors({
+                                              ...errors,
+                                              permanent_address: "",
+                                            });
+                                          }
+                                        }}
+                                      />
+                                      <label
+                                        className="form-check-label fs-12 text-primary cursor-pointer"
+                                        htmlFor="sameAsAbove"
+                                      >
+                                        Same as Present
+                                      </label>
+                                    </div>
+                                  </div>
+                                  <textarea
+                                    disabled={
+                                      isViewOnly ||
+                                      isSubmitting ||
+                                      formData.is_same_address
+                                    }
+                                    readOnly={isViewOnly}
+                                    rows={3}
+                                    className={`form-control ${formData.is_same_address ? "bg-light opacity-75" : ""} ${isSubmitted ? (errors.permanent_address ? "is-invalid" : formData.permanent_address ? "is-valid" : "") : ""}`}
+                                    maxLength={500}
+                                    placeholder={
+                                      formData.is_same_address
+                                        ? "Matching present address..."
+                                        : "Same as present or different..."
+                                    }
                                     value={formData.permanent_address}
                                     onChange={(e) => {
                                       updateFormData({
@@ -2514,6 +2741,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Country
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     options={countries}
                                     placeholder="Select Country"
                                     defaultValue={countries.find(
@@ -2535,6 +2763,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     State
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     key={`state-${formData.country_id}`}
                                     options={states}
                                     placeholder="Select State"
@@ -2560,9 +2789,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     District
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     key={`city-${formData.state_id}`}
                                     options={districts}
-                                    placeholder="Select City/District"
+                                    placeholder="Select District"
                                     defaultValue={districts.find(
                                       (d) =>
                                         d.value ===
@@ -2580,6 +2810,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Pin Code
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
                                     maxLength={6}
@@ -2619,6 +2851,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       +91
                                     </span>
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type="text"
                                       className={`form-control ${isSubmitted ? (errors.work_phone ? "is-invalid" : formData.work_phone ? "is-valid" : "") : ""}`}
                                       maxLength={10}
@@ -2650,6 +2884,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="email"
                                     className={`form-control ${isSubmitted ? (errors.private_email ? "is-invalid" : formData.private_email ? "is-valid" : "") : ""}`}
                                     maxLength={100}
@@ -2681,6 +2917,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       +91
                                     </span>
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type="text"
                                       className="form-control"
                                       maxLength={10}
@@ -2706,6 +2944,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className={`form-control ${isSubmitted ? (errors.emergency_contact_name ? "is-invalid" : formData.emergency_contact_name ? "is-valid" : "") : ""}`}
                                     placeholder="Full Name"
@@ -2731,6 +2971,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className={`form-control ${isSubmitted ? (errors.emergency_contact_relation ? "is-invalid" : formData.emergency_contact_relation ? "is-valid" : "") : ""}`}
                                     placeholder="e.g. Spouse, Father"
@@ -2760,6 +3002,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       +91
                                     </span>
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type="text"
                                       className={`form-control ${isSubmitted ? (errors.emergency_contact_mobile ? "is-invalid" : formData.emergency_contact_mobile ? "is-valid" : "") : ""}`}
                                       maxLength={10}
@@ -2793,6 +3037,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Contact Address
                                   </label>
                                   <textarea
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     rows={2}
                                     className="form-control"
                                     maxLength={500}
@@ -2813,12 +3059,16 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                           {activeTab === "employment" && (
                             <div className="animate__animated animate__fadeIn ">
                               <input
+                                disabled={isViewOnly || isSubmitting}
+                                readOnly={isViewOnly}
                                 type="text"
                                 name="prevent_autofill"
                                 style={{ display: "none" }}
                                 tabIndex={-1}
                               />
                               <input
+                                disabled={isViewOnly || isSubmitting}
+                                readOnly={isViewOnly}
                                 type="password"
                                 name="prevent_autofill_pwd"
                                 style={{ display: "none" }}
@@ -2830,26 +3080,32 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Department{" "}
                                     <span className="text-danger">*</span>
                                   </label>
-                                  <CommonSelect
-                                    key={`dept-list-${departments.length}`}
-                                    options={departments}
-                                    placeholder="Select Department"
-                                    value={departments.find(
-                                      (o) =>
-                                        o.value ===
-                                        String(formData.department_id),
-                                    )}
-                                    onChange={(opt) => {
-                                      const deptId = opt?.value || "";
-                                      updateFormData({
-                                        department_id: deptId,
-                                        job_id: "",
-                                      });
-                                      if (deptId)
-                                        loadFilteredDesignations(deptId);
-                                      else setDesignations([]);
-                                    }}
-                                  />
+                                  <div className={isSubmitted && errors.department_id ? "border border-danger rounded" : ""}>
+                                    <CommonSelect
+                                      disabled={isViewOnly}
+                                      key={`dept-list-${departments.length}`}
+                                      options={departments}
+                                      placeholder="Select Department"
+                                      value={departments.find(
+                                        (o) =>
+                                          o.value ===
+                                          String(formData.department_id),
+                                      )}
+                                      onChange={(opt) => {
+                                        const deptId = opt?.value || "";
+                                        updateFormData({
+                                          department_id: deptId,
+                                          job_id: "",
+                                        });
+                                        if (errors.department_id) {
+                                          setErrors((prev: any) => ({ ...prev, department_id: "" }));
+                                        }
+                                        if (deptId)
+                                          loadFilteredDesignations(deptId);
+                                        else setDesignations([]);
+                                      }}
+                                    />
+                                  </div>
                                   {isSubmitted && errors.department_id && (
                                     <div className="text-danger fs-11 mt-1">
                                       {errors.department_id}
@@ -2861,25 +3117,32 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Designation{" "}
                                     <span className="text-danger">*</span>
                                   </label>
-                                  <CommonSelect
-                                    key={`designation-list-${designations.length}-${formData.job_id}`}
-                                    options={designations}
-                                    placeholder={
-                                      formData.department_id
-                                        ? "Select Designation"
-                                        : "Select Department First"
-                                    }
-                                    defaultValue={designations.find(
-                                      (o) =>
-                                        o.value === String(formData.job_id),
-                                    )}
-                                    disabled={!formData.department_id}
-                                    onChange={(opt) =>
-                                      updateFormData({
-                                        job_id: opt?.value || "",
-                                      })
-                                    }
-                                  />
+                                  <div className={isSubmitted && errors.job_id ? "border border-danger rounded" : ""}>
+                                    <CommonSelect
+                                      disabled={
+                                        isViewOnly || !formData.department_id
+                                      }
+                                      key={`designation-list-${designations.length}-${formData.job_id}`}
+                                      options={designations}
+                                      placeholder={
+                                        formData.department_id
+                                          ? "Select Designation"
+                                          : "Select Department First"
+                                      }
+                                      defaultValue={designations.find(
+                                        (o) =>
+                                          o.value === String(formData.job_id),
+                                      )}
+                                      onChange={(opt) => {
+                                        updateFormData({
+                                          job_id: opt?.value || "",
+                                        });
+                                        if (errors.job_id) {
+                                          setErrors((prev: any) => ({ ...prev, job_id: "" }));
+                                        }
+                                      }}
+                                    />
+                                  </div>
                                   {isSubmitted && errors.job_id && (
                                     <div className="text-danger fs-11 mt-1">
                                       {errors.job_id}
@@ -2893,6 +3156,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   </label>
                                   <div className="input-group">
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type={showPassword ? "text" : "password"}
                                       autoComplete="new-password"
                                       className={`form-control ${isSubmitted ? (errors.employee_password ? "is-invalid" : formData.employee_password ? "is-valid" : "") : ""}`}
@@ -2902,7 +3167,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         handleInputChange(
                                           e,
                                           "employee_password",
-                                          { type: "all", maxLength: 20 },
+                                          { type: "all", maxLength: 30 },
                                         )
                                       }
                                     />
@@ -2933,6 +3198,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <DatePicker
+                                    disabled={isViewOnly}
                                     className={`w-100 form-control ${isSubmitted && errors.joining_date ? "is-invalid" : ""}`}
                                     value={
                                       formData.joining_date
@@ -2957,6 +3223,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                 <div className="col-md-3 d-flex align-items-center pt-4">
                                   <div className="form-check">
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type="checkbox"
                                       className="form-check-input"
                                       id="probCheck"
@@ -2980,6 +3248,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Probation (Months)
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="number"
                                     className="form-control"
                                     value={formData.probation_period}
@@ -2995,13 +3265,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Probation End Date
                                   </label>
                                   <DatePicker
+                                    disabled={isViewOnly}
                                     className="w-100 form-control bg-light"
                                     value={
                                       formData.probation_end_date
                                         ? dayjs(formData.probation_end_date)
                                         : null
                                     }
-                                    disabled
                                     placeholder="Auto-calculated"
                                   />
                                 </div>
@@ -3013,6 +3283,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Reporting Manager
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     key={`rep-manager-${managers.length}`}
                                     options={managers}
                                     defaultValue={managers.find(
@@ -3032,6 +3303,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Head of Department
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     key={`hod-manager-${managers.length}`}
                                     options={managers}
                                     defaultValue={managers.find(
@@ -3051,6 +3323,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Attendance Mode
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly || true}
                                     options={[
                                       { value: "qr", label: "QR CODE" },
                                       {
@@ -3063,7 +3336,6 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       value: "mobile",
                                       label: "MobileAPP",
                                     }}
-                                    disabled={true}
                                     placeholder="Capture Mode"
                                     onChange={(opt) =>
                                       updateFormData({
@@ -3078,6 +3350,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Status
                                   </label>
                                   <CommonSelect
+                                    disabled={isViewOnly}
                                     options={[
                                       { value: "active", label: "Active" },
                                       { value: "inactive", label: "Inactive" },
@@ -3085,10 +3358,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     defaultValue={
                                       formData.status
                                         ? {
-                                            value: formData.status,
-                                            label:
-                                              formData.status.toUpperCase(),
-                                          }
+                                          value: formData.status,
+                                          label:
+                                            formData.status.toUpperCase(),
+                                        }
                                         : undefined
                                     }
                                     onChange={(opt) =>
@@ -3101,6 +3374,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                 <div className="col-md-3 d-flex align-items-center pt-4">
                                   <div className="form-check">
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type="checkbox"
                                       className="form-check-input"
                                       id="holdCheck"
@@ -3124,10 +3399,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Hold Remarks
                                   </label>
                                   <textarea
+                                    disabled={
+                                      isViewOnly ||
+                                      isSubmitting ||
+                                      !formData.hold_status
+                                    }
+                                    readOnly={isViewOnly}
                                     rows={1}
                                     className={`form-control ${isSubmitted && formData.hold_status && errors.hold_remarks ? "is-invalid" : ""}`}
                                     placeholder="Reason for hold..."
-                                    disabled={!formData.hold_status}
                                     value={formData.hold_remarks}
                                     maxLength={150}
                                     onChange={(e) => {
@@ -3169,6 +3449,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     }
                                   >
                                     <CommonSelect
+                                      disabled={isViewOnly}
                                       key={`bank-master-${bankMasterList.length}-${formData.bank_id}`}
                                       options={bankMasterList}
                                       placeholder="Select Bank"
@@ -3199,6 +3480,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     maxLength={18}
                                     className={`form-control ${isSubmitted && errors.account_number ? "is-invalid" : isSubmitted && formData.account_number ? "is-valid" : ""}`}
@@ -3228,6 +3511,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <span className="text-danger">*</span>
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className={`form-control ${isSubmitted && errors.bank_iafc_code ? "is-invalid" : ""}`}
                                     value={formData.bank_iafc_code}
@@ -3259,10 +3544,11 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     SWIFT Code
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly || true}
                                     type="text"
                                     className="form-control bg-light"
                                     value={formData.bank_swift_code}
-                                    readOnly
                                     placeholder="Auto-populated"
                                   />
                                 </div>
@@ -3271,6 +3557,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Currency
                                   </label>
                                   <select
+                                    disabled={
+                                      isViewOnly || isSubmitting || true
+                                    }
                                     className="form-select"
                                     value={formData.currency_id}
                                     onChange={(e) =>
@@ -3278,7 +3567,6 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         currency_id: e.target.value,
                                       })
                                     }
-                                    disabled={true}
                                   >
                                     <option value="INR">INR</option>
                                   </select>
@@ -3289,6 +3577,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   </label>
                                   <div className="d-flex align-items-center gap-3">
                                     <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
                                       type="file"
                                       id="passbook_upload_input"
                                       accept=".jpg,.jpeg,.png,.pdf"
@@ -3337,25 +3627,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {/* 1. Show EYE ICON if the value is an existing URL string */}
                                         {typeof formData.upload_passbook ===
                                           "string" && (
-                                          <a
-                                            href={formData.upload_passbook}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
-                                            title="View Current Passbook"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.upload_passbook}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                              title="View Current Passbook"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
 
                                         {/* 2. Show CHECKMARK if a new File object has been selected */}
                                         {formData.upload_passbook instanceof
                                           File && (
-                                          <i
-                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
-                                            title="New file selected"
-                                          ></i>
-                                        )}
+                                            <i
+                                              className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                              title="New file selected"
+                                            ></i>
+                                          )}
                                       </div>
                                     )}
                                     <div className="text-info fs-11 lh-sm">
@@ -3398,6 +3688,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     }
                                   >
                                     <CommonSelect
+                                      disabled={isViewOnly}
                                       options={[
                                         {
                                           value: "voluntary",
@@ -3420,15 +3711,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       defaultValue={
                                         formData.type_of_sepration
                                           ? {
-                                              value: formData.type_of_sepration,
-                                              label:
-                                                formData.type_of_sepration
-                                                  .charAt(0)
-                                                  .toUpperCase() +
-                                                formData.type_of_sepration.slice(
-                                                  1,
-                                                ),
-                                            }
+                                            value: formData.type_of_sepration,
+                                            label:
+                                              formData.type_of_sepration
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                              formData.type_of_sepration.slice(
+                                                1,
+                                              ),
+                                          }
                                           : undefined
                                       }
                                       onChange={(opt) => {
@@ -3454,6 +3745,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Resignation Date
                                   </label>
                                   <DatePicker
+                                    disabled={isViewOnly}
                                     className={`w-100 form-control ${isSubmitted ? (errors.resignation_date ? "is-invalid" : formData.resignation_date ? "is-valid" : "") : ""}`}
                                     value={
                                       formData.resignation_date
@@ -3486,6 +3778,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Notice Period (Days)
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
                                     type="number"
                                     className={`form-control ${isSubmitted ? (errors.notice_period_days ? "is-invalid" : formData.notice_period_days > 0 ? "is-valid" : "") : ""}`}
                                     placeholder="e.g. 30"
@@ -3517,13 +3811,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Last Working Day
                                   </label>
                                   <DatePicker
+                                    disabled={isViewOnly || true}
                                     className="w-100 form-control bg-light border-dashed"
                                     value={
                                       formData.notice_period_end_date
                                         ? dayjs(formData.notice_period_end_date)
                                         : null
                                     }
-                                    disabled
                                     placeholder="System Calculated"
                                   />
                                 </div>
@@ -3547,9 +3841,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Mobile Device Unique ID
                                   </label>
                                   <input
+                                    disabled={
+                                      isViewOnly || isSubmitting || true
+                                    }
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
-                                    disabled={true}
                                     value={formData.device_unique_id}
                                     placeholder="e.g. 3d60c7079ea1ea51"
                                   />
@@ -3559,9 +3856,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Mobile Model Name
                                   </label>
                                   <input
+                                    disabled={
+                                      isViewOnly || isSubmitting || true
+                                    }
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
-                                    disabled={true}
                                     value={formData.device_name}
                                     placeholder="e.g. Pixel 6 Pro"
                                   />
@@ -3571,9 +3871,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Mobile Device ID
                                   </label>
                                   <input
+                                    disabled={
+                                      isViewOnly || isSubmitting || true
+                                    }
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
-                                    disabled={true}
                                     value={formData.device_id}
                                   />
                                 </div>
@@ -3582,9 +3885,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Mobile OS Version Type
                                   </label>
                                   <input
+                                    disabled={
+                                      isViewOnly || isSubmitting || true
+                                    }
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
-                                    disabled={true}
                                     value={formData.device_platform}
                                     placeholder="Android / iOS"
                                   />
@@ -3594,9 +3900,12 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Mobile OS Version number
                                   </label>
                                   <input
+                                    disabled={
+                                      isViewOnly || isSubmitting || true
+                                    }
+                                    readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
-                                    disabled={true}
                                     value={formData.system_version}
                                     placeholder="e.g. 15"
                                   />
@@ -3606,8 +3915,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Reg. Code
                                   </label>
                                   <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly || true}
                                     type="text"
-                                    readOnly
                                     className="form-control bg-light border-dashed fw-bold text-primary"
                                     value={formData.random_code_for_reg}
                                     placeholder="No Code Assigned"
@@ -3673,6 +3983,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                             style={{ overflow: "visible" }}
                                           >
                                             <CommonSelect
+                                              disabled={isViewOnly}
                                               options={[
                                                 {
                                                   value: "leave",
@@ -3718,6 +4029,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                             style={{ overflow: "visible" }}
                                           >
                                             <CommonSelect
+                                              disabled={isViewOnly}
                                               key={`group-select-${index}-${groupOptions.length}`}
                                               options={groupOptions}
                                               placeholder="Select Group"
@@ -3739,10 +4051,11 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                             style={{ overflow: "visible" }}
                                           >
                                             <CommonSelect
+                                              disabled={isViewOnly}
                                               key={`user-select-${index}-${line.group_id}-${(groupUserOptions[String(line.group_id)] || []).length}`}
                                               options={
                                                 groupUserOptions[
-                                                  String(line.group_id)
+                                                String(line.group_id)
                                                 ] || []
                                               }
                                               placeholder={
@@ -3752,7 +4065,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               }
                                               defaultValue={(
                                                 groupUserOptions[
-                                                  String(line.group_id)
+                                                String(line.group_id)
                                                 ] || []
                                               ).find(
                                                 (u) =>
@@ -3770,6 +4083,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                           </td>
                                           <td className="py-3 pe-4">
                                             <input
+                                              disabled={
+                                                isViewOnly || isSubmitting
+                                              }
+                                              readOnly={isViewOnly}
                                               type="number"
                                               className="form-control"
                                               placeholder="0"
@@ -3873,13 +4190,22 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                       </div>
 
                       <div className="d-flex gap-2">
-                        {!preventClose && (
+                        {!preventClose && !isViewOnly && (
                           <button
                             type="button"
                             className="btn btn-light px-4 fw-medium rounded-pill"
                             onClick={handleAttemptClose}
                           >
                             Cancel
+                          </button>
+                        )}
+                        {isViewOnly && (
+                          <button
+                            type="button"
+                            className="btn btn-primary px-4 fw-medium rounded-pill"
+                            onClick={executeClose}
+                          >
+                            Close View
                           </button>
                         )}
                         {!isLastTab ? (
@@ -3891,28 +4217,30 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                             Next Step <i className="ti ti-arrow-right ms-2"></i>
                           </button>
                         ) : (
-                          <button
-                            type="submit"
-                            className="btn btn-success px-5 fw-bold shadow-sm rounded-pill"
-                            disabled={isSubmitting}
-                          >
-                            {isSubmitting ? (
-                              <>
-                                <span className="spinner-border spinner-border-sm me-2" />{" "}
-                                Processing...
-                              </>
-                            ) : preventClose ? (
-                              <>
-                                <i className="ti ti-check me-2"></i> Complete
-                                Profile
-                              </>
-                            ) : (
-                              <>
-                                <i className="ti ti-device-floppy me-2"></i>{" "}
-                                Save Employee
-                              </>
-                            )}
-                          </button>
+                          !isViewOnly && (
+                            <button
+                              type="submit"
+                              className="btn btn-success px-5 fw-bold shadow-sm rounded-pill"
+                              disabled={isSubmitting}
+                            >
+                              {isSubmitting ? (
+                                <>
+                                  <span className="spinner-border spinner-border-sm me-2" />{" "}
+                                  Processing...
+                                </>
+                              ) : preventClose ? (
+                                <>
+                                  <i className="ti ti-check me-2"></i> Complete
+                                  Profile
+                                </>
+                              ) : (
+                                <>
+                                  <i className="ti ti-device-floppy me-2"></i>{" "}
+                                  Save Employee
+                                </>
+                              )}
+                            </button>
+                          )
                         )}
                       </div>
                     </div>
@@ -4007,58 +4335,63 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                 ></button>
               </div>
               <div className="modal-body p-4 bg-light-subtle">
-                <div className="bg-white p-3 rounded-4 border shadow-sm mb-4">
-                  <div className="row g-3 align-items-end">
-                    <div className="col-md-5">
-                      <label className="form-label fs-12 fw-bold text-muted">
-                        Category
-                      </label>
-                      <select
-                        className="form-select fs-13"
-                        value={tempDoc.category}
-                        onChange={(e) =>
-                          setTempDoc({ ...tempDoc, category: e.target.value })
-                        }
-                        style={{ height: "40px", borderRadius: "8px" }}
-                      >
-                        <option value="">Select Category...</option>
-                        {docCategories.map((cat) => (
-                          <option key={cat.value} value={cat.value}>
-                            {cat.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="col-md-5">
-                      <label className="form-label fs-12 fw-bold text-muted">
-                        Source File
-                      </label>
-                      <input
-                        type="file"
-                        id="vault-file-input-single"
-                        className="form-control fs-13"
-                        style={{ height: "40px", borderRadius: "8px" }}
-                        onChange={(e) =>
-                          setTempDoc({
-                            ...tempDoc,
-                            file: e.target.files?.[0] || null,
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="col-md-2">
-                      <button
-                        type="button"
-                        className="btn btn-primary w-100 fw-bold fs-13"
-                        style={{ height: "40px", borderRadius: "8px" }}
-                        disabled={!tempDoc.category || !tempDoc.file}
-                        onClick={handleStageDocument}
-                      >
-                        ADD
-                      </button>
+                {!isViewOnly && (
+                  <div className="bg-white p-3 rounded-4 border shadow-sm mb-4">
+                    <div className="row g-3 align-items-end">
+                      <div className="col-md-5">
+                        <label className="form-label fs-12 fw-bold text-muted">
+                          Category
+                        </label>
+                        <select
+                          disabled={isViewOnly || isSubmitting}
+                          className="form-select fs-13"
+                          value={tempDoc.category}
+                          onChange={(e) =>
+                            setTempDoc({ ...tempDoc, category: e.target.value })
+                          }
+                          style={{ height: "40px", borderRadius: "8px" }}
+                        >
+                          <option value="">Select Category...</option>
+                          {docCategories.map((cat) => (
+                            <option key={cat.value} value={cat.value}>
+                              {cat.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="col-md-5">
+                        <label className="form-label fs-12 fw-bold text-muted">
+                          Source File
+                        </label>
+                        <input
+                          disabled={isViewOnly || isSubmitting}
+                          readOnly={isViewOnly}
+                          type="file"
+                          id="vault-file-input-single"
+                          className="form-control fs-13"
+                          style={{ height: "40px", borderRadius: "8px" }}
+                          onChange={(e) =>
+                            setTempDoc({
+                              ...tempDoc,
+                              file: e.target.files?.[0] || null,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="col-md-2">
+                        <button
+                          type="button"
+                          className="btn btn-primary w-100 fw-bold fs-13"
+                          style={{ height: "40px", borderRadius: "8px" }}
+                          disabled={!tempDoc.category || !tempDoc.file}
+                          onClick={handleStageDocument}
+                        >
+                          ADD
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
                 <p className="fs-11 fw-bold text-uppercase text-muted mb-3 tracking-wider">
                   Staged Documents ({experienceDocs.length})
                 </p>
@@ -4070,18 +4403,20 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                     experienceDocs.map((doc, index) => (
                       <div key={index} className="col-md-4">
                         <div className="card h-100 border-0 shadow-sm text-center p-3 position-relative bg-white rounded-4">
-                          <button
-                            className="btn btn-ghost-danger btn-icon btn-sm position-absolute"
-                            style={{ top: "5px", right: "5px" }}
-                            onClick={() => {
-                              setExperienceDocs(
-                                experienceDocs.filter((_, i) => i !== index),
-                              );
-                              setIsDirty(true);
-                            }}
-                          >
-                            <i className="ti ti-trash fs-16"></i>
-                          </button>
+                          {!isViewOnly && (
+                            <button
+                              className="btn btn-ghost-danger btn-icon btn-sm position-absolute"
+                              style={{ top: "5px", right: "5px" }}
+                              onClick={() => {
+                                setExperienceDocs(
+                                  experienceDocs.filter((_, i) => i !== index),
+                                );
+                                setIsDirty(true);
+                              }}
+                            >
+                              <i className="ti ti-trash fs-16"></i>
+                            </button>
+                          )}
                           <div className="mb-2">
                             <i className="ti ti-folder-filled text-warning fs-40"></i>
                           </div>
@@ -4123,13 +4458,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                 >
                   Close
                 </button>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm px-4 fw-bold shadow-sm rounded-pill"
-                  onClick={() => setShowExpModal(false)}
-                >
-                  Sync Documents
-                </button>
+                {!isViewOnly && (
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm px-4 fw-bold shadow-sm rounded-pill"
+                    onClick={() => setShowExpModal(false)}
+                  >
+                    Sync Documents
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -5469,7 +5806,7 @@ export default AddEditEmployeeModal2;
 //                                     Full Name{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control ${isSubmitted ? (errors.name ? "is-invalid" : formData.name ? "is-valid" : "") : ""}`}
 //                                     placeholder="Enter Fullname here"
@@ -5493,7 +5830,7 @@ export default AddEditEmployeeModal2;
 //                                     Father's Name{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control ${isSubmitted ? (errors.father_name ? "is-invalid" : formData.father_name ? "is-valid" : "") : ""}`}
 //                                     placeholder="Enter Father's Name"
@@ -5516,7 +5853,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13 fw-bold">
 //                                     Branch
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     key={`branch-field-${formData.name_of_client}-${branches.length}`}
 //                                     options={branches}
 //                                     placeholder="Select Branch"
@@ -5556,7 +5893,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Employee Category
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     options={[
 //                                       { value: "staff", label: "Staff" },
 //                                       { value: "contract", label: "Contract" },
@@ -5582,7 +5919,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Working Hours
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     options={workingSchedules}
 //                                     placeholder="Select Hours"
 //                                     defaultValue={workingSchedules.find(
@@ -5681,7 +6018,7 @@ export default AddEditEmployeeModal2;
 //                                 >
 //                                   <i className="ti ti-upload fs-12"></i>
 //                                 </label>
-//                                 <input
+//                                 <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                   type="file"
 //                                   id="emp_img_header"
 //                                   className="d-none"
@@ -5713,7 +6050,7 @@ export default AddEditEmployeeModal2;
 //                                     Aadhaar Number{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control ${isSubmitted ? (errors.aadhaar_number ? "is-invalid" : formData.aadhaar_number ? "is-valid" : "") : ""}`}
 //                                     placeholder="12 Digit Aadhaar"
@@ -5743,7 +6080,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     PAN Number
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control text-uppercase ${isSubmitted ? (errors.pan_number ? "is-invalid" : formData.pan_number ? "is-valid" : "") : ""}`}
 //                                     maxLength={10}
@@ -5774,7 +6111,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Voter ID
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control text-uppercase ${isSubmitted && errors.voter_id ? "is-invalid" : ""}`}
 //                                     placeholder="ABC1234567"
@@ -5805,7 +6142,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Passport No
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     maxLength={8}
 //                                     className={`form-control text-uppercase ${isSubmitted && errors.passport_no ? "is-invalid" : ""}`}
@@ -5841,7 +6178,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Category
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     options={[
 //                                       { value: "general", label: "General" },
 //                                       { value: "sc", label: "SC" },
@@ -5871,7 +6208,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     ESI Number
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     placeholder="Enter ESI Number"
@@ -5886,7 +6223,7 @@ export default AddEditEmployeeModal2;
 //                                 </div>
 //                                 <div className="col-md-2 d-flex align-items-center pt-4">
 //                                   <div className="form-check">
-//                                     <input
+//                                     <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                       type="checkbox"
 //                                       className="form-check-input"
 //                                       id="uanCheckLegal"
@@ -5916,7 +6253,7 @@ export default AddEditEmployeeModal2;
 //                                       <span className="text-danger">*</span>
 //                                     )}
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control ${isSubmitted && formData.is_uan_number_applicable ? (errors.uan_number ? "is-invalid" : "is-valid") : ""}`}
 //                                     disabled={
@@ -5955,7 +6292,7 @@ export default AddEditEmployeeModal2;
 //                                         <i
 //                                           className={`ti ${formData.driving_license ? "ti-file-check" : "ti-upload"} fs-18`}
 //                                         ></i>
-//                                         <input
+//                                         <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                           type="file"
 //                                           className="position-absolute opacity-0 w-100 h-100 start-0 top-0 cursor-pointer"
 //                                           onChange={(e) =>
@@ -6000,7 +6337,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13 text-muted">
 //                                     Employee Code
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control bg-light border-dashed"
 //                                     disabled
@@ -6011,7 +6348,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Marital Status
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     options={[
 //                                       { value: "single", label: "Single" },
 //                                       { value: "married", label: "Married" },
@@ -6055,7 +6392,7 @@ export default AddEditEmployeeModal2;
 //                                         Spouse Name{" "}
 //                                         <span className="text-danger">*</span>
 //                                       </label>
-//                                       <input
+//                                       <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                         type="text"
 //                                         className={`form-control ${isSubmitted ? (errors.spouse_name ? "is-invalid" : formData.spouse_name ? "is-valid" : "") : ""}`}
 //                                         placeholder="Spouse Name"
@@ -6078,7 +6415,7 @@ export default AddEditEmployeeModal2;
 //                                         Date of Marriage{" "}
 //                                         <span className="text-danger">*</span>
 //                                       </label>
-//                                       <DatePicker
+//                                       <DatePicker disabled={isViewOnly}
 //                                         className={`form-control w-100 ${isSubmitted ? (errors.date_of_marriage ? "is-invalid" : formData.date_of_marriage ? "is-valid" : "") : ""}`}
 //                                         value={
 //                                           formData.date_of_marriage
@@ -6112,7 +6449,7 @@ export default AddEditEmployeeModal2;
 //                                     Date of Birth{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <DatePicker
+//                                   <DatePicker disabled={isViewOnly}
 //                                     className={`form-control w-100 ${isSubmitted ? (errors.birthday ? "is-invalid" : formData.birthday ? "is-valid" : "") : ""}`}
 //                                     value={
 //                                       formData.birthday
@@ -6151,7 +6488,7 @@ export default AddEditEmployeeModal2;
 //                                         : ""
 //                                     }
 //                                   >
-//                                     <CommonSelect
+//                                     <CommonSelect disabled={isViewOnly}
 //                                       options={[
 //                                         "A+",
 //                                         "A-",
@@ -6230,7 +6567,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Post Graduation
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     placeholder="MBA, etc."
@@ -6248,7 +6585,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     University Name
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     value={formData.name_of_any_other_education}
@@ -6275,7 +6612,7 @@ export default AddEditEmployeeModal2;
 //                                       <i
 //                                         className={`ti ${formData.cv_file ? "ti-file-text" : "ti-upload"} fs-18`}
 //                                       ></i>
-//                                       <input
+//                                       <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                         type="file"
 //                                         accept=".pdf,.doc,.docx"
 //                                         className="position-absolute opacity-0 w-100 h-100 start-0 top-0 cursor-pointer"
@@ -6325,7 +6662,7 @@ export default AddEditEmployeeModal2;
 //                                     Present Address{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <textarea
+//                                   <textarea disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     rows={3}
 //                                     className={`form-control ${isSubmitted ? (errors.present_address ? "is-invalid" : formData.present_address ? "is-valid" : "") : ""}`}
 //                                     maxLength={500}
@@ -6354,7 +6691,7 @@ export default AddEditEmployeeModal2;
 //                                     Permanent Address{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <textarea
+//                                   <textarea disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     rows={3}
 //                                     className={`form-control ${isSubmitted ? (errors.permanent_address ? "is-invalid" : formData.permanent_address ? "is-valid" : "") : ""}`}
 //                                     maxLength={500}
@@ -6387,7 +6724,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Country
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     options={countries}
 //                                     placeholder="Select Country"
 //                                     defaultValue={countries.find(
@@ -6409,7 +6746,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     State
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     key={`state-${formData.country_id}`}
 //                                     options={states}
 //                                     placeholder="Select State"
@@ -6435,7 +6772,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     District
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     key={`city-${formData.state_id}`}
 //                                     options={districts}
 //                                     placeholder="Select City/District"
@@ -6456,7 +6793,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Pin Code
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     maxLength={6}
@@ -6499,7 +6836,7 @@ export default AddEditEmployeeModal2;
 //                                     <span className="input-group-text fs-12 bg-light">
 //                                       +91
 //                                     </span>
-//                                     <input
+//                                     <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                       type="text"
 //                                       className={`form-control ${isSubmitted ? (errors.work_phone ? "is-invalid" : formData.work_phone ? "is-valid" : "") : ""}`}
 //                                       maxLength={10}
@@ -6531,7 +6868,7 @@ export default AddEditEmployeeModal2;
 //                                     Personal Email{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="email"
 //                                     className={`form-control ${isSubmitted ? (errors.private_email ? "is-invalid" : formData.private_email ? "is-valid" : "") : ""}`}
 //                                     maxLength={100}
@@ -6563,7 +6900,7 @@ export default AddEditEmployeeModal2;
 //                                     <span className="input-group-text fs-12 bg-light">
 //                                       +91
 //                                     </span>
-//                                     <input
+//                                     <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                       type="text"
 //                                       className="form-control"
 //                                       maxLength={10}
@@ -6591,7 +6928,7 @@ export default AddEditEmployeeModal2;
 //                                     Emergency Contact Name{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control ${isSubmitted ? (errors.emergency_contact_name ? "is-invalid" : formData.emergency_contact_name ? "is-valid" : "") : ""}`}
 //                                     placeholder="Full Name"
@@ -6616,7 +6953,7 @@ export default AddEditEmployeeModal2;
 //                                     Relation{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control ${isSubmitted ? (errors.emergency_contact_relation ? "is-invalid" : formData.emergency_contact_relation ? "is-valid" : "") : ""}`}
 //                                     placeholder="e.g. Spouse, Father"
@@ -6645,7 +6982,7 @@ export default AddEditEmployeeModal2;
 //                                     <span className="input-group-text bg-light fs-12">
 //                                       +91
 //                                     </span>
-//                                     <input
+//                                     <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                       type="text"
 //                                       className={`form-control ${isSubmitted ? (errors.emergency_contact_mobile ? "is-invalid" : formData.emergency_contact_mobile ? "is-valid" : "") : ""}`}
 //                                       maxLength={10}
@@ -6679,7 +7016,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Contact Address
 //                                   </label>
-//                                   <textarea
+//                                   <textarea disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     rows={2}
 //                                     className="form-control"
 //                                     maxLength={500}
@@ -6700,13 +7037,13 @@ export default AddEditEmployeeModal2;
 
 //                           {activeTab === "employment" && (
 //                             <div className="animate__animated animate__fadeIn">
-//                               <input
+//                               <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                 type="text"
 //                                 name="prevent_autofill"
 //                                 style={{ display: "none" }}
 //                                 tabIndex={-1}
 //                               />
-//                               <input
+//                               <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                 type="password"
 //                                 name="prevent_autofill_pwd"
 //                                 style={{ display: "none" }}
@@ -6719,7 +7056,7 @@ export default AddEditEmployeeModal2;
 //                                     Department{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     key={`dept-list-${departments.length}`}
 //                                     options={departments}
 //                                     placeholder="Select Department"
@@ -6751,7 +7088,7 @@ export default AddEditEmployeeModal2;
 //                                     Designation{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     key={`designation-list-${designations.length}-${formData.job_id}`}
 //                                     options={designations}
 //                                     placeholder={
@@ -6783,7 +7120,7 @@ export default AddEditEmployeeModal2;
 //                                     <span className="text-danger">*</span>
 //                                   </label>
 //                                   <div className="input-group">
-//                                     <input
+//                                     <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                       type={showPassword ? "text" : "password"}
 //                                       autoComplete="new-password"
 //                                       className={`form-control ${isSubmitted ? (errors.employee_password ? "is-invalid" : formData.employee_password ? "is-valid" : "") : ""}`}
@@ -6825,7 +7162,7 @@ export default AddEditEmployeeModal2;
 //                                     Joining Date{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <DatePicker
+//                                   <DatePicker disabled={isViewOnly}
 //                                     className={`w-100 form-control ${isSubmitted && errors.joining_date ? "is-invalid" : ""}`}
 //                                     value={
 //                                       formData.joining_date
@@ -6852,7 +7189,7 @@ export default AddEditEmployeeModal2;
 //                                 </div>
 //                                 <div className="col-md-3 d-flex align-items-center pt-4">
 //                                   <div className="form-check">
-//                                     <input
+//                                     <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                       type="checkbox"
 //                                       className="form-check-input"
 //                                       id="probCheck"
@@ -6876,7 +7213,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Probation (Months)
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="number"
 //                                     className="form-control"
 //                                     value={formData.probation_period}
@@ -6891,7 +7228,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13 text-muted">
 //                                     Probation End Date
 //                                   </label>
-//                                   <DatePicker
+//                                   <DatePicker disabled={isViewOnly}
 //                                     className="w-100 form-control bg-light"
 //                                     value={
 //                                       formData.probation_end_date
@@ -6911,7 +7248,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Reporting Manager
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     key={`rep-manager-${managers.length}`}
 //                                     options={managers}
 //                                     defaultValue={managers.find(
@@ -6931,7 +7268,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Head of Department
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     key={`hod-manager-${managers.length}`}
 //                                     options={managers}
 //                                     defaultValue={managers.find(
@@ -6951,7 +7288,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Attendance Mode
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     options={[
 //                                       { value: "qr", label: "QR CODE" },
 //                                       {
@@ -6980,7 +7317,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Status
 //                                   </label>
-//                                   <CommonSelect
+//                                   <CommonSelect disabled={isViewOnly}
 //                                     options={[
 //                                       { value: "active", label: "Active" },
 //                                       { value: "inactive", label: "Inactive" },
@@ -7004,7 +7341,7 @@ export default AddEditEmployeeModal2;
 //                                 </div>
 //                                 <div className="col-md-3 d-flex align-items-center pt-4">
 //                                   <div className="form-check">
-//                                     <input
+//                                     <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                       type="checkbox"
 //                                       className="form-check-input"
 //                                       id="holdCheck"
@@ -7028,7 +7365,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Hold Remarks
 //                                   </label>
-//                                   <textarea
+//                                   <textarea disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     rows={1}
 //                                     className={`form-control ${isSubmitted && formData.hold_status && errors.hold_remarks ? "is-invalid" : ""}`}
 //                                     placeholder="Reason for hold..."
@@ -7074,7 +7411,7 @@ export default AddEditEmployeeModal2;
 //                                         : ""
 //                                     }
 //                                   >
-//                                     <CommonSelect
+//                                     <CommonSelect disabled={isViewOnly}
 //                                       key={`bank-master-${bankMasterList.length}-${formData.bank_id}`}
 //                                       options={bankMasterList}
 //                                       placeholder="Select Bank"
@@ -7105,7 +7442,7 @@ export default AddEditEmployeeModal2;
 //                                     Account Number{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     maxLength={18}
 //                                     className={`form-control ${isSubmitted && errors.account_number ? "is-invalid" : isSubmitted && formData.account_number ? "is-valid" : ""}`}
@@ -7137,7 +7474,7 @@ export default AddEditEmployeeModal2;
 //                                     IFSC Code{" "}
 //                                     <span className="text-danger">*</span>
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className={`form-control ${isSubmitted && errors.bank_iafc_code ? "is-invalid" : ""}`}
 //                                     value={formData.bank_iafc_code}
@@ -7171,7 +7508,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13 fw-bold text-muted">
 //                                     SWIFT Code
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control bg-light"
 //                                     value={formData.bank_swift_code}
@@ -7183,7 +7520,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13 fw-bold">
 //                                     Currency
 //                                   </label>
-//                                   <select
+//                                   <select disabled={isViewOnly || isSubmitting}
 //                                     className="form-select"
 //                                     value={formData.currency_id}
 //                                     onChange={(e) =>
@@ -7210,7 +7547,7 @@ export default AddEditEmployeeModal2;
 //                                       <i
 //                                         className={`ti ${formData.upload_passbook ? "ti-book" : "ti-upload"} fs-18`}
 //                                       ></i>
-//                                       <input
+//                                       <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                         type="file"
 //                                         accept=".jpg,.jpeg,.png,.pdf"
 //                                         className="position-absolute opacity-0 w-100 h-100 start-0 top-0 cursor-pointer"
@@ -7284,7 +7621,7 @@ export default AddEditEmployeeModal2;
 //                                         : ""
 //                                     }
 //                                   >
-//                                     <CommonSelect
+//                                     <CommonSelect disabled={isViewOnly}
 //                                       options={[
 //                                         {
 //                                           value: "voluntary",
@@ -7341,7 +7678,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Resignation Date
 //                                   </label>
-//                                   <DatePicker
+//                                   <DatePicker disabled={isViewOnly}
 //                                     className={`w-100 form-control ${isSubmitted ? (errors.resignation_date ? "is-invalid" : formData.resignation_date ? "is-valid" : "") : ""}`}
 //                                     value={
 //                                       formData.resignation_date
@@ -7374,7 +7711,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Notice Period (Days)
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="number"
 //                                     className={`form-control ${isSubmitted ? (errors.notice_period_days ? "is-invalid" : formData.notice_period_days > 0 ? "is-valid" : "") : ""}`}
 //                                     placeholder="e.g. 30"
@@ -7406,7 +7743,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13 text-muted">
 //                                     Last Working Day
 //                                   </label>
-//                                   <DatePicker
+//                                   <DatePicker disabled={isViewOnly}
 //                                     className="w-100 form-control bg-light border-dashed"
 //                                     value={
 //                                       formData.notice_period_end_date
@@ -7436,7 +7773,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Mobile Device Unique ID
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     disabled={true}
@@ -7448,7 +7785,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Mobile Model Name
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     disabled={true}
@@ -7460,7 +7797,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Mobile Device ID
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     disabled={true}
@@ -7471,7 +7808,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Mobile OS Version Type
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     disabled={true}
@@ -7483,7 +7820,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13">
 //                                     Mobile OS Version number
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     className="form-control"
 //                                     disabled={true}
@@ -7495,7 +7832,7 @@ export default AddEditEmployeeModal2;
 //                                   <label className="form-label fs-13 text-muted">
 //                                     Reg. Code
 //                                   </label>
-//                                   <input
+//                                   <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                     type="text"
 //                                     readOnly
 //                                     className="form-control bg-light border-dashed fw-bold text-primary"
@@ -7554,7 +7891,7 @@ export default AddEditEmployeeModal2;
 //                                             className="ps-4 py-3"
 //                                             style={{ overflow: "visible" }}
 //                                           >
-//                                             <CommonSelect
+//                                             <CommonSelect disabled={isViewOnly}
 //                                               options={[
 //                                                 {
 //                                                   value: "leave",
@@ -7599,7 +7936,7 @@ export default AddEditEmployeeModal2;
 //                                             className="py-3"
 //                                             style={{ overflow: "visible" }}
 //                                           >
-//                                             <CommonSelect
+//                                             <CommonSelect disabled={isViewOnly}
 //                                               key={`group-select-${index}-${groupOptions.length}`}
 //                                               options={groupOptions}
 //                                               placeholder="Select Group"
@@ -7620,7 +7957,7 @@ export default AddEditEmployeeModal2;
 //                                             className="py-3"
 //                                             style={{ overflow: "visible" }}
 //                                           >
-//                                             <CommonSelect
+//                                             <CommonSelect disabled={isViewOnly}
 //                                               key={`user-select-${index}-${line.group_id}-${(groupUserOptions[String(line.group_id)] || []).length}`}
 //                                               options={
 //                                                 groupUserOptions[
@@ -7651,7 +7988,7 @@ export default AddEditEmployeeModal2;
 //                                             />
 //                                           </td>
 //                                           <td className="py-3 pe-4">
-//                                             <input
+//                                             <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                                               type="number"
 //                                               className="form-control"
 //                                               placeholder="0"
@@ -7815,7 +8152,7 @@ export default AddEditEmployeeModal2;
 //                       <label className="form-label fs-12 fw-bold text-muted">
 //                         Category
 //                       </label>
-//                       <select
+//                       <select disabled={isViewOnly || isSubmitting}
 //                         className="form-select fs-13"
 //                         value={tempDoc.category}
 //                         onChange={(e) =>
@@ -7835,7 +8172,7 @@ export default AddEditEmployeeModal2;
 //                       <label className="form-label fs-12 fw-bold text-muted">
 //                         Source File
 //                       </label>
-//                       <input
+//                       <input disabled={isViewOnly || isSubmitting} readOnly={isViewOnly}
 //                         type="file"
 //                         id="vault-file-input-single"
 //                         className="form-control fs-13"

@@ -38,35 +38,100 @@ const AddEditBranchModal = ({ data, onSuccess }: any) => {
     setCities([]);
   };
 
+  // useEffect(() => {
+  //   const loadInitialData = async () => {
+  //     const countryList = await getCountries();
+  //     setCountries(
+  //       countryList.map((c: any) => ({ value: String(c.id), label: c.name })),
+  //     );
+
+  //     const getCleanId = (field: any) => {
+  //       if (Array.isArray(field)) return String(field[0]); // Extracts 104 from [104, "India"]
+  //       if (typeof field === "object" && field !== null)
+  //         return String(field.id || "");
+  //       return String(field || "");
+  //     };
+
+  //     const countryId = getCleanId(data?.country_id) || "104";
+  //     const stateId = getCleanId(data?.state_id);
+  //     const cityId = getCleanId(data?.city_id);
+
+  //     const currentCountry = data?.country_id?.id || data?.country_id || "104";
+  //     const stateList = await getStates(String(countryId));
+  //     setStates(
+  //       stateList.map((s: any) => ({ value: String(s.id), label: s.name })),
+  //     );
+
+  //     if (data) {
+  //       setFormData({
+  //         ...data,
+  //         country_id: String(currentCountry),
+  //         state_id: String(stateId),
+  //         city_id: String(cityId),
+  //       });
+
+  //       if (stateId && stateId !== "false" && stateId !== "0") {
+  //         fetchCities(countryId, stateId);
+  //       }
+  //     } else {
+  //       resetForm();
+  //     }
+  //   };
+  //   loadInitialData();
+  // }, [data]);
+
   useEffect(() => {
     const loadInitialData = async () => {
-      const countryList = await getCountries();
-      setCountries(
-        countryList.map((c: any) => ({ value: String(c.id), label: c.name })),
-      );
+      // 1. Helper to extract ID from Odoo format [ID, Name] or {id: ID}
+      const getCleanId = (field: any) => {
+        if (Array.isArray(field)) return String(field[0]);
+        if (typeof field === "object" && field !== null)
+          return String(field.id || "");
+        return field ? String(field) : "";
+      };
 
-      const currentCountry = data?.country_id?.id || data?.country_id || "104";
-      const stateList = await getStates(String(currentCountry));
-      setStates(
-        stateList.map((s: any) => ({ value: String(s.id), label: s.name })),
-      );
+      // 2. Load Countries (Essential for the dropdown to show anything)
+      const countryList = await getCountries();
+      const mappedCountries = countryList.map((c: any) => ({
+        value: String(c.id),
+        label: c.name,
+      }));
+      setCountries(mappedCountries);
 
       if (data) {
+        // 3. Extract IDs from the record
+        const countryId = getCleanId(data.country_id) || "104";
+        const stateId = getCleanId(data.state_id);
+        const cityId = getCleanId(data.city_id);
+
+        // 4. Fetch dependent lists sequentially so dropdowns have data
+        const stateList = await getStates(countryId);
+        setStates(
+          stateList.map((s: any) => ({ value: String(s.id), label: s.name })),
+        );
+
+        if (stateId) {
+          const cityList = await getDistricts(countryId, stateId);
+          setCities(
+            cityList.map((c: any) => ({ value: String(c.id), label: c.name })),
+          );
+        }
+
+        // 5. Update form state with cleaned IDs
         setFormData({
           ...data,
-          country_id: String(currentCountry),
-          state_id: String(data.state_id?.id || data.state_id || ""),
-          city_id: String(data.city_id?.id || data.city_id || ""),
+          country_id: countryId,
+          state_id: stateId,
+          city_id: cityId,
+          name: data.name || "",
+          gst_number: data.gst_number || "",
+          address: data.address || "",
         });
-        if (data.state_id)
-          fetchCities(
-            String(currentCountry),
-            String(data.state_id?.id || data.state_id),
-          );
       } else {
         resetForm();
       }
     };
+
     loadInitialData();
   }, [data]);
 
