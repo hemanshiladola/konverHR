@@ -67,16 +67,16 @@ export const updateAdminAttendance = async (
     throw error;
   }
 };
+
 // Export attendance to Excel
 export const exportAttendanceToExcel = async (
   dateFrom: string,
   dateTo: string,
-): Promise<void> => {
+): Promise<any> => {
   try {
     const { user_id } = getAuthDetails();
     const token = localStorage.getItem("authToken");
 
-    // UPDATED: Using the new /api/export/attendance/excel endpoint
     const response = await axios.get(
       `${CONFIG.BASE_URL_ALL}/api/export/attendance/excel`,
       {
@@ -85,25 +85,24 @@ export const exportAttendanceToExcel = async (
           date_from: dateFrom,
           date_to: dateTo,
         },
-        responseType: "blob", // Critical for file downloads
+        // REMOVED responseType: "blob" because we need to read the JSON response
         headers: {
           Authorization: token || "",
         },
       },
     );
 
-    // Create download link
-    const blob = new Blob([response.data], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `attendance_${dateFrom}_to_${dateTo}.xlsx`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    const result = response.data;
+
+    if (result.status === "success" && result.data.download_url) {
+      // OPTION 1: Use the Odoo Download URL
+      window.location.href = result.data.download_url;
+
+      /* OPTION 2: If the URL fails, use the Base64 data provided in "file"
+       const base64 = result.data.file;
+       downloadBase64(base64, result.data.filename, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+       */
+    }
   } catch (error) {
     console.error("Export Attendance Error:", error);
     throw error;
@@ -114,12 +113,11 @@ export const exportAttendanceToExcel = async (
 export const exportAttendanceToPdf = async (
   dateFrom: string,
   dateTo: string,
-): Promise<void> => {
+): Promise<any> => {
   try {
     const { user_id } = getAuthDetails();
     const token = localStorage.getItem("authToken");
 
-    // UPDATED: Using the new /api/export/attendance/pdf endpoint
     const response = await axios.get(
       `${CONFIG.BASE_URL_ALL}/api/export/attendance/pdf`,
       {
@@ -128,25 +126,18 @@ export const exportAttendanceToPdf = async (
           date_from: dateFrom,
           date_to: dateTo,
         },
-        responseType: "blob", // Critical for file downloads
         headers: {
           Authorization: token || "",
         },
       },
     );
 
-    // Create download link
-    const blob = new Blob([response.data], {
-      type: "application/pdf",
-    });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `attendance_${dateFrom}_to_${dateTo}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    const result = response.data;
+
+    if (result.success && result.data.download_url) {
+      // For PDF, opening in a new tab is a better experience
+      window.open(result.data.download_url, "_blank");
+    }
   } catch (error) {
     console.error("Export PDF Error:", error);
     throw error;

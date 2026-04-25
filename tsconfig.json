@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
-    "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "5.0",
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
-
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -14,7 +17,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,
@@ -29,7 +31,6 @@
     "noImplicitThis": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
-
     /* Advanced */
     "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
@@ -44,28 +45,45 @@
     "importHelpers": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-
     /* Path mapping */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/hooks/*": ["src/core/hooks/*"],
-      "@/utils/*": ["src/core/utils/*"],
-      "@/types/*": ["src/core/data/types/*"],
-      "@/store/*": ["src/core/data/redux/*"],
-      "@/assets/*": ["src/assets/*"],
-      "@/styles/*": ["src/assets/scss/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@/components/*": [
+        "src/components/*"
+      ],
+      "@/hooks/*": [
+        "src/core/hooks/*"
+      ],
+      "@/utils/*": [
+        "src/core/utils/*"
+      ],
+      "@/types/*": [
+        "src/core/data/types/*"
+      ],
+      "@/store/*": [
+        "src/core/data/redux/*"
+      ],
+      "@/assets/*": [
+        "src/assets/*"
+      ],
+      "@/styles/*": [
+        "src/assets/scss/*"
+      ]
     },
-
     /* Type checking */
-    "types": ["node"],
-    "typeRoots": ["./node_modules/@types", "./src/types"],
-
+    "types": [
+      "node"
+    ],
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ],
     /* Performance */
     "incremental": true,
     "tsBuildInfoFile": "./node_modules/.cache/.tsbuildinfo",
-
     /* Additional checks */
     "noErrorTruncation": true,
     "preserveWatchOutput": true,
@@ -80,7 +98,8 @@
     "vite.config.ts",
     "vitest.config.ts",
     "scripts/**/*.ts",
-    "scripts/**/*.js"
+    "scripts/**/*.js",
+    "bump-version.js"
   ],
   "exclude": [
     "node_modules",
@@ -92,6 +111,8 @@
     "src/__tests__/**/*"
   ],
   "references": [
-    { "path": "./tsconfig.node.json" }
+    {
+      "path": "./tsconfig.node.json"
+    }
   ]
 }

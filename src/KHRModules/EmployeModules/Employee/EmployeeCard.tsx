@@ -5,12 +5,14 @@ interface EmployeeCardProps {
   employee: any;
   onEdit: (employee: any) => void;
   onDelete: (id: number) => void;
+  onView: (employee: any) => void;
 }
 
 const EmployeeCard: React.FC<EmployeeCardProps> = ({
   employee,
   onEdit,
   onDelete,
+  onView,
 }) => {
   const [imgUrl, setImgUrl] = useState<string | null>(null);
 
@@ -126,6 +128,14 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 data-bs-toggle="dropdown"
               />
               <ul className="dropdown-menu dropdown-menu-end border-0 shadow-lg p-2">
+                <li>
+                  <button
+                    className="dropdown-item py-2"
+                    onClick={() => onView(employee)}
+                  >
+                    <i className="ti ti-eye me-2" /> View
+                  </button>
+                </li>
                 <li>
                   <button
                     className="dropdown-item py-2"

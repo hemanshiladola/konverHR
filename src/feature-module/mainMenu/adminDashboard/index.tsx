@@ -1003,7 +1003,7 @@ const AdminDashboard = () => {
                         <p className="fs-13 mb-3">Employee Distribution</p>
                         {/* Using total_employees from your new API response */}
                         <h3 className="mb-3">
-                          {statusApiData?.total_employees || "75"}
+                          {statusApiData?.total_employees || "N/A"}
                         </h3>
                       </div>
 

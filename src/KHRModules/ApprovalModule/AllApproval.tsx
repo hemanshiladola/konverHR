@@ -239,6 +239,9 @@ const AllApproval = () => {
         } else if (val === "reject" || val === "rejected") {
           badgeClass = "bg-light-danger text-danger";
           label = "Rejected";
+        } else if (val === "to_be_approve" || val === "To Be Approved") {
+          badgeClass = "bg-light-info text-info";
+          label = "Submitted";
         } else if (val === "submit" || val === "submitted") {
           badgeClass = "bg-light-info text-info";
           label = "Submitted";

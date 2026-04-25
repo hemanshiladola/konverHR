@@ -1358,7 +1358,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
 
         const formattedBranches = branchList.map((b: any) => ({
           value: String(b.id),
-          label: `${b.RegisteredCompnany} | ${b.address}`,
+          label: `${b.name || b.RegisteredCompnany} | ${b.address}`,
         }));
 
         setBranches(formattedBranches);
