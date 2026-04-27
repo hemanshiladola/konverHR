@@ -11,7 +11,7 @@ import { checkGST, createBranch, UpdateBrnach } from "./BranchServices";
 const AddEditBranchModal = ({ data, onSuccess }: any) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [touched, setTouched] = useState<any>({}); // Tracks which fields the user touched
+  const [touched, setTouched] = useState<any>({});
 
   const [countries, setCountries] = useState<any[]>([]);
   const [states, setStates] = useState<any[]>([]);

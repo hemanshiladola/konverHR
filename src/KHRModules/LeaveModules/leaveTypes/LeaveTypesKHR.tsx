@@ -66,15 +66,15 @@ const LeaveAdminKHR = () => {
           String(b?.leave_category ?? ""),
         ),
     },
-    {
-      title: "Leave Validation Type",
-      dataIndex: "leave_validation_type",
-      render: (val: any) => <span>{val ? String(val) : "-"}</span>,
-      sorter: (a: any, b: any) =>
-        String(a?.leave_validation_type ?? "").localeCompare(
-          String(b?.leave_validation_type ?? ""),
-        ),
-    },
+    // {
+    //   title: "Leave Validation Type",
+    //   dataIndex: "leave_validation_type",
+    //   render: (val: any) => <span>{val ? String(val) : "-"}</span>,
+    //   sorter: (a: any, b: any) =>
+    //     String(a?.leave_validation_type ?? "").localeCompare(
+    //       String(b?.leave_validation_type ?? ""),
+    //     ),
+    // },
     {
       title: "Actions",
       dataIndex: "id",
