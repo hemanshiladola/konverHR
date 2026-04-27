@@ -55,6 +55,10 @@ export interface Employee {
   employee_code: string;
   email: string;
   department?: string;
+  department_id: number; // 🔥 Added
+  job_id: number; // 🔥 Added
+  resource_calendar_id: number; // 🔥 Added
+  joinning_date: string; // 🔥 Added (Note: spelling matches your API response)
 }
 
 export interface WorkingSchedule {
@@ -281,6 +285,46 @@ export const getDepartments = async (): Promise<Department[]> => {
     console.error("Error fetching departments:", error);
     throw new Error(
       error?.response?.data?.message || "Failed to fetch departments",
+    );
+  }
+};
+
+// Add these to contractService.ts
+
+export const startContract = async (id: number | string) => {
+  try {
+    const response = await axios({
+      method: "PUT", // Based on the URL format provided
+      baseURL: CONFIG.BASE_URL_ALL,
+      headers: {
+        authorization: `${localStorage.getItem("authToken")}`,
+      },
+      url: `/api/contract/start/${id}`,
+      params: { user_id },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error?.response?.data?.message || "Failed to start contract",
+    );
+  }
+};
+
+export const cancelContract = async (id: number | string) => {
+  try {
+    const response = await axios({
+      method: "PUT",
+      baseURL: CONFIG.BASE_URL_ALL,
+      headers: {
+        authorization: `${localStorage.getItem("authToken")}`,
+      },
+      url: `/api/contract/cancel/${id}`,
+      params: { user_id },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error?.response?.data?.message || "Failed to cancel contract",
     );
   }
 };

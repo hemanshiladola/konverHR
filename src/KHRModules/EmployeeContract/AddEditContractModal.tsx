@@ -324,22 +324,46 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     label: p.name,
   }));
 
-  const handleEmployeeChange = (employeeId: number) => {
-    const selectedEmployee = employees.find((emp) => emp.id === employeeId);
-    const uniqueSuffix = dayjs().format("DD-MMM-YYYY");
-    if (selectedEmployee) {
-      setFormData((prev) => ({
-        ...prev,
-        employee_id: employeeId,
-        employee_code: selectedEmployee.employee_code,
-        name: `Contract - ${selectedEmployee.name} (${uniqueSuffix})`,
-      }));
-    }
-  };
+  // const handleEmployeeChange = (employeeId: number) => {
+  //   const selectedEmployee = employees.find((emp) => emp.id === employeeId);
+  //   const uniqueSuffix = dayjs().format("DD-MMM-YYYY");
+  //   if (selectedEmployee) {
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       employee_id: employeeId,
+  //       employee_code: selectedEmployee.employee_code,
+  //       name: `Contract - ${selectedEmployee.name} (${uniqueSuffix})`,
+  //     }));
+  //   }
+  // };
 
   // ==========================================
   // VALIDATION LOGIC
   // ==========================================
+
+  const handleEmployeeChange = (employeeId: number) => {
+    const selectedEmployee = employees.find((emp) => emp.id === employeeId);
+    const uniqueSuffix = dayjs().format("DD-MMM-YYYY");
+
+    if (selectedEmployee) {
+      // Determine the Start Date (Using joining date if available)
+      const startDate =
+        selectedEmployee.joinning_date || dayjs().format("YYYY-MM-DD");
+
+      setFormData((prev) => ({
+        ...prev,
+        employee_id: employeeId,
+        employee_code: selectedEmployee.employee_code || "",
+        // Set Reference automatically
+        name: `Contract - ${selectedEmployee.name} (${uniqueSuffix})`,
+        // Auto-fill from API response
+        department_id: selectedEmployee.department_id || 0,
+        resource_calendar_id: selectedEmployee.resource_calendar_id || 0,
+        date_start: startDate,
+        job_id: selectedEmployee.job_id || 0,
+      }));
+    }
+  };
 
   const tabFieldsMap: { [key: string]: string[] } = {
     basic: ["employee_id", "date_start", "wage"],
@@ -646,6 +670,12 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
 
       // 4. Call Single API (Add or Edit)
       // Note: Use contract_id from the JSON response if available
+
+      // 🔥 Add selectedLeaveConfig if it exists
+      if (selectedLeaveConfig) {
+        finalPayload.leave_configuration_id = Number(selectedLeaveConfig);
+      }
+
       const id = data?.contract_id || data?.id;
 
       if (id && id !== "undefined") {
@@ -820,6 +850,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               type="text"
                               className="form-control"
                               value={formData.name}
+                              disabled={!!formData.employee_id} // 🔥 Disable after selection
                               onChange={(e) =>
                                 setFormData({
                                   ...formData,
@@ -969,6 +1000,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     resource_calendar_id: null,
                                   });
                               }}
+                              disabled={!!formData.employee_id} // 🔥 Disable after selection
                             />
                             {isSubmitted && errors.resource_calendar_id && (
                               <div className="text-danger fs-11 mt-1">
@@ -986,6 +1018,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 value: String(d.id),
                                 label: d.name,
                               }))}
+                              disabled={!!formData.employee_id} // 🔥 Disable after selection
                               value={
                                 formData.department_id
                                   ? {

@@ -6,7 +6,13 @@ import CommonHeader from "../../CommonComponent/HeaderKHR/HeaderKHR";
 import AddEditContractModal from "./AddEditContractModal";
 
 // Service Imports
-import { getContracts, deleteContract, Contract } from "./contractService";
+import {
+  getContracts,
+  deleteContract,
+  Contract,
+  cancelContract,
+  startContract,
+} from "./contractService";
 import { toast } from "react-toastify";
 import dayjs from "dayjs";
 
@@ -113,6 +119,34 @@ const EmployeeContractKHR = () => {
         fetchData();
       } catch (error) {
         toast.error("Failed to delete contract");
+      }
+    }
+  };
+
+  const handleStartContract = async (id: string) => {
+    try {
+      setLoading(true);
+      await startContract(id);
+      toast.success("Contract started successfully");
+      fetchData(); // Refresh the list
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelContract = async (id: string) => {
+    if (window.confirm("Are you sure you want to cancel this contract?")) {
+      try {
+        setLoading(true);
+        await cancelContract(id);
+        toast.success("Contract cancelled successfully");
+        fetchData();
+      } catch (error: any) {
+        toast.error(error.message);
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -513,23 +547,64 @@ const EmployeeContractKHR = () => {
     //     </span>
     //   ),
     // },
+    // {
+    //   title: "Actions",
+    //   dataIndex: "id",
+    //   render: (_: any, record: Contract) => (
+    //     <div className="action-icon d-inline-flex">
+    //       <Link
+    //         to="#"
+    //         className="me-2"
+    //         data-bs-toggle="modal"
+    //         data-bs-target="#add_contract"
+    //         onClick={() => setSelectedContract({ ...record })}
+    //       >
+    //         <i className="ti ti-edit text-blue" />
+    //       </Link>
+    //       {/* <Link to="#" onClick={() => handleDelete(record.id!)}>
+    //         <i className="ti ti-trash text-danger" />
+    //       </Link> */}
+    //     </div>
+    //   ),
+    // },
     {
       title: "Actions",
       dataIndex: "id",
       render: (_: any, record: Contract) => (
-        <div className="action-icon d-inline-flex">
+        <div className="action-icon d-inline-flex align-items-center gap-2">
+          {/* Start Button - Only show if in draft or similar state */}
+          {(record as any).state === "draft" && (
+            <button
+              className="btn btn-sm btn-soft-success"
+              onClick={() => handleStartContract(record.id!)}
+              title="Start Contract"
+            >
+              <i className="ti ti-player-play-filled" />
+            </button>
+          )}
+
+          {/* Edit Button */}
           <Link
             to="#"
-            className="me-2"
             data-bs-toggle="modal"
             data-bs-target="#add_contract"
             onClick={() => setSelectedContract({ ...record })}
+            title="Edit"
           >
-            <i className="ti ti-edit text-blue" />
+            <i className="ti ti-edit text-blue fs-16" />
           </Link>
-          {/* <Link to="#" onClick={() => handleDelete(record.id!)}>
-            <i className="ti ti-trash text-danger" />
-          </Link> */}
+
+          {/* Cancel Button - Only show if running */}
+          {((record as any).state === "open" ||
+            (record as any).state === "running") && (
+            <button
+              className="btn btn-sm btn-soft-danger"
+              onClick={() => handleCancelContract(record.id!)}
+              title="Cancel Contract"
+            >
+              <i className="ti ti-square-rounded-x-filled" />
+            </button>
+          )}
         </div>
       ),
     },
