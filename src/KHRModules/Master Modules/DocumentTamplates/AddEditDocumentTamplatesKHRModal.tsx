@@ -81,8 +81,24 @@ const AddEditDocumentTamplatesKHRModal: React.FC<Props> = ({
   };
 
   const variables = [
-    { label: "Full Name", value: "{{name}}" },
-    { label: "Designation", value: "{{job_id}}" },
+    { label: "Current Date", value: "{{date}}" },
+    { label: "Company Logo", value: "{{company_logo}}" },
+    { label: "Employee Name", value: "{{name}}" },
+    { label: "Address", value: "{{address}}" },
+    { label: "Work Location", value: "{{location}}" },
+    { label: "Work Email", value: "{{work_email}}" },
+    { label: "Job Title", value: "{{job}}" },
+    { label: "Department", value: "{{department}}" },
+    { label: "Date of Joining", value: "{{doj}}" },
+    { label: "Salary", value: "{{salary}}" },
+    { label: "Company Name", value: "{{company}}" },
+    { label: "Street", value: "{{street}}" },
+    { label: "Street 2", value: "{{street2}}" },
+    { label: "City", value: "{{city}}" },
+    { label: "State", value: "{{state}}" },
+    { label: "Country", value: "{{country}}" },
+    { label: "Pincode", value: "{{pincode}}" },
+    { label: "Probation Duration", value: "{{probation}}" },
   ];
 
   const injectVariable = (v: string) => {
@@ -114,20 +130,23 @@ const AddEditDocumentTamplatesKHRModal: React.FC<Props> = ({
             ></button>
           </div>
 
-          <div className="modal-body p-0 d-flex bg-light">
-            <div className="bg-white border-end p-4" style={{ width: "300px" }}>
+          <div className="modal-body p-0 d-flex bg-light" style={{ overflow: "hidden" }}>
+            <div className="bg-white border-end p-4 d-flex flex-column" style={{ width: "300px" }}>
               <h6 className="fs-10 fw-black text-muted text-uppercase mb-3">
                 Placeholders
               </h6>
-              <div className="d-flex flex-column gap-2 mb-4">
+              <div
+                className="d-flex flex-column gap-2 mb-4 overflow-auto"
+                style={{ flexGrow: 1, paddingRight: "4px" }}
+              >
                 {variables.map((v) => (
                   <button
                     key={v.value}
-                    className="btn btn-outline-light text-dark border d-flex justify-content-between p-2 shadow-xs"
+                    className="btn btn-outline-light text-dark border d-flex justify-content-between align-items-center p-2 shadow-xs"
                     onClick={() => injectVariable(v.value)}
                   >
-                    <span className="fs-12 fw-bold">{v.label}</span>
-                    <code className="text-primary fs-11">{v.value}</code>
+                    <span className="fs-12 fw-bold text-start">{v.label}</span>
+                    <code className="text-primary fs-11 bg-light px-1 rounded">{v.value}</code>
                   </button>
                 ))}
               </div>

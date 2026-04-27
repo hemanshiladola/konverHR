@@ -1,7 +1,9 @@
 import { all_routes } from "@/router/all_routes";
 import ImageWithBasePath from "@/core/common/imageWithBasePath";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { DatePicker } from "antd";
+import dayjs, { Dayjs } from "dayjs";
 import DatatableKHR from "@/CommonComponent/DataTableKHR/DatatableKHR";
 import CommonHeader from "@/CommonComponent/HeaderKHR/HeaderKHR";
 
@@ -96,6 +98,10 @@ const AdminAttandanceKHR = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   const [isExporting, setIsExporting] = useState(false);
+  const [exportDateFrom, setExportDateFrom] = useState<Dayjs | null>(null);
+  const [exportDateTo, setExportDateTo] = useState<Dayjs | null>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const exportDropdownRef = useRef<HTMLDivElement>(null);
 
   // Group by functionality
   const groupByOptions = [
@@ -490,13 +496,9 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       const { dateFrom, dateTo } = getDefaultDateRange();
-      // Assuming your service returns the JSON response you provided
-      const response = await exportAttendanceToExcel(dateFrom, dateTo);
-
-      if (response?.data?.download_url) {
-        // Direct browser download via the URL
-        window.location.href = response.data.download_url;
-      }
+      const finalDateFrom = exportDateFrom ? exportDateFrom.format("YYYY-MM-DD") : dateFrom;
+      const finalDateTo = exportDateTo ? exportDateTo.format("YYYY-MM-DD") : dateTo;
+      await exportAttendanceToExcel(finalDateFrom, finalDateTo);
     } catch (error) {
       console.error("Excel Export failed:", error);
     } finally {
@@ -508,12 +510,9 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       const { dateFrom, dateTo } = getDefaultDateRange();
-      const response = await exportAttendanceToPdf(dateFrom, dateTo);
-
-      if (response?.data?.download_url) {
-        // Opening in a new tab is often better for PDFs so users can preview
-        window.open(response.data.download_url, "_blank");
-      }
+      const finalDateFrom = exportDateFrom ? exportDateFrom.format("YYYY-MM-DD") : dateFrom;
+      const finalDateTo = exportDateTo ? exportDateTo.format("YYYY-MM-DD") : dateTo;
+      await exportAttendanceToPdf(finalDateFrom, finalDateTo);
     } catch (error) {
       console.error("PDF Export failed:", error);
     } finally {
@@ -772,7 +771,7 @@ const AdminAttandanceKHR = () => {
     }
   }, [isAttendancesGetApi, isAttendancesGetApiFetching]);
 
-  useEffect(() => {}, []);
+  useEffect(() => { }, []);
 
   // Update grouped data when main data changes
   useEffect(() => {
@@ -800,7 +799,7 @@ const AdminAttandanceKHR = () => {
     }
   }, [isGetEmployeesBasicInfo, getEmployeesBasicInfoData, dispatch]);
 
-  
+
   useEffect(() => {
     // fetchData();
     if (isApiAuth) {
@@ -808,6 +807,18 @@ const AdminAttandanceKHR = () => {
       dispatch(updateState({ isApiAuth: false }));
     }
   }, [dispatch, isApiAuth]);
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(e.target as Node)) {
+        setIsExportOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     // fetchData();
     dispatch(ApiAuth());
@@ -841,11 +852,10 @@ const AdminAttandanceKHR = () => {
       dataIndex: "Status",
       render: (text: string, record: AttendanceAdminData) => (
         <span
-          className={`badge ${
-            text === "Present"
-              ? "badge-success-transparent"
-              : "badge-danger-transparent"
-          } d-inline-flex align-items-center`}
+          className={`badge ${text === "Present"
+            ? "badge-success-transparent"
+            : "badge-danger-transparent"
+            } d-inline-flex align-items-center`}
         >
           <i className="ti ti-point-filled me-1" />
           {record.Status}
@@ -883,14 +893,13 @@ const AdminAttandanceKHR = () => {
       dataIndex: "ProductionHours",
       render: (_text: string, record: AttendanceAdminData) => (
         <span
-          className={`badge d-inline-flex align-items-center badge-sm ${
-            parseFloat(record.ProductionHours) < 8
-              ? "badge-danger"
-              : parseFloat(record.ProductionHours) >= 8 &&
-                  parseFloat(record.ProductionHours) <= 9
-                ? "badge-success"
-                : "badge-info"
-          }`}
+          className={`badge d-inline-flex align-items-center badge-sm ${parseFloat(record.ProductionHours) < 8
+            ? "badge-danger"
+            : parseFloat(record.ProductionHours) >= 8 &&
+              parseFloat(record.ProductionHours) <= 9
+              ? "badge-success"
+              : "badge-info"
+            }`}
         >
           <i className="ti ti-clock-hour-11 me-1"></i>
           {record.ProductionHours}
@@ -952,8 +961,8 @@ const AdminAttandanceKHR = () => {
                       <i className="ti ti-user me-1" />
                       {selectedEmployeeId
                         ? employees.find(
-                            (emp) => emp.id.toString() === selectedEmployeeId,
-                          )?.name || "Select Employee"
+                          (emp) => emp.id.toString() === selectedEmployeeId,
+                        )?.name || "Select Employee"
                         : "All Employees"}
                     </button>
                     <ul
@@ -1055,36 +1064,71 @@ const AdminAttandanceKHR = () => {
                   </div>
 
                   {/* Export */}
-                  <div className="dropdown">
+                  <div className="position-relative" ref={exportDropdownRef}>
                     <button
                       className="btn btn-white dropdown-toggle d-flex align-items-center"
-                      data-bs-toggle="dropdown"
+                      onClick={() => setIsExportOpen((prev) => !prev)}
                     >
                       <i className="ti ti-file-export me-1" />
                       Export
                     </button>
-                    <ul className="dropdown-menu dropdown-menu-end p-3">
-                      <li>
-                        <button
-                          className="dropdown-item"
-                          onClick={handleExportPdf}
-                          disabled={isExporting}
-                        >
-                          <i className="ti ti-file-type-pdf me-1" />
-                          {isExporting ? "Exporting..." : "PDF"}
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          className="dropdown-item"
-                          onClick={handleExportExcel}
-                          disabled={isExporting}
-                        >
-                          <i className="ti ti-file-type-xls me-1" />
-                          {isExporting ? "Exporting..." : "Excel"}
-                        </button>
-                      </li>
-                    </ul>
+                    {isExportOpen && (
+                      <ul
+                        className="dropdown-menu dropdown-menu-end p-2 mt-2 show"
+                        style={{ minWidth: "220px", right: 0, top: "100%" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* Date Range inside dropdown */}
+                        <li className="mb-1 px-1">
+                          <p className="fs-11 text-muted text-uppercase fw-bold mb-1">Date Range</p>
+                          <div className="d-flex align-items-center gap-1">
+                            <DatePicker
+                              size="small"
+                              style={{ width: "90px", fontSize: "11px" }}
+                              value={exportDateFrom}
+                              onChange={(val) => setExportDateFrom(val)}
+                              placeholder="From"
+                              format="DD/MM/YY"
+                              getPopupContainer={() => exportDropdownRef.current || document.body}
+                            />
+                            <span className="text-muted fs-12">–</span>
+                            <DatePicker
+                              size="small"
+                              style={{ width: "90px", fontSize: "11px" }}
+                              value={exportDateTo}
+                              onChange={(val) => setExportDateTo(val)}
+                              placeholder="To"
+                              format="DD/MM/YY"
+                              disabledDate={(current) =>
+                                exportDateFrom ? current.isBefore(exportDateFrom, "day") : false
+                              }
+                              getPopupContainer={() => exportDropdownRef.current || document.body}
+                            />
+                          </div>
+                        </li>
+                        <li><hr className="dropdown-divider my-1" /></li>
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => { setIsExportOpen(false); handleExportPdf(); }}
+                            disabled={isExporting}
+                          >
+                            <i className="ti ti-file-type-pdf me-1" />
+                            {isExporting ? "Exporting..." : "PDF"}
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => { setIsExportOpen(false); handleExportExcel(); }}
+                            disabled={isExporting}
+                          >
+                            <i className="ti ti-file-type-xls me-1" />
+                            {isExporting ? "Exporting..." : "Excel"}
+                          </button>
+                        </li>
+                      </ul>
+                    )}
                   </div>
 
                   {/* Report */}
@@ -1220,13 +1264,13 @@ const AdminAttandanceKHR = () => {
                     {["last_month", "last_3_months", "last_6_months"].includes(
                       groupBy,
                     ) && (
-                      <span className="ms-2 badge badge-info">
-                        <i className="ti ti-calendar me-1"></i>
-                        {groupBy === "last_month" && "Previous Month Only"}
-                        {groupBy === "last_3_months" && "Previous 3 Months"}
-                        {groupBy === "last_6_months" && "Previous 6 Months"}
-                      </span>
-                    )}
+                        <span className="ms-2 badge badge-info">
+                          <i className="ti ti-calendar me-1"></i>
+                          {groupBy === "last_month" && "Previous Month Only"}
+                          {groupBy === "last_3_months" && "Previous 3 Months"}
+                          {groupBy === "last_6_months" && "Previous 6 Months"}
+                        </span>
+                      )}
                   </div>
                   <div className="btn-group btn-group-sm">
                     <button

@@ -282,10 +282,39 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
         setGroupAccessLines(draftData.groupAccessLines);
       }
 
+      if (draftData.experienceDocs && Array.isArray(draftData.experienceDocs)) {
+        const restoredDocs = draftData.experienceDocs.map((doc: any) => {
+          if (doc.base64 && !doc.file) {
+            try {
+              const byteString = atob(doc.base64);
+              const ab = new ArrayBuffer(byteString.length);
+              const ia = new Uint8Array(ab);
+              for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+              }
+              const blob = new Blob([ab], { type: doc.fileType || "application/pdf" });
+              const file = new File([blob], doc.fileName || "document", { type: doc.fileType || "application/pdf" });
+              return {
+                ...doc,
+                file: file,
+                previewUrl: doc.previewUrl || URL.createObjectURL(file)
+              };
+            } catch (e) {
+              console.error("Failed to restore file from base64", e);
+              return doc;
+            }
+          }
+          return doc;
+        });
+        setExperienceDocs(restoredDocs);
+      } else {
+        setExperienceDocs([]);
+      }
+
       setLoadedDraftId(draftData.id);
       setIsDraftLoaded(true);
       toast.info(
-        "Draft loaded successfully. Note: Attachments must be re-uploaded.",
+        "Draft loaded successfully.",
       );
     } else if (!data) {
       setIsDraftLoaded(false);
@@ -301,7 +330,11 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   };
 
   const handleAttemptClose = () => {
-    if (isDirty && !preventClose && !isViewOnly) {
+    if (preventClose) {
+      toast.warning("Please complete your profile before closing.");
+      return;
+    }
+    if (isDirty && !isViewOnly) {
       setShowCloseConfirm(true);
     } else {
       executeClose();
@@ -319,7 +352,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
 
   // ✅ SAVE MULTIPLE DRAFTS
   // ✅ BULLETPROOF: SAVE MULTIPLE DRAFTS
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     try {
       // 1. Exclude ALL File objects explicitly
       const {
@@ -334,6 +367,37 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       // circular references, or complex DayJS instances that crash JSON.stringify.
       const safeFormData = JSON.parse(JSON.stringify(restFormData));
 
+      // ✅ Process experienceDocs to base64 if it's a new file
+      const safeExperienceDocs = await Promise.all(
+        experienceDocs.map(async (doc) => {
+          if (doc.file instanceof File) {
+            try {
+              const base64 = await fileToBase64(doc.file);
+              return {
+                category: doc.category,
+                fileName: doc.file.name,
+                fileType: doc.file.type,
+                base64: base64,
+                previewUrl: doc.previewUrl || null,
+              };
+            } catch (e) {
+              console.error("Failed to convert file to base64", e);
+              return null;
+            }
+          }
+          return {
+            category: doc.category,
+            fileName: doc.fileName || (doc.file && doc.file.name) || "Untitled Document",
+            fileType: doc.fileType || (doc.file && doc.file.type) || "application/pdf",
+            base64: doc.base64 || null,
+            previewUrl: doc.previewUrl || null,
+            isExisting: doc.isExisting || false,
+            id: doc.id || null,
+          };
+        })
+      );
+      const finalExperienceDocs = safeExperienceDocs.filter(Boolean);
+
       // Generate an ID if this is a brand new draft, otherwise keep existing ID
       const draftId = loadedDraftId || Date.now().toString();
 
@@ -347,6 +411,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
         lastModified: new Date().toISOString(),
         formData: safeFormData,
         groupAccessLines: groupAccessLines, // Ensure group access is saved
+        experienceDocs: finalExperienceDocs, // ✅ Include vault attachments
       };
 
       // 3. Get existing drafts array safely
@@ -378,13 +443,19 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
 
       // 5. Save back to storage
       localStorage.setItem("emp_form_drafts", JSON.stringify(drafts));
-      toast.success("Draft saved! Documents and images were skipped.");
+      toast.success("Draft saved successfully with attachments.");
       executeClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("CRITICAL ERROR saving draft:", error);
-      toast.error(
-        "Failed to save draft. Form contains invalid or corrupted data.",
-      );
+      if (error.name === "QuotaExceededError" || (error.message && error.message.toLowerCase().includes("quota"))) {
+        toast.error(
+          "Failed to save draft. Attachments are too large for storage. Please remove some attachments and try again."
+        );
+      } else {
+        toast.error(
+          "Failed to save draft. Form contains invalid or corrupted data."
+        );
+      }
     }
   };
 
@@ -886,8 +957,26 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     if (!formData.job_id) tempErrors.job_id = "Designation is required.";
     if (formData.hold_status && !formData.hold_remarks?.trim())
       tempErrors.hold_remarks = "Reason required.";
-    if (!formData.employee_password?.trim())
+
+    const password = formData.employee_password?.trim() || "";
+    if (!password) {
       tempErrors.employee_password = "Login Password required.";
+    } else {
+      if (password.length < 8) {
+        tempErrors.employee_password = "Password must be at least 8 characters.";
+      } else if (password.length > 30) {
+        tempErrors.employee_password = "Password cannot exceed 30 characters.";
+      } else if (!/[A-Z]/.test(password)) {
+        tempErrors.employee_password = "Password must contain at least one uppercase letter.";
+      } else if (!/[a-z]/.test(password)) {
+        tempErrors.employee_password = "Password must contain at least one lowercase letter.";
+      } else if (!/[0-9]/.test(password)) {
+        tempErrors.employee_password = "Password must contain at least one number.";
+      } else if (!/[!@#$%^&*(),.?":{}|<>\-_+=\[\]\\/'`]/.test(password)) {
+        tempErrors.employee_password = "Password must contain at least one special character.";
+      }
+    }
+
     if (!formData.joining_date)
       tempErrors.joining_date = "Joining Date required.";
     setErrors((prev: any) => ({ ...prev, ...tempErrors }));
@@ -1833,6 +1922,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       min={0}
                                       max={30}
                                       step={1}
+                                      disabled={isViewOnly}
                                       value={
                                         Number(formData.total_experiance) || 0
                                       }
@@ -2411,6 +2501,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     <Radio.Group
                                       className="custom-radio-group"
                                       value={formData.gender}
+                                      disabled={isViewOnly}
                                       onChange={(e) => {
                                         updateFormData({
                                           gender: e.target.value,
@@ -4101,16 +4192,18 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                             />
                                           </td>
                                           <td className="py-3 pe-4 text-center">
-                                            <button
-                                              type="button"
-                                              className="btn btn-icon btn-sm btn-outline-danger rounded-circle"
-                                              onClick={() =>
-                                                handleRemoveLine(index)
-                                              }
-                                              title="Remove Approval Step"
-                                            >
-                                              <i className="ti ti-trash" />
-                                            </button>
+                                            {!isViewOnly && (
+                                              <button
+                                                type="button"
+                                                className="btn btn-icon btn-sm btn-outline-danger rounded-circle"
+                                                onClick={() =>
+                                                  handleRemoveLine(index)
+                                                }
+                                                title="Remove Approval Step"
+                                              >
+                                                <i className="ti ti-trash" />
+                                              </button>
+                                            )}
                                           </td>
                                         </tr>
                                       ))}
@@ -4136,6 +4229,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   <button
                                     type="button"
                                     className="btn btn-sm btn-primary d-flex align-items-center shadow-sm px-3 rounded-pill"
+                                    disabled={isViewOnly}
                                     onClick={() =>
                                       setGroupAccessLines([
                                         ...groupAccessLines,

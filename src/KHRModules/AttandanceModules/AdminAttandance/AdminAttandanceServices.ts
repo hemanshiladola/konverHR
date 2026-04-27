@@ -68,6 +68,30 @@ export const updateAdminAttendance = async (
   }
 };
 
+// Helper to decode a Base64 string and trigger a browser file download
+const downloadBase64File = (
+  base64String: string,
+  fileName: string,
+  mimeType: string,
+) => {
+  const pureBase64 = base64String.replace(/\s/g, "");
+  const byteCharacters = atob(pureBase64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: mimeType });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
 // Export attendance to Excel
 export const exportAttendanceToExcel = async (
   dateFrom: string,
@@ -85,7 +109,6 @@ export const exportAttendanceToExcel = async (
           date_from: dateFrom,
           date_to: dateTo,
         },
-        // REMOVED responseType: "blob" because we need to read the JSON response
         headers: {
           Authorization: token || "",
         },
@@ -94,15 +117,20 @@ export const exportAttendanceToExcel = async (
 
     const result = response.data;
 
-    if (result.status === "success" && result.data.download_url) {
-      // OPTION 1: Use the Odoo Download URL
-      window.location.href = result.data.download_url;
+    if (result.status === "success" && result.data) {
+      const { file, filename } = result.data;
 
-      /* OPTION 2: If the URL fails, use the Base64 data provided in "file"
-       const base64 = result.data.file;
-       downloadBase64(base64, result.data.filename, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-       */
+      if (file && filename) {
+        // Always use Base64 — works on both local and live
+        downloadBase64File(
+          file,
+          filename,
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        );
+      }
     }
+
+    return result;
   } catch (error) {
     console.error("Export Attendance Error:", error);
     throw error;
@@ -134,10 +162,17 @@ export const exportAttendanceToPdf = async (
 
     const result = response.data;
 
-    if (result.success && result.data.download_url) {
-      // For PDF, opening in a new tab is a better experience
-      window.open(result.data.download_url, "_blank");
+    // PDF response uses `success: true`, `file_base64`, and `file_name`
+    if ((result.success === true || result.status === "success") && result.data) {
+      const fileBase64 = result.data.file_base64 || result.data.file;
+      const fileName = result.data.file_name || result.data.filename || "Attendance.pdf";
+
+      if (fileBase64 && fileName) {
+        downloadBase64File(fileBase64, fileName, "application/pdf");
+      }
     }
+
+    return result;
   } catch (error) {
     console.error("Export PDF Error:", error);
     throw error;

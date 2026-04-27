@@ -24,7 +24,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
     : String(employee.user_id);
 
   const isCurrentUser = loggedInUserId === employeeUserId;
-  const isAdmin = isCurrentUser && userRole === "REGISTER_ADMIN";
+  const isAdmin = userRole === "REGISTER_ADMIN";
 
   const designation = Array.isArray(employee.job_id)
     ? employee.job_id[1]
@@ -85,11 +85,11 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
         {/* Avatar */}
         <div
           className="position-absolute start-50 translate-middle-x"
-          style={{ top: "-35px", zIndex: 2 }}
+          style={{ top: "-45px", zIndex: 2 }}
         >
           <div
             className="rounded-circle p-1 bg-white shadow-sm"
-            style={{ width: "75px", height: "75px" }}
+            style={{ width: "90px", height: "90px" }}
           >
             {imgUrl ? (
               <img
@@ -108,7 +108,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 }}
               />
             ) : (
-              <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold w-100 h-100 fs-5">
+              <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold w-100 h-100 fs-3">
                 {employee.name?.charAt(0).toUpperCase()}
               </div>
             )}
@@ -136,15 +136,17 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
                     <i className="ti ti-eye me-2" /> View
                   </button>
                 </li>
-                <li>
-                  <button
-                    className="dropdown-item py-2"
-                    onClick={() => onEdit(employee)}
-                  >
-                    <i className="ti ti-pencil me-2" /> Edit
-                  </button>
-                </li>
-                {!isCurrentUser && (
+                {isAdmin && (
+                  <li>
+                    <button
+                      className="dropdown-item py-2"
+                      onClick={() => onEdit(employee)}
+                    >
+                      <i className="ti ti-pencil me-2" /> Edit
+                    </button>
+                  </li>
+                )}
+                {isAdmin && !isCurrentUser && (
                   <li>
                     <button
                       className="dropdown-item py-2 text-danger"
