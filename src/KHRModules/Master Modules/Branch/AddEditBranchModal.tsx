@@ -8,7 +8,7 @@ import {
 } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
 import { checkGST, createBranch, UpdateBrnach } from "./BranchServices";
 
-const AddEditBranchModal = ({ data, onSuccess }: any) => {
+const AddEditBranchModal = ({ data, onSuccess, onClose }: any) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [touched, setTouched] = useState<any>({});
@@ -37,6 +37,27 @@ const AddEditBranchModal = ({ data, onSuccess }: any) => {
     setTouched({});
     setCities([]);
   };
+
+  const onCloseRef = React.useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    const modalElement = document.getElementById("add_branch_modal");
+
+    const handleModalHidden = () => {
+      // Notify the parent to set selectedBranch to null
+      if (onCloseRef.current) {
+        onCloseRef.current();
+      }
+    };
+
+    modalElement?.addEventListener("hidden.bs.modal", handleModalHidden);
+    return () => {
+      modalElement?.removeEventListener("hidden.bs.modal", handleModalHidden);
+    };
+  }, []); // <-- Empty dependency array prevents the wipe loop!
 
   // useEffect(() => {
   //   const loadInitialData = async () => {
@@ -129,6 +150,10 @@ const AddEditBranchModal = ({ data, onSuccess }: any) => {
         });
       } else {
         resetForm();
+        const stateList = await getStates("104");
+        setStates(
+          stateList.map((s: any) => ({ value: String(s.id), label: s.name })),
+        );
       }
     };
 

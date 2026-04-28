@@ -187,7 +187,11 @@ const BranchKHR = () => {
       </div>
 
       {/* BRANCH MODAL */}
-      <AddEditBranchModal onSuccess={fetchData} data={selectedBranch} />
+      <AddEditBranchModal
+        onSuccess={fetchData}
+        data={selectedBranch}
+        onClose={() => setSelectedBranch(null)} // 🔥 Add this line
+      />
 
       {/* WORK LOCATION MODAL */}
       <AddEditWorkLocationModal

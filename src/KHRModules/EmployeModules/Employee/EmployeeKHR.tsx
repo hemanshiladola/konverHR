@@ -249,24 +249,38 @@ const EmployeeKHR = () => {
         const rawImg = record.image_url || record.image_url;
         const getListImg = () => {
           if (!rawImg || rawImg === "false") return null;
-          if (rawImg.startsWith("http")) return rawImg; // Don't add timestamp in list view to save performance
-          if (rawImg.length > 50)
-            return `data:image/png;base64,${rawImg.replace(/\s/g, "")}`;
+          let trimmed = rawImg.trim();
+          if (trimmed.startsWith("/")) return `https://odooapi.konverthr.com${trimmed}`;
+          if (trimmed.startsWith("http")) return trimmed.replace("http://", "https://");
+          if (trimmed.length > 50) return `data:image/png;base64,${trimmed.replace(/\s/g, "")}`;
           return null;
         };
         const finalImg = getListImg();
+        const initial = text ? text.charAt(0).toUpperCase() : "?";
         return (
           <div className="d-flex align-items-center">
             <div className="avatar avatar-md me-2">
-              <img
-                src={finalImg || "assets/img/profiles/avatar-02.jpg"}
-                className="rounded-circle object-fit-cover"
-                alt="User"
-                onError={(e) => {
-                  // Fallback if the URL fails to load
-                  e.currentTarget.src = "assets/img/profiles/avatar-02.jpg";
-                }}
-              />
+              {finalImg ? (
+                <>
+                  <img
+                    src={finalImg}
+                    className="rounded-circle object-fit-cover w-100 h-100"
+                    alt={text}
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.nextElementSibling?.classList.remove("d-none");
+                      e.currentTarget.nextElementSibling?.classList.add("d-flex");
+                    }}
+                  />
+                  <div className="rounded-circle bg-primary text-white w-100 h-100 justify-content-center align-items-center fw-bold d-none">
+                    {initial}
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-circle bg-primary text-white w-100 h-100 d-flex justify-content-center align-items-center fw-bold">
+                  {initial}
+                </div>
+              )}
             </div>
             <div>
               <h6 className="fs-14 fw-medium mb-0">
@@ -330,33 +344,37 @@ const EmployeeKHR = () => {
     },
     {
       title: "Action",
-      hidden: !isAdmin,
-      render: (_: any, record: any) =>
-        isAdmin && ( // Double check here
-          <div className="d-flex align-items-center gap-2">
-            <button
-              className="btn btn-icon btn-sm btn-soft-info"
-              onClick={() => handleViewClick(record)}
-              title="View Details"
-            >
-              <i className="ti ti-eye"></i>
-            </button>
-            <button
-              className="btn btn-icon btn-sm btn-soft-primary"
-              onClick={() => handleEditClick(record)}
-            >
-              <i className="ti ti-edit"></i>
-            </button>
-            <button
-              className="btn btn-icon btn-sm btn-soft-danger"
-              onClick={() => handleDeleteEmployee(record.id)}
-            >
-              <i className="ti ti-trash"></i>
-            </button>
-          </div>
-        ),
+      render: (_: any, record: any) => (
+        <div className="d-flex align-items-center gap-2">
+          <button
+            className="btn btn-icon btn-sm btn-soft-info"
+            onClick={() => handleViewClick(record)}
+            title="View Details"
+          >
+            <i className="ti ti-eye"></i>
+          </button>
+          {isAdmin && (
+            <>
+              <button
+                className="btn btn-icon btn-sm btn-soft-primary"
+                onClick={() => handleEditClick(record)}
+                title="Edit Details"
+              >
+                <i className="ti ti-edit"></i>
+              </button>
+              <button
+                className="btn btn-icon btn-sm btn-soft-danger"
+                onClick={() => handleDeleteEmployee(record.id)}
+                title="Delete Employee"
+              >
+                <i className="ti ti-trash"></i>
+              </button>
+            </>
+          )}
+        </div>
+      ),
     },
-  ].filter((col) => !col.hidden);
+  ];
 
   // Get unique departments for filter dropdown
   const uniqueDepts = Array.from(
