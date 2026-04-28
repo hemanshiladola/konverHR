@@ -282,6 +282,29 @@ const EmployeeCalendarsKHR = () => {
         onHide={() => setShowAddModal(false)}
         onSuccess={fetchEvents}
       />
+      {/* 🔥 FIX: FullCalendar Button State Override with Theme Color */}
+      <style>{`
+        /* 1. Force inactive buttons to look normal */
+        .fc .fc-button:not(.fc-button-active) {
+          background-color: #fff !important;
+          color: #333 !important;
+          border-color: #dee2e6 !important;
+          box-shadow: none !important;
+        }
+
+        /* 2. Style the ACTUAL active button with your Orange theme */
+        .fc .fc-button-active {
+          background-color: #F26522 !important;
+          border-color: #F26522 !important;
+          color: #fff !important;
+          box-shadow: 0 2px 4px rgba(242, 101, 34, 0.2) !important;
+        }
+
+        /* 3. Clean up hover states for inactive buttons */
+        .fc .fc-button:not(.fc-button-active):hover {
+          background-color: #f8f9fa !important;
+        }
+      `}</style>
     </div>
   );
 };

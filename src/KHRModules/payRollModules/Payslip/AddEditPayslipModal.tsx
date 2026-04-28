@@ -79,6 +79,25 @@ const AddEditPayslipModal: React.FC<Props> = ({
     };
   }, []);
 
+  // const handleEmployeeChange = (opt: any) => {
+  //   const employeeName = opt?.label || "";
+  //   const month = dayjs(formData.date_from).format("MMM YYYY");
+  //   setFormData((prev: any) => ({
+  //     ...prev,
+  //     employee_id: opt?.value || "",
+  //     name: opt ? `Salary Slip of ${employeeName} for ${month}` : "",
+  //   }));
+  // };
+
+  const validate = () => {
+    const newErrors: any = {};
+    if (!formData.employee_id) newErrors.employee_id = "Employee is required.";
+    if (!formData.name?.trim()) newErrors.name = "Reference Name is required.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleEmployeeChange = (opt: any) => {
     const employeeName = opt?.label || "";
     const month = dayjs(formData.date_from).format("MMM YYYY");
@@ -87,10 +106,23 @@ const AddEditPayslipModal: React.FC<Props> = ({
       employee_id: opt?.value || "",
       name: opt ? `Salary Slip of ${employeeName} for ${month}` : "",
     }));
+    // Clear errors when user selects an employee
+    if (errors.employee_id)
+      setErrors((prev: any) => ({ ...prev, employee_id: null }));
+    if (errors.name) setErrors((prev: any) => ({ ...prev, name: null }));
   };
 
   const updateField = (name: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [name]: value }));
+
+    // Clear specific field error the moment the user types
+    if (errors[name]) {
+      setErrors((prev: any) => {
+        const newErrors = { ...prev };
+        delete newErrors[name]; // Completely removes the error key
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,6 +130,12 @@ const AddEditPayslipModal: React.FC<Props> = ({
     try {
       if (currentStep === "create") {
         setIsSubmitted(true);
+
+        if (!validate()) {
+          toast.error("Please fill in the required fields.");
+          return;
+        }
+
         if (!formData.name || !formData.employee_id) return;
         setIsSubmitting(true);
         const response = await createPayslip({
@@ -219,17 +257,33 @@ const AddEditPayslipModal: React.FC<Props> = ({
                 className={`row g-3 mb-4 p-3 rounded border bg-white ${computedData ? "d-none" : ""}`}
               >
                 <div className="col-md-6">
-                  <label className="form-label fs-13 fw-bold">
+                  <label
+                    className={`form-label fs-13 fw-bold ${isSubmitted && errors.employee_id ? "text-danger" : ""}`}
+                  >
+                    {" "}
                     Employee <span className="text-danger">*</span>
                   </label>
-                  <CommonSelect
-                    disabled={currentStep !== "create"}
-                    options={dropdowns.employees}
-                    value={dropdowns.employees.find(
-                      (o: any) => o.value === formData.employee_id,
-                    )}
-                    onChange={handleEmployeeChange}
-                  />
+                  <div
+                    className={
+                      isSubmitted && errors.employee_id
+                        ? "border border-danger rounded shadow-sm"
+                        : ""
+                    }
+                  >
+                    <CommonSelect
+                      disabled={currentStep !== "create"}
+                      options={dropdowns.employees}
+                      value={dropdowns.employees.find(
+                        (o: any) => o.value === formData.employee_id,
+                      )}
+                      onChange={handleEmployeeChange}
+                    />
+                  </div>
+                  {isSubmitted && errors.employee_id && (
+                    <div className="text-danger fw-medium fs-11 mt-1">
+                      {errors.employee_id}
+                    </div>
+                  )}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fs-13 fw-bold">Contract</label>
@@ -244,16 +298,25 @@ const AddEditPayslipModal: React.FC<Props> = ({
                     }
                   />
                 </div>
+
                 <div className="col-md-12">
-                  <label className="form-label fs-13 fw-bold">
+                  <label
+                    className={`form-label fs-13 fw-bold ${isSubmitted && errors.name ? "text-danger" : ""}`}
+                  >
+                    {" "}
                     Reference Name <span className="text-danger">*</span>
                   </label>
                   <input
                     disabled={currentStep !== "create"}
-                    className="form-control"
+                    className={`form-control ${isSubmitted && errors.name ? "is-invalid border-danger shadow-sm" : ""}`}
                     value={formData.name}
                     onChange={(e) => updateField("name", e.target.value)}
                   />
+                  {isSubmitted && errors.name && (
+                    <div className="invalid-feedback d-block fw-medium mt-1">
+                      {errors.name}
+                    </div>
+                  )}
                 </div>
                 <div className="col-md-6">
                   <label className="form-label fs-13 fw-bold">

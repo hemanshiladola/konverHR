@@ -25,6 +25,10 @@ const AllApproval = () => {
   const [rejectRemarks, setRejectRemarks] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // 🔥 NEW: Validation states for the reject modal
+  const [isRejectSubmitted, setIsRejectSubmitted] = useState(false);
+  const [rejectError, setRejectError] = useState<string | null>(null);
+
   // --- Helpers ---
   const extractDate = (desc: string) => {
     if (!desc) return null;
@@ -125,19 +129,48 @@ const AllApproval = () => {
   const openRejectModal = (reqId: string | number) => {
     setSelectedRequestId(reqId);
     setRejectRemarks("");
+    setIsRejectSubmitted(false); // Reset validation
+    setRejectError(null); // Reset validation
     setShowRejectModal(true);
   };
 
   const closeRejectModal = () => {
     setShowRejectModal(false);
     setSelectedRequestId(null);
+    setIsRejectSubmitted(false); // Reset validation
+    setRejectError(null); // Reset validation
   };
+
+  // const submitReject = async () => {
+
+  //   if (!selectedRequestId) return;
+  //   if (!rejectRemarks.trim()) {
+  //     toast.error("Please enter remarks.");
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+  //   try {
+  //     await rejectRequest(selectedRequestId, rejectRemarks);
+  //     toast.warning("Request Rejected");
+  //     closeRejectModal();
+  //     fetchData();
+  //   } catch (error: any) {
+  //     toast.error(error.response?.data?.message || "Failed to reject request");
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // };
 
   const submitReject = async () => {
     if (!selectedRequestId) return;
+
+    setIsRejectSubmitted(true); // Mark as submitted
+
+    // 🔥 Check for errors and set state
     if (!rejectRemarks.trim()) {
-      toast.error("Please enter remarks.");
-      return;
+      setRejectError("Rejection reason is required.");
+      return; // Stop execution
     }
 
     setIsSubmitting(true);
@@ -354,7 +387,7 @@ const AllApproval = () => {
                   onClick={closeRejectModal}
                 ></button>
               </div>
-              <div className="modal-body">
+              {/* <div className="modal-body">
                 <label className="form-label fw-bold">
                   Reason <span className="text-danger">*</span>
                 </label>
@@ -365,6 +398,32 @@ const AllApproval = () => {
                   value={rejectRemarks}
                   onChange={(e) => setRejectRemarks(e.target.value)}
                 ></textarea>
+              </div> */}
+              <div className="modal-body">
+                <label
+                  className={`form-label fw-bold ${isRejectSubmitted && rejectError ? "text-danger" : ""}`}
+                >
+                  Reason <span className="text-danger">*</span>
+                </label>
+                <textarea
+                  className={`form-control ${isRejectSubmitted && rejectError ? "is-invalid border-danger shadow-sm" : ""}`}
+                  rows={3}
+                  placeholder="Enter remarks..."
+                  value={rejectRemarks}
+                  onChange={(e) => {
+                    setRejectRemarks(e.target.value);
+                    // 🔥 Instantly clear the error state when user types
+                    if (rejectError) {
+                      setRejectError(null);
+                    }
+                  }}
+                ></textarea>
+                {/* 🔥 Validation Error Message */}
+                {isRejectSubmitted && rejectError && (
+                  <div className="invalid-feedback d-block fw-medium mt-1">
+                    {rejectError}
+                  </div>
+                )}
               </div>
               <div className="modal-footer border-top-0">
                 <button

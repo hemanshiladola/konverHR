@@ -38,7 +38,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
     if (data) {
       setFormData({
         name: data.name || "",
-        code: data.code || "",
+        code: data.code,
         external_code: data.external_code || "",
         sequence: data.sequence || 0,
         color: data.color || 1,
@@ -275,7 +275,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                 </div>
 
                 {/* Sequence */}
-                <div className="col-md-6">
+                {/* <div className="col-md-6">
                   <label className="form-label fs-13 fw-bold">Sequence</label>
                   <input
                     type="number"
@@ -284,10 +284,10 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                     value={formData.sequence}
                     onChange={handleInputChange}
                   />
-                </div>
+                </div> */}
 
                 {/* Color */}
-                <div className="col-md-6">
+                {/* <div className="col-md-6">
                   <label className="form-label fs-13 fw-bold">
                     Color (1-10)
                   </label>
@@ -300,7 +300,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                     value={formData.color}
                     onChange={handleInputChange}
                   />
-                </div>
+                </div> */}
 
                 {/* Switches */}
                 <div className="col-md-6 pt-3">
