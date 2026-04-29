@@ -82,7 +82,7 @@ export const updateWorkEntryType = async (id: string, data: any) => {
 // DELETE - http://localhost:4000/api/work-entry-type/21?user_id=159
 export const deleteWorkEntryType = async (id: string) => {
   const { user_id } = getAuthDetails();
-  return await Instance.delete(`/api/delete-work-entry-type/${id}`, {
+  return await Instance.delete(`/api/work-entry-type/${id}`, {
     params: { user_id },
   });
 };

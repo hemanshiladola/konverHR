@@ -13,6 +13,7 @@ import {
   getAttendancePolicies,
   getStates,
   addEmployee,
+  importEmployees,
   getCountries,
   getBanks,
   getReportingManagers,
@@ -45,6 +46,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onSuccess, onClose })
   const [isProcessing, setIsProcessing] = useState(false);
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [rawRows, setRawRows] = useState<any[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -135,7 +137,8 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onSuccess, onClose })
 
       setPreviewData(rowsWithValidation);
       setRawRows(parsedData);
-      
+      setSelectedFile(file);
+
       // Reset input
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (error) {
@@ -145,38 +148,44 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onSuccess, onClose })
   };
 
   const submitBulkUpload = async () => {
-    const validRows = previewData.filter(d => d.isValid);
-    if (validRows.length === 0) {
-      toast.error("No valid rows to upload. Please fix errors and try again.");
+    const file = selectedFile;
+    if (!file) {
+      toast.error("No file selected.");
       return;
     }
 
     setIsProcessing(true);
-    let successCount = 0;
-    let failCount = 0;
 
-    for (const data of validRows) {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = async () => {
       try {
-        await addEmployee(data.payload);
-        successCount++;
-      } catch (error) {
-        failCount++;
-        console.error(`Failed to add employee at row ${data.rowNumber}:`, error);
-      }
-    }
+        const base64String = (reader.result as string).split(',')[1];
+        await importEmployees(base64String);
+        toast.success("Bulk Upload Complete!");
 
-    setIsProcessing(false);
-    toast.success(`Bulk Upload Complete! Success: ${successCount}, Failed: ${failCount}`);
-    
-    document.getElementById("bulk-modal-close-btn")?.click();
-    setTimeout(() => {
-        onSuccess();
-    }, 500);
+        document.getElementById("bulk-modal-close-btn")?.click();
+        setTimeout(() => {
+          onSuccess();
+        }, 500);
+      } catch (error: any) {
+        console.error("Bulk upload failed:", error);
+        toast.error(error.response?.data?.message || "Failed to bulk upload employees.");
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    reader.onerror = () => {
+      toast.error("Failed to read the file.");
+      setIsProcessing(false);
+    };
   };
 
   const handleModalClose = () => {
     setPreviewData([]);
     setRawRows([]);
+    setSelectedFile(null);
     onClose();
   };
 
@@ -280,7 +289,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onSuccess, onClose })
                 <div className="card-footer px-4 py-3 text-end bg-white">
                   <button
                     className="btn btn-light me-2"
-                    onClick={() => setPreviewData([])}
+                    onClick={() => { setPreviewData([]); setSelectedFile(null); }}
                     disabled={isProcessing}
                   >
                     Clear Preview
@@ -288,7 +297,7 @@ const BulkUploadModal: React.FC<BulkUploadModalProps> = ({ onSuccess, onClose })
                   <button
                     className="btn btn-primary"
                     onClick={submitBulkUpload}
-                    disabled={previewData.filter(d => d.isValid).length === 0 || isProcessing}
+                    disabled={previewData.length === 0 || isProcessing}
                   >
                     {isProcessing ? (
                       <><span className="spinner-border spinner-border-sm me-2" role="status"></span> Processing...</>

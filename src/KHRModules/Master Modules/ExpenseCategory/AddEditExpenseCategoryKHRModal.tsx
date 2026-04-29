@@ -135,10 +135,27 @@ const AddEditExpenseCategoryKHRModal: React.FC<Props> = ({
     }
   };
 
+  // const getInputClass = (field: string) => {
+  //   if (errors[field]) return "form-control is-invalid";
+  //   if (isSubmitted && formData[field] && !errors[field])
+  //     return "form-control is-valid";
+  //   return "form-control";
+  // };
   const getInputClass = (field: string) => {
-    if (errors[field]) return "form-control is-invalid";
-    if (isSubmitted && formData[field] && !errors[field])
-      return "form-control is-valid";
+    // 1. If there is an error, force the red border and icon
+    if (errors[field]) {
+      return "form-control is-invalid border-danger shadow-sm";
+    }
+    // 2. Only show the green success border if submitted, NO errors, AND the field actually has text/numbers in it
+    if (
+      isSubmitted &&
+      formData[field] !== "" &&
+      formData[field] !== null &&
+      !errors[field]
+    ) {
+      return "form-control is-valid border-success";
+    }
+    // 3. Default state
     return "form-control";
   };
 
@@ -252,14 +269,18 @@ const AddEditExpenseCategoryKHRModal: React.FC<Props> = ({
 
             <div className="modal-body p-4">
               <form
-                className={`needs-validation ${
-                  isSubmitted ? "was-validated" : ""
-                }`}
+                // className={`needs-validation ${
+                //   isSubmitted ? "was-validated" : ""
+                // }`}
+                className="needs-validation"
                 noValidate
                 onSubmit={handleSubmit}
               >
                 {/* --- TOP SECTION: Primary Info --- */}
-                <div className="row g-3 mb-4 bg-light p-3 rounded mx-0 border shadow-sm align-items-center">
+                {/* <div className="row g-3 mb-4 bg-light p-3 rounded mx-0 border shadow-sm align-items-center"> */}
+                <div
+                  className={`row g-3 mb-4 p-3 rounded mx-0 border shadow-sm align-items-center ${errors.name ? "bg-danger-subtle border-danger" : "bg-light"}`}
+                >
                   <div className="col-md-12">
                     <label className="form-label fs-13 fw-bold">
                       Product Name <span className="text-danger">*</span>
@@ -272,7 +293,9 @@ const AddEditExpenseCategoryKHRModal: React.FC<Props> = ({
                       value={formData.name}
                       onChange={handleChange}
                     />
-                    <div className="invalid-feedback">{errors.name}</div>
+                    <div className="invalid-feedback fw-medium mt-1">
+                      {errors.name || "Product Name is required"}
+                    </div>{" "}
                   </div>
                 </div>
 

@@ -772,9 +772,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
         ]);
       }
 
-      if (imgUrl) {
+      if (imgUrl && imgUrl !== "false" && typeof imgUrl === "string") {
         setImgPreview(imgUrl);
-      } else if (data.image_1920 && typeof data.image_1920 === "string") {
+      } else if (
+        data.image_1920 &&
+        typeof data.image_1920 === "string" &&
+        data.image_1920 !== "false"
+      ) {
         const prefix = data.image_1920.startsWith("data:")
           ? ""
           : "data:image/png;base64,";
@@ -1673,17 +1677,30 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                 autoComplete="off"
               >
                 {/* 👇 These hidden inputs "catch" the browser's autofill so your real fields stay clean 👇 */}
+                {/* We use visually hidden styles instead of display:none because modern browsers skip display:none fields for autofill */}
                 <input
-                  disabled={isViewOnly || isSubmitting}
-                  readOnly={isViewOnly}
                   type="text"
-                  style={{ display: "none" }}
+                  name="fake_username_prevent_autofill"
+                  autoComplete="off"
+                  style={{
+                    opacity: 0,
+                    position: "absolute",
+                    height: 0,
+                    width: 0,
+                    zIndex: -1,
+                  }}
                 />
                 <input
-                  disabled={isViewOnly || isSubmitting}
-                  readOnly={isViewOnly}
                   type="password"
-                  style={{ display: "none" }}
+                  name="fake_password_prevent_autofill"
+                  autoComplete="off"
+                  style={{
+                    opacity: 0,
+                    position: "absolute",
+                    height: 0,
+                    width: 0,
+                    zIndex: -1,
+                  }}
                 />
                 <div
                   className="d-flex flex-row flex-grow-1"
@@ -1957,6 +1974,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     src={imgPreview}
                                     className="img-fluid rounded w-100 h-100 object-fit-cover"
                                     alt="Preview"
+                                    onError={(e) => {
+                                      setImgPreview(null);
+                                    }}
                                   />
                                 ) : (
                                   <div className="d-flex flex-column align-items-center justify-content-center h-100 bg-light rounded">
@@ -2018,6 +2038,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     disabled={isViewOnly || isSubmitting}
                                     readOnly={isViewOnly}
                                     type="text"
+                                    name="employee_aadhaar_number_unique"
+                                    autoComplete="one-time-code"
                                     className={`form-control ${isSubmitted ? (errors.aadhaar_number ? "is-invalid" : formData.aadhaar_number ? "is-valid" : "") : ""}`}
                                     placeholder="12 Digit Aadhaar"
                                     value={formData.aadhaar_number}
@@ -2047,6 +2069,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     disabled={isViewOnly || isSubmitting}
                                     readOnly={isViewOnly}
                                     type="text"
+                                    name="employee_pan_number_unique"
+                                    autoComplete="one-time-code"
                                     className={`form-control text-uppercase ${isSubmitted ? (errors.pan_number ? "is-invalid" : formData.pan_number ? "is-valid" : "") : ""}`}
                                     maxLength={10}
                                     placeholder="ABCDE1234F"
@@ -2077,6 +2101,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     disabled={isViewOnly || isSubmitting}
                                     readOnly={isViewOnly}
                                     type="text"
+                                    name="employee_voter_id_unique"
+                                    autoComplete="one-time-code"
                                     className={`form-control text-uppercase ${isSubmitted && errors.voter_id ? "is-invalid" : ""}`}
                                     placeholder="ABC1234567"
                                     maxLength={10}
@@ -2107,6 +2133,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     disabled={isViewOnly || isSubmitting}
                                     readOnly={isViewOnly}
                                     type="text"
+                                    name="employee_passport_id_unique"
+                                    autoComplete="one-time-code"
                                     maxLength={8}
                                     className={`form-control text-uppercase ${isSubmitted && errors.passport_id ? "is-invalid" : ""}`}
                                     placeholder="A1234567"

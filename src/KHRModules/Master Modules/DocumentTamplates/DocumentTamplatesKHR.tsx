@@ -55,8 +55,8 @@ const DocumentTemplatesKHR: React.FC = () => {
 
   const simulatePreview = (tpl: any) => {
     const previewHtml = tpl.content
-      .replace(/{{name}}/g, "<strong>Prachi Shah</strong>")
-      .replace(/{{job_id}}/g, "<strong>Senior Software Engineer</strong>");
+      .replace(/{{name}}/g, "<strong>[Employee Name]</strong>")
+      .replace(/{{job_id}}/g, "<strong>[Designation]</strong>");
     const win = window.open("", "_blank");
     win?.document.write(
       `<html><body style="padding:50px;">${previewHtml}</body></html>`,

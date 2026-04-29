@@ -6,11 +6,13 @@ import {
   computePayslip,
   confirmPayslip,
   markPaidPayslip,
+  downloadPayslip,
 } from "./PayslipServices";
 import { toast } from "react-toastify";
 import { all_routes } from "@/router/all_routes";
 import DatatableKHR from "@/CommonComponent/DataTableKHR/DatatableKHR";
 import ViewPayslipModal from "./ViewPayslipModal";
+import BulkPayrollModal from "./BulkPayrollModal";
 
 const PayslipKHR = () => {
   const [payslips, setPayslips] = useState([]);
@@ -55,6 +57,21 @@ const PayslipKHR = () => {
       fetchPayslips();
     } catch (err) {
       toast.error("Action failed");
+    }
+  };
+
+  const handleDownload = async (id: number) => {
+    try {
+      const response = await downloadPayslip(id);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `payslip_${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (err) {
+      toast.error("Failed to download payslip");
     }
   };
 
@@ -202,7 +219,6 @@ const PayslipKHR = () => {
               <i className="ti ti-calculator"></i>
             </button>
           )}
-          {/* {record.state === "verify" && ( */}
           <button
             className="btn btn-sm btn-soft-secondary"
             onClick={() => handleView(record)}
@@ -210,7 +226,15 @@ const PayslipKHR = () => {
           >
             <i className="ti ti-eye"></i>
           </button>
-          {/* // )} */}
+          
+          <button
+            className="btn btn-sm btn-outline-primary"
+            onClick={() => handleDownload(record.id)}
+            title="Download PDF"
+          >
+            <i className="ti ti-download"></i>
+          </button>
+          
           {/* Only show Confirm for Draft/Verify */}
           {record.state === "draft" && (
             <button
@@ -246,6 +270,17 @@ const PayslipKHR = () => {
           buttonText="Compute Payslip"
           modalTarget="#add_payslip_modal"
           routes={all_routes}
+          rightActions={
+            <button
+              type="button"
+              className="btn btn-outline-primary d-flex align-items-center"
+              data-bs-toggle="modal"
+              data-bs-target="#bulk_payroll_modal"
+            >
+              <i className="ti ti-calculator fs-5 me-2"></i>
+              Bulk Payroll Wizard
+            </button>
+          }
         />
 
         {/* <div className="card mt-4 shadow-sm border-0">
@@ -260,6 +295,7 @@ const PayslipKHR = () => {
           onClose={() => setSelectedPayslip(null)}
         />
         <ViewPayslipModal data={viewData} onClose={() => setViewData(null)} />
+        <BulkPayrollModal onSuccess={fetchPayslips} />
       </div>
     </div>
   );

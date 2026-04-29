@@ -350,6 +350,15 @@ export const addEmployee = async (payload: any) => {
   });
 };
 
+export const importEmployees = async (base64File: string) => {
+  const userId = getUserId() || 2;
+  return await Instance.post(
+    `/api/employee/import`,
+    { file: base64File },
+    { params: { user_id: userId } }
+  );
+};
+
 export const getDepartureReasons = async () => {
   const userId = localStorage.getItem("user_id");
   const res = await Instance.get(`/api/departure_reason?user_id=${userId}`);

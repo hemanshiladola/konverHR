@@ -51,3 +51,17 @@ export const markPaidPayslip = async (id: number) => {
     `api/mark-paid/payslip/${id}?user_id=${getUserId()}`,
   );
 };
+
+export const generateBulkPayroll = async (payload: any) => {
+  return await Instance.post(
+    `api/generate_payslip_batch?user_id=${getUserId()}`,
+    payload
+  );
+};
+
+export const downloadPayslip = async (id: number) => {
+  return await Instance.get(
+    `api/download_payslip/${id}?user_id=${getUserId()}`,
+    { responseType: "blob" }
+  );
+};
