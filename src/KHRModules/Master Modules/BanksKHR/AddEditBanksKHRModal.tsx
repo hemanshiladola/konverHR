@@ -146,45 +146,154 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
     setIsSubmitting(false);
   };
 
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { name, value } = e.target;
+  //   if (name === "phone") {
+  //     const numericValue = value.replace(/\D/g, "").slice(0, 10);
+  //     setFormData({ ...formData, [name]: numericValue });
+  //   } else if (name === "micr_code") {
+  //     const numericValue = value.replace(/\D/g, "").slice(0, 9);
+  //     setFormData({ ...formData, [name]: numericValue });
+  //   } else if (name === "bic" || name === "swift_code") {
+  //     setFormData({ ...formData, [name]: value.toUpperCase() });
+  //   } else {
+  //     setFormData({ ...formData, [name]: value });
+  //   }
+  //   if (errors[name]) {
+  //     const newErrors = { ...errors };
+  //     delete newErrors[name];
+  //     setErrors(newErrors);
+  //   }
+  // };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    let finalValue = value;
+
+    // 1. Format the input dynamically
     if (name === "phone") {
-      const numericValue = value.replace(/\D/g, "").slice(0, 10);
-      setFormData({ ...formData, [name]: numericValue });
+      finalValue = value.replace(/\D/g, "").slice(0, 10);
     } else if (name === "micr_code") {
-      const numericValue = value.replace(/\D/g, "").slice(0, 9);
-      setFormData({ ...formData, [name]: numericValue });
+      finalValue = value.replace(/\D/g, "").slice(0, 9);
     } else if (name === "bic" || name === "swift_code") {
-      setFormData({ ...formData, [name]: value.toUpperCase() });
-    } else {
-      setFormData({ ...formData, [name]: value });
+      finalValue = value.toUpperCase();
     }
-    if (errors[name]) {
-      const newErrors = { ...errors };
-      delete newErrors[name];
-      setErrors(newErrors);
+
+    // 2. Set the form data
+    setFormData({ ...formData, [name]: finalValue });
+
+    // 3. --- RUN-TIME VALIDATION LOGIC ---
+    let fieldError = "";
+    const swiftBicRegex = /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
+    const micrRegex = /^\d{9}$/;
+
+    if (name === "bic") {
+      if (!finalValue.trim()) {
+        fieldError = "BIC is required";
+      } else if (finalValue.length !== 8 && finalValue.length !== 11) {
+        fieldError = "BIC must be exactly 8 or 11 characters long";
+      } else if (!swiftBicRegex.test(finalValue)) {
+        fieldError = "Invalid BIC format (e.g., BOFAUS3N)";
+      }
     }
+
+    if (name === "swift_code" && finalValue) {
+      if (finalValue.length !== 8 && finalValue.length !== 11) {
+        fieldError = "SWIFT Code must be exactly 8 or 11 characters";
+      } else if (!swiftBicRegex.test(finalValue)) {
+        fieldError = "Invalid SWIFT format (e.g., CHASUS33XXX)";
+      }
+    }
+
+    if (name === "micr_code" && finalValue) {
+      if (!micrRegex.test(finalValue)) {
+        fieldError = "MICR Code must be exactly 9 numeric digits";
+      }
+    }
+
+    // 4. Update the Errors state instantly
+    setErrors((prev: any) => {
+      const newErrors = { ...prev };
+      if (fieldError) {
+        newErrors[name] = fieldError;
+      } else {
+        delete newErrors[name];
+      }
+      return newErrors;
+    });
   };
+
+  // const validate = () => {
+  //   let tempErrors: any = {};
+  //   const swiftBicRegex = /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
+  //   const micrRegex = /^\d{9}$/;
+
+  //   if (!formData.name?.trim()) tempErrors.name = "Bank Name is required";
+
+  //   if (!formData.bic?.trim()) {
+  //     tempErrors.bic = "BIC is required";
+  //   } else if (!swiftBicRegex.test(formData.bic)) {
+  //     tempErrors.bic =
+  //       "Invalid BIC format (8 or 11 chars, starts with 6 letters)";
+  //   }
+
+  //   if (formData.swift_code && !swiftBicRegex.test(formData.swift_code)) {
+  //     tempErrors.swift_code = "Invalid SWIFT Code format";
+  //   }
+
+  //   if (formData.micr_code && !micrRegex.test(formData.micr_code)) {
+  //     tempErrors.micr_code = "MICR Code must be exactly 9 digits";
+  //   }
+
+  //   if (formData.phone && formData.phone.length !== 10) {
+  //     tempErrors.phone = "Phone number must be exactly 10 digits";
+  //   }
+  //   const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  //   if (formData.email && !emailPattern.test(formData.email)) {
+  //     tempErrors.email = "Invalid email format";
+  //   }
+  //   setErrors(tempErrors);
+  //   return Object.keys(tempErrors).length === 0;
+  // };
 
   const validate = () => {
     let tempErrors: any = {};
-    const swiftBicRegex = /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
+
+    // Standard SWIFT/BIC format: 8 or 11 characters.
+    // First 4: letters (bank code), Next 2: letters (country code),
+    // Next 2: letters/digits (location), Optional last 3: letters/digits (branch)
+    const swiftBicRegex = /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
+
+    // Standard MICR format: Exactly 9 digits
     const micrRegex = /^\d{9}$/;
 
     if (!formData.name?.trim()) tempErrors.name = "Bank Name is required";
 
+    // --- BIC Validation ---
     if (!formData.bic?.trim()) {
       tempErrors.bic = "BIC is required";
+    } else if (formData.bic.length !== 8 && formData.bic.length !== 11) {
+      tempErrors.bic = "BIC must be exactly 8 or 11 characters long";
     } else if (!swiftBicRegex.test(formData.bic)) {
-      tempErrors.bic = "Invalid BIC format (8 or 11 chars, starts with 6 letters)";
+      tempErrors.bic = "Invalid BIC format (e.g., BOFAUS3N or BOFAUS3NXXX)";
     }
 
-    if (formData.swift_code && !swiftBicRegex.test(formData.swift_code)) {
-      tempErrors.swift_code = "Invalid SWIFT Code format";
+    // --- SWIFT Validation (Optional, but strict if provided) ---
+    if (formData.swift_code) {
+      if (
+        formData.swift_code.length !== 8 &&
+        formData.swift_code.length !== 11
+      ) {
+        tempErrors.swift_code = "SWIFT Code must be exactly 8 or 11 characters";
+      } else if (!swiftBicRegex.test(formData.swift_code)) {
+        tempErrors.swift_code =
+          "Invalid SWIFT format (e.g., CHASUS33 or CHASUS33XXX)";
+      }
     }
 
+    // --- MICR Validation (Optional, but strict if provided) ---
     if (formData.micr_code && !micrRegex.test(formData.micr_code)) {
-      tempErrors.micr_code = "MICR Code must be exactly 9 digits";
+      tempErrors.micr_code = "MICR Code must be exactly 9 numeric digits";
     }
 
     if (formData.phone && formData.phone.length !== 10) {
@@ -254,13 +363,12 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="name"
-                      className={`form-control ${
-                        isSubmitted && errors.name
+                      className={`form-control ${isSubmitted && errors.name
                           ? "is-invalid"
                           : formData.name
                             ? "is-valid"
                             : ""
-                      }`}
+                        }`}
                       value={formData.name}
                       onChange={handleInputChange}
                     />
@@ -277,13 +385,13 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="bic"
-                      className={`form-control ${
-                        isSubmitted && errors.bic
+                      className={`form-control ${isSubmitted && errors.bic
                           ? "is-invalid"
                           : formData.bic
                             ? "is-valid"
                             : ""
-                      }`}
+                        }`}
+                      maxLength={11} // Maximum allowed for BIC
                       value={formData.bic}
                       onChange={handleInputChange}
                     />
@@ -298,14 +406,16 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="swift_code"
-                      className={`form-control ${
-                        isSubmitted && errors.swift_code ? "is-invalid" : ""
-                      }`}
+                      maxLength={11} // Maximum allowed for SWIFT
+                      className={`form-control ${isSubmitted && errors.swift_code ? "is-invalid" : ""
+                        }`}
                       value={formData.swift_code}
                       onChange={handleInputChange}
                     />
                     {isSubmitted && errors.swift_code && (
-                      <div className="invalid-feedback fs-11">{errors.swift_code}</div>
+                      <div className="invalid-feedback fs-11">
+                        {errors.swift_code}
+                      </div>
                     )}
                   </div>
                   <div className="col-md-4">
@@ -315,14 +425,16 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="micr_code"
-                      className={`form-control ${
-                        isSubmitted && errors.micr_code ? "is-invalid" : ""
-                      }`}
+                      maxLength={9} // Strict 9 digits for MICR
+                      className={`form-control ${isSubmitted && errors.micr_code ? "is-invalid" : ""
+                        }`}
                       value={formData.micr_code}
                       onChange={handleInputChange}
                     />
                     {isSubmitted && errors.micr_code && (
-                      <div className="invalid-feedback fs-11">{errors.micr_code}</div>
+                      <div className="invalid-feedback fs-11">
+                        {errors.micr_code}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -457,9 +569,8 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                         type="text"
                         name="phone"
                         maxLength={10}
-                        className={`form-control ${
-                          isSubmitted && errors.phone ? "is-invalid" : ""
-                        }`}
+                        className={`form-control ${isSubmitted && errors.phone ? "is-invalid" : ""
+                          }`}
                         value={formData.phone}
                         onChange={handleInputChange}
                         placeholder="10-digit mobile"
@@ -482,9 +593,8 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                       <input
                         type="email"
                         name="email"
-                        className={`form-control ${
-                          isSubmitted && errors.email ? "is-invalid" : ""
-                        }`}
+                        className={`form-control ${isSubmitted && errors.email ? "is-invalid" : ""
+                          }`}
                         value={formData.email}
                         onChange={handleInputChange}
                         placeholder="e.g. accounts@bank.com"

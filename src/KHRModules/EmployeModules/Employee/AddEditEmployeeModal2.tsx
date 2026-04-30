@@ -123,7 +123,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   });
 
   // ? Refs to handle stale closures in global event listeners
-  const latestAttemptClose = useRef<() => void>(() => { });
+  const latestAttemptClose = useRef<() => void>(() => {});
   const latestIsDirty = useRef<boolean>(false);
 
   useEffect(() => {
@@ -292,12 +292,16 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
               for (let i = 0; i < byteString.length; i++) {
                 ia[i] = byteString.charCodeAt(i);
               }
-              const blob = new Blob([ab], { type: doc.fileType || "application/pdf" });
-              const file = new File([blob], doc.fileName || "document", { type: doc.fileType || "application/pdf" });
+              const blob = new Blob([ab], {
+                type: doc.fileType || "application/pdf",
+              });
+              const file = new File([blob], doc.fileName || "document", {
+                type: doc.fileType || "application/pdf",
+              });
               return {
                 ...doc,
                 file: file,
-                previewUrl: doc.previewUrl || URL.createObjectURL(file)
+                previewUrl: doc.previewUrl || URL.createObjectURL(file),
               };
             } catch (e) {
               console.error("Failed to restore file from base64", e);
@@ -313,9 +317,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
 
       setLoadedDraftId(draftData.id);
       setIsDraftLoaded(true);
-      toast.info(
-        "Draft loaded successfully.",
-      );
+      toast.info("Draft loaded successfully.");
     } else if (!data) {
       setIsDraftLoaded(false);
       setLoadedDraftId(null);
@@ -387,14 +389,18 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
           }
           return {
             category: doc.category,
-            fileName: doc.fileName || (doc.file && doc.file.name) || "Untitled Document",
-            fileType: doc.fileType || (doc.file && doc.file.type) || "application/pdf",
+            fileName:
+              doc.fileName ||
+              (doc.file && doc.file.name) ||
+              "Untitled Document",
+            fileType:
+              doc.fileType || (doc.file && doc.file.type) || "application/pdf",
             base64: doc.base64 || null,
             previewUrl: doc.previewUrl || null,
             isExisting: doc.isExisting || false,
             id: doc.id || null,
           };
-        })
+        }),
       );
       const finalExperienceDocs = safeExperienceDocs.filter(Boolean);
 
@@ -447,13 +453,16 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       executeClose();
     } catch (error: any) {
       console.error("CRITICAL ERROR saving draft:", error);
-      if (error.name === "QuotaExceededError" || (error.message && error.message.toLowerCase().includes("quota"))) {
+      if (
+        error.name === "QuotaExceededError" ||
+        (error.message && error.message.toLowerCase().includes("quota"))
+      ) {
         toast.error(
-          "Failed to save draft. Attachments are too large for storage. Please remove some attachments and try again."
+          "Failed to save draft. Attachments are too large for storage. Please remove some attachments and try again.",
         );
       } else {
         toast.error(
-          "Failed to save draft. Form contains invalid or corrupted data."
+          "Failed to save draft. Form contains invalid or corrupted data.",
         );
       }
     }
@@ -967,17 +976,22 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       tempErrors.employee_password = "Login Password required.";
     } else {
       if (password.length < 8) {
-        tempErrors.employee_password = "Password must be at least 8 characters.";
+        tempErrors.employee_password =
+          "Password must be at least 8 characters.";
       } else if (password.length > 30) {
         tempErrors.employee_password = "Password cannot exceed 30 characters.";
       } else if (!/[A-Z]/.test(password)) {
-        tempErrors.employee_password = "Password must contain at least one uppercase letter.";
+        tempErrors.employee_password =
+          "Password must contain at least one uppercase letter.";
       } else if (!/[a-z]/.test(password)) {
-        tempErrors.employee_password = "Password must contain at least one lowercase letter.";
+        tempErrors.employee_password =
+          "Password must contain at least one lowercase letter.";
       } else if (!/[0-9]/.test(password)) {
-        tempErrors.employee_password = "Password must contain at least one number.";
+        tempErrors.employee_password =
+          "Password must contain at least one number.";
       } else if (!/[!@#$%^&*(),.?":{}|<>\-_+=\[\]\\/'`]/.test(password)) {
-        tempErrors.employee_password = "Password must contain at least one special character.";
+        tempErrors.employee_password =
+          "Password must contain at least one special character.";
       }
     }
 
@@ -2295,25 +2309,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {/* 1. Show EYE ICON if the value is a URL string from the backend */}
                                         {typeof formData.driving_license ===
                                           "string" && (
-                                            <a
-                                              href={formData.driving_license}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              className="btn btn-icon btn-sm btn-ghost-info ms-1"
-                                              title="View Current License"
-                                            >
-                                              <i className="ti ti-eye fs-18"></i>
-                                            </a>
-                                          )}
+                                          <a
+                                            href={formData.driving_license}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                            title="View Current License"
+                                          >
+                                            <i className="ti ti-eye fs-18"></i>
+                                          </a>
+                                        )}
 
                                         {/* 2. Show CHECKMARK if a new File object has been selected */}
                                         {formData.driving_license instanceof
                                           File && (
-                                            <i
-                                              className="ti ti-circle-check-filled text-success fs-20 ms-1"
-                                              title="New file selected"
-                                            ></i>
-                                          )}
+                                          <i
+                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                            title="New file selected"
+                                          ></i>
+                                        )}
                                       </div>
                                     )}
                                   </div>
@@ -2355,13 +2369,48 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       { value: "widower", label: "Widower" },
                                       { value: "divorced", label: "Divorced" },
                                     ]}
+                                    // defaultValue={{
+                                    //   value: formData.marital,
+                                    //   label: formData.marital
+                                    //     ? formData.marital
+                                    //       .charAt(0)
+                                    //       .toUpperCase() +
+                                    //     formData.marital.slice(1)
+                                    //     : "Select",
+                                    // }}
                                     defaultValue={{
                                       value: formData.marital,
+                                      // Find the matching option to get the correct label, fallback to capitalization or "Select"
                                       label: formData.marital
-                                        ? formData.marital
-                                          .charAt(0)
-                                          .toUpperCase() +
-                                        formData.marital.slice(1)
+                                        ? [
+                                            {
+                                              value: "single",
+                                              label: "Single",
+                                            },
+                                            {
+                                              value: "married",
+                                              label: "Married",
+                                            },
+                                            {
+                                              value: "cohabitant",
+                                              label: "Legal Cohabitant",
+                                            },
+                                            {
+                                              value: "widower",
+                                              label: "Widower",
+                                            },
+                                            {
+                                              value: "divorced",
+                                              label: "Divorced",
+                                            },
+                                          ].find(
+                                            (opt) =>
+                                              opt.value === formData.marital,
+                                          )?.label ||
+                                          formData.marital
+                                            .charAt(0)
+                                            .toUpperCase() +
+                                            formData.marital.slice(1)
                                         : "Select",
                                     }}
                                     onChange={(opt) => {
@@ -2495,9 +2544,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       defaultValue={
                                         formData.blood_group
                                           ? {
-                                            value: formData.blood_group,
-                                            label: formData.blood_group,
-                                          }
+                                              value: formData.blood_group,
+                                              label: formData.blood_group,
+                                            }
                                           : undefined
                                       }
                                       onChange={(opt) => {
@@ -2566,10 +2615,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     defaultValue={
                                       formData.category
                                         ? {
-                                          value: formData.category,
-                                          label:
-                                            formData.category.toUpperCase(),
-                                        }
+                                            value: formData.category,
+                                            label:
+                                              formData.category.toUpperCase(),
+                                          }
                                         : undefined
                                     }
                                     onChange={(opt) =>
@@ -2665,15 +2714,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         )}
                                         {typeof formData.cv_file ===
                                           "string" && (
-                                            <a
-                                              href={formData.cv_file}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              className="btn btn-icon btn-sm btn-ghost-info ms-2"
-                                            >
-                                              <i className="ti ti-eye fs-18"></i>
-                                            </a>
-                                          )}
+                                          <a
+                                            href={formData.cv_file}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn btn-icon btn-sm btn-ghost-info ms-2"
+                                          >
+                                            <i className="ti ti-eye fs-18"></i>
+                                          </a>
+                                        )}
                                       </div>
                                     )}
                                   </div>
@@ -3199,7 +3248,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Department{" "}
                                     <span className="text-danger">*</span>
                                   </label>
-                                  <div className={isSubmitted && errors.department_id ? "border border-danger rounded" : ""}>
+                                  <div
+                                    className={
+                                      isSubmitted && errors.department_id
+                                        ? "border border-danger rounded"
+                                        : ""
+                                    }
+                                  >
                                     <CommonSelect
                                       disabled={isViewOnly}
                                       key={`dept-list-${departments.length}`}
@@ -3217,7 +3272,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                           job_id: "",
                                         });
                                         if (errors.department_id) {
-                                          setErrors((prev: any) => ({ ...prev, department_id: "" }));
+                                          setErrors((prev: any) => ({
+                                            ...prev,
+                                            department_id: "",
+                                          }));
                                         }
                                         if (deptId)
                                           loadFilteredDesignations(deptId);
@@ -3236,7 +3294,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     Designation{" "}
                                     <span className="text-danger">*</span>
                                   </label>
-                                  <div className={isSubmitted && errors.job_id ? "border border-danger rounded" : ""}>
+                                  <div
+                                    className={
+                                      isSubmitted && errors.job_id
+                                        ? "border border-danger rounded"
+                                        : ""
+                                    }
+                                  >
                                     <CommonSelect
                                       disabled={
                                         isViewOnly || !formData.department_id
@@ -3257,7 +3321,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                           job_id: opt?.value || "",
                                         });
                                         if (errors.job_id) {
-                                          setErrors((prev: any) => ({ ...prev, job_id: "" }));
+                                          setErrors((prev: any) => ({
+                                            ...prev,
+                                            job_id: "",
+                                          }));
                                         }
                                       }}
                                     />
@@ -3477,10 +3544,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     defaultValue={
                                       formData.status
                                         ? {
-                                          value: formData.status,
-                                          label:
-                                            formData.status.toUpperCase(),
-                                        }
+                                            value: formData.status,
+                                            label:
+                                              formData.status.toUpperCase(),
+                                          }
                                         : undefined
                                     }
                                     onChange={(opt) =>
@@ -3746,25 +3813,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {/* 1. Show EYE ICON if the value is an existing URL string */}
                                         {typeof formData.upload_passbook ===
                                           "string" && (
-                                            <a
-                                              href={formData.upload_passbook}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              className="btn btn-icon btn-sm btn-ghost-info ms-1"
-                                              title="View Current Passbook"
-                                            >
-                                              <i className="ti ti-eye fs-18"></i>
-                                            </a>
-                                          )}
+                                          <a
+                                            href={formData.upload_passbook}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                            title="View Current Passbook"
+                                          >
+                                            <i className="ti ti-eye fs-18"></i>
+                                          </a>
+                                        )}
 
                                         {/* 2. Show CHECKMARK if a new File object has been selected */}
                                         {formData.upload_passbook instanceof
                                           File && (
-                                            <i
-                                              className="ti ti-circle-check-filled text-success fs-20 ms-1"
-                                              title="New file selected"
-                                            ></i>
-                                          )}
+                                          <i
+                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                            title="New file selected"
+                                          ></i>
+                                        )}
                                       </div>
                                     )}
                                     <div className="text-info fs-11 lh-sm">
@@ -3830,15 +3897,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       defaultValue={
                                         formData.type_of_sepration
                                           ? {
-                                            value: formData.type_of_sepration,
-                                            label:
-                                              formData.type_of_sepration
-                                                .charAt(0)
-                                                .toUpperCase() +
-                                              formData.type_of_sepration.slice(
-                                                1,
-                                              ),
-                                          }
+                                              value: formData.type_of_sepration,
+                                              label:
+                                                formData.type_of_sepration
+                                                  .charAt(0)
+                                                  .toUpperCase() +
+                                                formData.type_of_sepration.slice(
+                                                  1,
+                                                ),
+                                            }
                                           : undefined
                                       }
                                       onChange={(opt) => {
@@ -4174,7 +4241,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               key={`user-select-${index}-${line.group_id}-${(groupUserOptions[String(line.group_id)] || []).length}`}
                                               options={
                                                 groupUserOptions[
-                                                String(line.group_id)
+                                                  String(line.group_id)
                                                 ] || []
                                               }
                                               placeholder={
@@ -4184,7 +4251,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               }
                                               defaultValue={(
                                                 groupUserOptions[
-                                                String(line.group_id)
+                                                  String(line.group_id)
                                                 ] || []
                                               ).find(
                                                 (u) =>
