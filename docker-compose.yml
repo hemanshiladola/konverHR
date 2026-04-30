@@ -16,7 +16,7 @@ services:
 
   odooproduction-konverthr-com:
     image: odooproduction-konverthr-com
-    container_name: odooproduction-konverthr-com
+    container_name: odooproduction-konverthr-com-container
     env_file:
       - "/etc/node-env/odooproduction.konverthr.com/.env"
     build: .
