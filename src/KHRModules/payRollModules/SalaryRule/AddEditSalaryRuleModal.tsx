@@ -9,6 +9,7 @@ import {
   addSalaryRule,
   updateSalaryRule,
 } from "./SalaryRuleService";
+import { createPortal } from "react-dom";
 
 const AddEditSalaryRuleModal = ({ onSuccess, data, onClose }: any) => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -165,7 +166,7 @@ const AddEditSalaryRuleModal = ({ onSuccess, data, onClose }: any) => {
     }
   };
 
-  return (
+  return createPortal(
     <div className="modal fade" id="add_salary_rule" role="dialog">
       <div className="modal-dialog modal-dialog-centered modal-xl">
         <div className="modal-content">
@@ -488,7 +489,8 @@ const AddEditSalaryRuleModal = ({ onSuccess, data, onClose }: any) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
