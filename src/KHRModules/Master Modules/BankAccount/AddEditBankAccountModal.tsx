@@ -26,6 +26,7 @@ const AddEditBankAccountModal: React.FC<Props> = ({
     acc_number: "",
     bank_swift_code: "",
     bank_iafc_code: "",
+    micr_code: "",
     currency: "INR",
   };
 
@@ -108,6 +109,7 @@ const AddEditBankAccountModal: React.FC<Props> = ({
           data.bank_iafc_code && data.bank_iafc_code !== false
             ? data.bank_iafc_code
             : "",
+        micr_code: data.micr_code && data.micr_code !== false ? data.micr_code : "",
         currency: extractedCurrency,
       });
     } else {
@@ -145,6 +147,9 @@ const AddEditBankAccountModal: React.FC<Props> = ({
   const validate = () => {
     let tempErrors: any = {};
     const accNumRegex = /^\d+$/;
+    const swiftBicRegex = /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
+    const micrRegex = /^\d{9}$/;
+    const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
 
     if (!formData.bank_id) tempErrors.bank_id = "Bank is required";
 
@@ -156,6 +161,16 @@ const AddEditBankAccountModal: React.FC<Props> = ({
 
     if (!formData.bank_iafc_code) {
       tempErrors.bank_iafc_code = "IFSC Code is required";
+    } else if (!ifscRegex.test(formData.bank_iafc_code)) {
+      tempErrors.bank_iafc_code = "Invalid IFSC Code (e.g., SBIN0001234)";
+    }
+
+    if (formData.bank_swift_code && !swiftBicRegex.test(formData.bank_swift_code)) {
+      tempErrors.bank_swift_code = "Invalid SWIFT/BIC Code format";
+    }
+
+    if (formData.micr_code && !micrRegex.test(formData.micr_code)) {
+      tempErrors.micr_code = "MICR Code must be exactly 9 digits";
     }
 
     setErrors(tempErrors);
@@ -289,16 +304,25 @@ const AddEditBankAccountModal: React.FC<Props> = ({
                     </div>
 
                     <div className="mb-3">
-                      <label className="form-label fs-13 fw-bold text-muted">
-                        SWIFT Code
+                      <label className="form-label fs-13 fw-bold">
+                        SWIFT / BIC Code
                       </label>
                       <input
                         type="text"
-                        className="form-control bg-light"
+                        className={getInputClass("bank_swift_code")}
                         value={formData.bank_swift_code}
-                        readOnly
-                        placeholder="Auto-populated"
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            bank_swift_code: e.target.value.toUpperCase(),
+                          });
+                          clearError("bank_swift_code");
+                        }}
+                        placeholder="e.g. SBININBBAXX"
                       />
+                      <div className="invalid-feedback">
+                        {errors.bank_swift_code}
+                      </div>
                     </div>
                   </div>
 
@@ -342,6 +366,29 @@ const AddEditBankAccountModal: React.FC<Props> = ({
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
                       </select>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label fs-13 fw-bold">
+                        MICR Code
+                      </label>
+                      <input
+                        type="text"
+                        className={getInputClass("micr_code")}
+                        value={formData.micr_code}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            micr_code: e.target.value.replace(/\D/g, ""), // Digits only
+                          });
+                          clearError("micr_code");
+                        }}
+                        placeholder="9-digit MICR code"
+                        maxLength={9}
+                      />
+                      <div className="invalid-feedback">
+                        {errors.micr_code}
+                      </div>
                     </div>
                   </div>
                 </div>

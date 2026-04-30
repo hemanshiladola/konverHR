@@ -292,7 +292,7 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                         Any of In or Out Entry not done then absent
                       </option>
                       <option value="in_abs">
-                        In Entry not done but Out done then abset
+                        In Entry not done but Out done then absent
                       </option>
                       <option value="out_abs">
                         Out Entry not done but in done then absent

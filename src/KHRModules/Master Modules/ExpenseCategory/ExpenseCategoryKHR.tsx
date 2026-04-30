@@ -48,15 +48,39 @@ const ExpenseCategoryKHR = () => {
   }, []);
 
   // --- Delete Handler ---
+  // const handleDelete = async (id: string | number) => {
+  //   if (window.confirm("Are you sure you want to delete this category?")) {
+  //     try {
+  //       await deleteExpenseCategory(id);
+  //       toast.success("Deleted successfully");
+  //       fetchData();
+  //     } catch (error) {
+  //       console.error("Error deleting category:", error);
+  //       toast.error("Failed to delete category.");
+  //     }
+  //   }
+  // };
+
   const handleDelete = async (id: string | number) => {
-    if (window.confirm("Are you sure you want to delete this category?")) {
+    if (window.confirm("Are you sure you want to delete this expense?")) {
       try {
-        await deleteExpenseCategory(id);
-        toast.success("Deleted successfully");
+        const response: any = await deleteExpenseCategory(id);
+
+        // Use the message from the API if available, otherwise fallback to a generic message
+        if (response.data && response.data.message) {
+          toast.success(response.data.message);
+        } else {
+          toast.success("Expense deleted successfully!");
+        }
+
         fetchData();
-      } catch (error) {
-        console.error("Error deleting category:", error);
-        toast.error("Failed to delete category.");
+      } catch (error: any) {
+        console.error("Error deleting expense:", error);
+
+        // Use the error message from the API if available
+        const errorMessage =
+          error.response?.data?.message || "Failed to delete expense";
+        toast.error(errorMessage);
       }
     }
   };
