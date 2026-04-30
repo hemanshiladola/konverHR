@@ -278,6 +278,13 @@ export default defineConfig({
         port: 3002,
         open: true,
         host: true,
+        strictPort: true,
+        hmr: {
+            overlay: false,
+        },
+        watch: {
+            usePolling: true,
+        },
         allowedHosts: [
             "odoosaas.konverthr.com",
             "odooproduction.konverthr.com",

@@ -25,6 +25,8 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
 
   const isCurrentUser = loggedInUserId === employeeUserId;
   const isAdmin = userRole === "REGISTER_ADMIN";
+  const isViewerAdmin = userRole === "REGISTER_ADMIN"; // Can they edit/delete?
+  const isCardAdmin = employee.is_client_employee_admin === true; // What badge should the card show?
 
   const designation = Array.isArray(employee.job_id)
     ? employee.job_id[1]
@@ -34,42 +36,22 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
     : employee.department_id || "General";
 
   useEffect(() => {
-    let rawSource = employee.image_url || employee.image_url;
+    const rawImg = employee.image_url || employee.image_url;
 
-    if (rawSource && typeof rawSource === "string" && rawSource !== "false") {
-      let trimmed = rawSource.trim();
+    const getCardImg = () => {
+      if (!rawImg || rawImg === "false") return null;
+      let trimmed = rawImg.trim();
+      if (trimmed.startsWith("/"))
+        return `https://odooapi.konverthr.com${trimmed}`;
+      if (trimmed.startsWith("http"))
+        return trimmed.replace("http://", "https://");
+      if (trimmed.length > 50)
+        return `data:image/png;base64,${trimmed.replace(/\s/g, "")}`;
+      return null;
+    };
 
-      // 1. Fix the double slash seen in your logs (com//web -> com/web)
-      trimmed = trimmed.replace("konverthr.com//", "konverthr.com/");
-
-      // 2. Force HTTPS to prevent 'Mixed Content' blocking
-      if (trimmed.startsWith("http://")) {
-        trimmed = trimmed.replace("http://", "https://");
-      }
-
-      // 3. Handle relative paths if the domain is missing
-      if (trimmed.startsWith("/")) {
-        trimmed = `https://odooapi.konverthr.com${trimmed}`;
-      }
-
-      if (trimmed.startsWith("https://")) {
-        const separator = trimmed.includes("?") ? "&" : "?";
-        // 4. Set the clean URL with a fresh timestamp
-        setImgUrl(`${trimmed}${separator}t=${new Date().getTime()}`);
-      } else if (trimmed.length > 50) {
-        // Handle Base64 strings
-        const cleanBase64 = trimmed.replace(/\s/g, "");
-        const prefix = cleanBase64.startsWith("data:image")
-          ? ""
-          : "data:image/png;base64,";
-        setImgUrl(`${prefix}${cleanBase64}`);
-      } else {
-        setImgUrl(null);
-      }
-    } else {
-      setImgUrl(null);
-    }
-  }, [employee.image_1920, employee.image_url]);
+    setImgUrl(getCardImg());
+  }, [employee.image_url, employee.image_data, employee.image_1920]);
 
   return (
     <div className="col-xxl-2 col-xl-3 col-lg-4 col-md-6 mb-5">
@@ -92,24 +74,25 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
             style={{ width: "90px", height: "90px" }}
           >
             {imgUrl ? (
-              <img
-                // CRITICAL: Forces the browser to discard the old render and start fresh
-                key={imgUrl}
-                src={imgUrl}
-                className="rounded-circle w-100 h-100 object-fit-cover"
-                alt={employee.name}
-                // Mimics a direct browser visit to bypass 'strict-origin' security
-                referrerPolicy="no-referrer"
-                // Help with cross-domain loading
-                crossOrigin="anonymous"
-                onError={(e) => {
-                  console.error("Image 200 OK but render failed:", imgUrl);
-                  setImgUrl(null); // Fallback to initials
-                }}
-              />
+              <>
+                <img
+                  key={imgUrl}
+                  src={imgUrl}
+                  className="rounded-circle w-100 h-100 object-fit-cover"
+                  alt={employee.name}
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                    e.currentTarget.nextElementSibling?.classList.remove("d-none");
+                    e.currentTarget.nextElementSibling?.classList.add("d-flex");
+                  }}
+                />
+                <div className="rounded-circle bg-primary text-white w-100 h-100 justify-content-center align-items-center fw-bold fs-3 d-none">
+                  {employee.name?.charAt(0).toUpperCase() || "?"}
+                </div>
+              </>
             ) : (
               <div className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold w-100 h-100 fs-3">
-                {employee.name?.charAt(0).toUpperCase()}
+                {employee.name?.charAt(0).toUpperCase() || "?"}
               </div>
             )}
           </div>
@@ -195,7 +178,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = ({
                 letterSpacing: "0.3px",
               }}
             >
-              {isAdmin ? "Admin" : "Employee"}
+              {isCardAdmin ? "Admin" : "Employee"}
             </span>
           </div>
 

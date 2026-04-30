@@ -151,6 +151,11 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
     if (name === "phone") {
       const numericValue = value.replace(/\D/g, "").slice(0, 10);
       setFormData({ ...formData, [name]: numericValue });
+    } else if (name === "micr_code") {
+      const numericValue = value.replace(/\D/g, "").slice(0, 9);
+      setFormData({ ...formData, [name]: numericValue });
+    } else if (name === "bic" || name === "swift_code") {
+      setFormData({ ...formData, [name]: value.toUpperCase() });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -163,8 +168,25 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
 
   const validate = () => {
     let tempErrors: any = {};
+    const swiftBicRegex = /^[A-Z]{6}[A-Z0-9]{2}([A-Z0-9]{3})?$/;
+    const micrRegex = /^\d{9}$/;
+
     if (!formData.name?.trim()) tempErrors.name = "Bank Name is required";
-    if (!formData.bic?.trim()) tempErrors.bic = "BIC is required";
+
+    if (!formData.bic?.trim()) {
+      tempErrors.bic = "BIC is required";
+    } else if (!swiftBicRegex.test(formData.bic)) {
+      tempErrors.bic = "Invalid BIC format (8 or 11 chars, starts with 6 letters)";
+    }
+
+    if (formData.swift_code && !swiftBicRegex.test(formData.swift_code)) {
+      tempErrors.swift_code = "Invalid SWIFT Code format";
+    }
+
+    if (formData.micr_code && !micrRegex.test(formData.micr_code)) {
+      tempErrors.micr_code = "MICR Code must be exactly 9 digits";
+    }
+
     if (formData.phone && formData.phone.length !== 10) {
       tempErrors.phone = "Phone number must be exactly 10 digits";
     }
@@ -276,10 +298,15 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="swift_code"
-                      className="form-control"
+                      className={`form-control ${
+                        isSubmitted && errors.swift_code ? "is-invalid" : ""
+                      }`}
                       value={formData.swift_code}
                       onChange={handleInputChange}
                     />
+                    {isSubmitted && errors.swift_code && (
+                      <div className="invalid-feedback fs-11">{errors.swift_code}</div>
+                    )}
                   </div>
                   <div className="col-md-4">
                     <label className="form-label fs-13 fw-bold">
@@ -288,10 +315,15 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="micr_code"
-                      className="form-control"
+                      className={`form-control ${
+                        isSubmitted && errors.micr_code ? "is-invalid" : ""
+                      }`}
                       value={formData.micr_code}
                       onChange={handleInputChange}
                     />
+                    {isSubmitted && errors.micr_code && (
+                      <div className="invalid-feedback fs-11">{errors.micr_code}</div>
+                    )}
                   </div>
                 </div>
               </div>

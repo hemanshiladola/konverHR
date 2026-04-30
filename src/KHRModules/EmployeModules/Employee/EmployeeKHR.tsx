@@ -250,9 +250,12 @@ const EmployeeKHR = () => {
         const getListImg = () => {
           if (!rawImg || rawImg === "false") return null;
           let trimmed = rawImg.trim();
-          if (trimmed.startsWith("/")) return `https://odooapi.konverthr.com${trimmed}`;
-          if (trimmed.startsWith("http")) return trimmed.replace("http://", "https://");
-          if (trimmed.length > 50) return `data:image/png;base64,${trimmed.replace(/\s/g, "")}`;
+          if (trimmed.startsWith("/"))
+            return `https://odooapi.konverthr.com${trimmed}`;
+          if (trimmed.startsWith("http"))
+            return trimmed.replace("http://", "https://");
+          if (trimmed.length > 50)
+            return `data:image/png;base64,${trimmed.replace(/\s/g, "")}`;
           return null;
         };
         const finalImg = getListImg();
@@ -268,8 +271,12 @@ const EmployeeKHR = () => {
                     alt={text}
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
-                      e.currentTarget.nextElementSibling?.classList.remove("d-none");
-                      e.currentTarget.nextElementSibling?.classList.add("d-flex");
+                      e.currentTarget.nextElementSibling?.classList.remove(
+                        "d-none",
+                      );
+                      e.currentTarget.nextElementSibling?.classList.add(
+                        "d-flex",
+                      );
                     }}
                   />
                   <div className="rounded-circle bg-primary text-white w-100 h-100 justify-content-center align-items-center fw-bold d-none">
