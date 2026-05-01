@@ -36,19 +36,12 @@ const initialContractState = {
   wage_type: "monthly",
   schedule_pay: "monthly",
   wage: 0,
-  conveyance_allowances: 0,
-  skill_allowances: 0,
-  food_allowances: 0,
-  washing_allowances: 0,
-  special_allowances: 0,
-  medial_allowances: 0,
-  uniform_allowances: 0,
-  child_education_allowances: 0,
-  other_allowances: 0,
-  variable_pay: 0,
-  gratuity: 0,
-  professional_tax: 0,
-  lta: 0,
+  components: [
+    { name: "BASIC", amount: 0, addition: true },
+    { name: "HRA", amount: 0, addition: true },
+    { name: "Skill Allowance", amount: 0, addition: true },
+    { name: "PT", amount: 0, deduction: true },
+  ],
 };
 
 const initialLeaveState = {
@@ -113,19 +106,12 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     wage_type: "monthly",
     schedule_pay: "monthly",
     wage: 0,
-    conveyance_allowances: 0,
-    skill_allowances: 0,
-    food_allowances: 0,
-    washing_allowances: 0,
-    special_allowances: 0,
-    medial_allowances: 0,
-    uniform_allowances: 0,
-    child_education_allowances: 0,
-    other_allowances: 0,
-    variable_pay: 0,
-    gratuity: 0,
-    professional_tax: 0,
-    lta: 0,
+    components: [
+      { name: "BASIC", amount: 0, addition: true },
+      { name: "HRA", amount: 0, addition: true },
+      { name: "Skill Allowance", amount: 0, addition: true },
+      { name: "PT", amount: 0, deduction: true },
+    ],
   });
 
   const [leaveFormData, setLeaveFormData] = useState({
@@ -264,7 +250,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         department_id: getVal(data.department_id),
         contract_type_id: getVal(data.contract_type_id),
         structure_type_id: getVal(data.structure_type_id),
-        // Handle allowance naming difference if applicable
+        components: data.components && data.components.length > 0 ? data.components : initialContractState.components,
       });
 
       // 2. Map Nested Leave Allocations into the Table State
@@ -641,12 +627,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         ...contractData
       } = formData as any;
 
-      const finalPayload = {
+      const finalPayload: any = {
         ...contractData,
         employee_id: Number(formData.employee_id),
-        if(selectedLeaveConfig: any) {
-          finalPayload.leave_configuration_id = Number(selectedLeaveConfig);
-        },
+        components: (contractData.components || []).filter((c: any) => c.name && c.name.trim() !== ""),
         // leave_allocation_ids: leaveAllocations.map((l) => ({
         //   // 3. Conditional ID: Only include the key if l.id exists (for existing items)
         //   ...(l.id ? { id: l.id } : {}),
@@ -818,13 +802,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 value={
                                   formData.employee_id
                                     ? {
-                                        value: String(formData.employee_id),
-                                        label:
-                                          employees.find(
-                                            (e) =>
-                                              e.id === formData.employee_id,
-                                          )?.name || "",
-                                      }
+                                      value: String(formData.employee_id),
+                                      label:
+                                        employees.find(
+                                          (e) =>
+                                            e.id === formData.employee_id,
+                                        )?.name || "",
+                                    }
                                     : null
                                 }
                                 onChange={(opt) => {
@@ -975,18 +959,18 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.resource_calendar_id
                                   ? {
-                                      value: String(
-                                        formData.resource_calendar_id,
-                                      ),
-                                      label:
-                                        workingSchedules.find(
-                                          (s: any) =>
-                                            s.id ===
-                                            Number(
-                                              formData.resource_calendar_id,
-                                            ),
-                                        )?.name || "",
-                                    }
+                                    value: String(
+                                      formData.resource_calendar_id,
+                                    ),
+                                    label:
+                                      workingSchedules.find(
+                                        (s: any) =>
+                                          s.id ===
+                                          Number(
+                                            formData.resource_calendar_id,
+                                          ),
+                                      )?.name || "",
+                                  }
                                   : null
                               }
                               onChange={(opt) => {
@@ -1022,13 +1006,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.department_id
                                   ? {
-                                      value: String(formData.department_id),
-                                      label:
-                                        departments.find(
-                                          (d) =>
-                                            d.id === formData.department_id,
-                                        )?.name || "",
-                                    }
+                                    value: String(formData.department_id),
+                                    label:
+                                      departments.find(
+                                        (d) =>
+                                          d.id === formData.department_id,
+                                      )?.name || "",
+                                  }
                                   : null
                               }
                               onChange={(opt) =>
@@ -1052,12 +1036,12 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.wage_type
                                   ? {
-                                      value: formData.wage_type,
-                                      label:
-                                        formData.wage_type === "monthly"
-                                          ? "Fixed Wage"
-                                          : "Hourly Wage",
-                                    }
+                                    value: formData.wage_type,
+                                    label:
+                                      formData.wage_type === "monthly"
+                                        ? "Fixed Wage"
+                                        : "Hourly Wage",
+                                  }
                                   : null
                               }
                               onChange={(opt) =>
@@ -1109,132 +1093,156 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                     {activeTab === "salary" && (
                       <div className="animate__animated animate__fadeIn">
                         <div className="row g-4 mx-0">
-                          <div className="col-md-7 border-end pe-4">
-                            <h6 className="fw-bold text-success mb-3 border-bottom pb-2 fs-14">
-                              <i className="ti ti-circle-plus me-2"></i>{" "}
-                              Allowances & Benefits
-                            </h6>
+                          {/* Left Column: Allowances */}
+                          <div className="col-md-6 border-end pe-4">
+                            <div className="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                              <h6 className="fw-bold text-success mb-0 fs-14">
+                                <i className="ti ti-circle-plus me-2"></i>{" "}
+                                Allowances & Benefits
+                              </h6>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-success-transparent"
+                                onClick={() => {
+                                  setFormData({
+                                    ...formData,
+                                    components: [
+                                      ...(formData.components || []),
+                                      { name: "", amount: 0, addition: true }
+                                    ]
+                                  });
+                                }}
+                              >
+                                <i className="ti ti-plus me-1"></i> Add
+                              </button>
+                            </div>
 
                             <div className="row g-2">
-                              {[
-                                {
-                                  label: "Conveyance",
-
-                                  key: "conveyance_allowances",
-                                },
-
-                                { label: "Skill", key: "skill_allowances" },
-
-                                { label: "Food", key: "food_allowances" },
-
-                                { label: "Washing", key: "washing_allowances" },
-
-                                { label: "Special", key: "special_allowances" },
-
-                                { label: "Medical", key: "medial_allowances" },
-
-                                { label: "Uniform", key: "uniform_allowances" },
-
-                                {
-                                  label: "Child Education",
-
-                                  key: "child_education_allowances",
-                                },
-
-                                {
-                                  label: "Other Allowances",
-
-                                  key: "other_allowances",
-                                },
-
-                                { label: "LTA", key: "lta" },
-
-                                { label: "Variable Pay", key: "variable_pay" },
-                              ].map((item) => (
-                                <div className="col-md-6" key={item.key}>
-                                  <label className="form-label fs-12 mb-1">
-                                    {item.label}
-                                  </label>
-
-                                  <div className="input-group input-group-sm">
-                                    <span className="input-group-text bg-light text-muted">
-                                      ₹
-                                    </span>
-
-                                    <input
-                                      type="number"
-                                      className="form-control"
-                                      value={(formData as any)[item.key]}
-                                      onChange={(e) =>
-                                        setFormData({
-                                          ...formData,
-
-                                          [item.key]: Number(e.target.value),
-                                        })
-                                      }
-                                    />
+                              {(formData.components || []).map((comp: any, index: number) => {
+                                if (!comp.addition) return null;
+                                return (
+                                  <div className="col-12" key={index}>
+                                    <div className="d-flex gap-2 mb-2">
+                                      <input
+                                        type="text"
+                                        className="form-control form-control-sm w-50"
+                                        placeholder="Allowance Name"
+                                        value={comp.name}
+                                        onChange={(e) => {
+                                          const newComps = [...(formData.components || [])];
+                                          newComps[index] = { ...newComps[index], name: e.target.value };
+                                          setFormData({ ...formData, components: newComps });
+                                        }}
+                                      />
+                                      <div className="input-group input-group-sm w-50">
+                                        <span className="input-group-text bg-light text-muted">₹</span>
+                                        <input
+                                          type="number"
+                                          className="form-control"
+                                          placeholder="0"
+                                          value={comp.amount}
+                                          onChange={(e) => {
+                                            const newComps = [...(formData.components || [])];
+                                            newComps[index] = { ...newComps[index], amount: Number(e.target.value) };
+                                            setFormData({ ...formData, components: newComps });
+                                          }}
+                                        />
+                                        <button
+                                          type="button"
+                                          className="btn btn-danger-transparent px-2 border-start-0"
+                                          style={{ border: "1px solid #dee2e6" }}
+                                          onClick={() => {
+                                            const newComps = [...(formData.components || [])];
+                                            newComps.splice(index, 1);
+                                            setFormData({ ...formData, components: newComps });
+                                          }}
+                                        >
+                                          <i className="ti ti-trash"></i>
+                                        </button>
+                                      </div>
+                                    </div>
                                   </div>
-                                </div>
-                              ))}
+                                );
+                              })}
+                              {(!formData.components || !formData.components.some((c: any) => c.addition)) && (
+                                <div className="text-center text-muted py-3 fs-13">No allowances added.</div>
+                              )}
                             </div>
                           </div>
 
-                          <div className="col-md-5 ps-4">
-                            <h6 className="fw-bold text-danger mb-3 border-bottom pb-2 fs-14">
-                              <i className="ti ti-circle-minus me-2"></i>{" "}
-                              Deductions & Statutory
-                            </h6>
+                          {/* Right Column: Deductions */}
+                          <div className="col-md-6 ps-4">
+                            <div className="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                              <h6 className="fw-bold text-danger mb-0 fs-14">
+                                <i className="ti ti-circle-minus me-2"></i>{" "}
+                                Deductions & Statutory
+                              </h6>
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-danger-transparent"
+                                onClick={() => {
+                                  setFormData({
+                                    ...formData,
+                                    components: [
+                                      ...(formData.components || []),
+                                      { name: "", amount: 0, deduction: true }
+                                    ]
+                                  });
+                                }}
+                              >
+                                <i className="ti ti-plus me-1"></i> Add
+                              </button>
+                            </div>
 
-                            <div className="row g-3">
-                              <div className="col-12">
-                                <label className="form-label fs-13">
-                                  Professional Tax (PT)
-                                </label>
-
-                                <div className="input-group input-group-sm">
-                                  <span className="input-group-text text-danger border-danger">
-                                    ₹
-                                  </span>
-
-                                  <input
-                                    type="number"
-                                    className="form-control border-danger"
-                                    value={formData.professional_tax}
-                                    onChange={(e) =>
-                                      setFormData({
-                                        ...formData,
-
-                                        professional_tax: Number(
-                                          e.target.value,
-                                        ),
-                                      })
-                                    }
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="col-12">
-                                <label className="form-label fs-13">
-                                  Gratuity Provision
-                                </label>
-
-                                <div className="input-group input-group-sm">
-                                  <span className="input-group-text">₹</span>
-
-                                  <input
-                                    type="number"
-                                    className="form-control"
-                                    value={formData.gratuity}
-                                    onChange={(e) =>
-                                      setFormData({
-                                        ...formData,
-
-                                        gratuity: Number(e.target.value),
-                                      })
-                                    }
-                                  />
-                                </div>
-                              </div>
+                            <div className="row g-2">
+                              {(formData.components || []).map((comp: any, index: number) => {
+                                if (!comp.deduction) return null;
+                                return (
+                                  <div className="col-12" key={index}>
+                                    <div className="d-flex gap-2 mb-2">
+                                      <input
+                                        type="text"
+                                        className="form-control form-control-sm border-danger w-50"
+                                        placeholder="Deduction Name"
+                                        value={comp.name}
+                                        onChange={(e) => {
+                                          const newComps = [...(formData.components || [])];
+                                          newComps[index] = { ...newComps[index], name: e.target.value };
+                                          setFormData({ ...formData, components: newComps });
+                                        }}
+                                      />
+                                      <div className="input-group input-group-sm w-50">
+                                        <span className="input-group-text text-danger border-danger">₹</span>
+                                        <input
+                                          type="number"
+                                          className="form-control border-danger"
+                                          placeholder="0"
+                                          value={comp.amount}
+                                          onChange={(e) => {
+                                            const newComps = [...(formData.components || [])];
+                                            newComps[index] = { ...newComps[index], amount: Number(e.target.value) };
+                                            setFormData({ ...formData, components: newComps });
+                                          }}
+                                        />
+                                        <button
+                                          type="button"
+                                          className="btn btn-danger-transparent px-2 border border-danger border-start-0"
+                                          onClick={() => {
+                                            const newComps = [...(formData.components || [])];
+                                            newComps.splice(index, 1);
+                                            setFormData({ ...formData, components: newComps });
+                                          }}
+                                        >
+                                          <i className="ti ti-trash"></i>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                              {(!formData.components || !formData.components.some((c: any) => c.deduction)) && (
+                                <div className="text-center text-muted py-3 fs-13">No deductions added.</div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1262,13 +1270,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     (c) => String(c.id) === selectedLeaveConfig,
                                   )
                                     ? {
-                                        value: selectedLeaveConfig,
-                                        label: leaveConfigs.find(
-                                          (c) =>
-                                            String(c.id) ===
-                                            selectedLeaveConfig,
-                                        )?.name,
-                                      }
+                                      value: selectedLeaveConfig,
+                                      label: leaveConfigs.find(
+                                        (c) =>
+                                          String(c.id) ===
+                                          selectedLeaveConfig,
+                                      )?.name,
+                                    }
                                     : null
                                 }
                                 onChange={(opt) =>

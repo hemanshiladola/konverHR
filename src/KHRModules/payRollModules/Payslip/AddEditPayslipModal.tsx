@@ -53,13 +53,13 @@ const AddEditPayslipModal: React.FC<Props> = ({
         ]);
         setDropdowns({
           employees: Array.isArray(e)
-            ? e.map((i: any) => ({ value: i.id, label: i.name }))
+            ? e.map((i: any) => ({ value: i.id, label: i.name, raw: i }))
             : [],
           contracts: Array.isArray(c)
             ? c.map((i: any) => ({
-                value: i.contract_id || i.id,
-                label: i.name,
-              }))
+              value: i.contract_id || i.id,
+              label: i.name,
+            }))
             : [],
         });
       } catch (error) {
@@ -78,6 +78,27 @@ const AddEditPayslipModal: React.FC<Props> = ({
       document.body.style.overflow = "";
     };
   }, []);
+
+  useEffect(() => {
+    const modalEl = modalRef.current;
+    if (modalEl) {
+      const handleHidden = () => {
+        setFormData(initialFormState);
+        setCurrentStep("create");
+        setCreatedSlipData(null);
+        setComputedData(null);
+        setErrors({});
+        setIsSubmitted(false);
+        setIsSubmitting(false);
+        onClose();
+      };
+
+      modalEl.addEventListener("hidden.bs.modal", handleHidden);
+      return () => {
+        modalEl.removeEventListener("hidden.bs.modal", handleHidden);
+      };
+    }
+  }, [onClose]);
 
   // const handleEmployeeChange = (opt: any) => {
   //   const employeeName = opt?.label || "";
@@ -101,9 +122,13 @@ const AddEditPayslipModal: React.FC<Props> = ({
   const handleEmployeeChange = (opt: any) => {
     const employeeName = opt?.label || "";
     const month = dayjs(formData.date_from).format("MMM YYYY");
+    const empContractId = opt?.raw?.contract_id;
+    const contractIdToSet = empContractId && empContractId !== false ? String(empContractId) : "";
+
     setFormData((prev: any) => ({
       ...prev,
       employee_id: opt?.value || "",
+      contract_id: contractIdToSet,
       name: opt ? `Salary Slip of ${employeeName} for ${month}` : "",
     }));
     // Clear errors when user selects an employee
@@ -274,7 +299,7 @@ const AddEditPayslipModal: React.FC<Props> = ({
                       disabled={currentStep !== "create"}
                       options={dropdowns.employees}
                       value={dropdowns.employees.find(
-                        (o: any) => o.value === formData.employee_id,
+                        (o: any) => String(o.value) === String(formData.employee_id),
                       )}
                       onChange={handleEmployeeChange}
                     />
@@ -288,10 +313,10 @@ const AddEditPayslipModal: React.FC<Props> = ({
                 <div className="col-md-6">
                   <label className="form-label fs-13 fw-bold">Contract</label>
                   <CommonSelect
-                    disabled={currentStep !== "create"}
+                    disabled={currentStep !== "create" || !!formData.employee_id}
                     options={dropdowns.contracts}
                     value={dropdowns.contracts.find(
-                      (o: any) => o.value === formData.contract_id,
+                      (o: any) => String(o.value) === String(formData.contract_id),
                     )}
                     onChange={(opt: any) =>
                       updateField("contract_id", opt?.value)

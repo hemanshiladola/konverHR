@@ -364,10 +364,10 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                       type="text"
                       name="name"
                       className={`form-control ${isSubmitted && errors.name
-                          ? "is-invalid"
-                          : formData.name
-                            ? "is-valid"
-                            : ""
+                        ? "is-invalid"
+                        : formData.name
+                          ? "is-valid"
+                          : ""
                         }`}
                       value={formData.name}
                       onChange={handleInputChange}
@@ -386,10 +386,10 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                       type="text"
                       name="bic"
                       className={`form-control ${isSubmitted && errors.bic
-                          ? "is-invalid"
-                          : formData.bic
-                            ? "is-valid"
-                            : ""
+                        ? "is-invalid"
+                        : formData.bic
+                          ? "is-valid"
+                          : ""
                         }`}
                       maxLength={11} // Maximum allowed for BIC
                       value={formData.bic}

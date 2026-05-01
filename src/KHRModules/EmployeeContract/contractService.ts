@@ -22,19 +22,7 @@ export interface Contract {
   wage_type: string;
   schedule_pay: string;
   wage: number;
-  conveyance_allowances: number;
-  skill_allowances: number;
-  food_allowances: number;
-  washing_allowances: number;
-  special_allowances: number;
-  medial_allowances: number;
-  uniform_allowances: number;
-  child_education_allowances: number;
-  other_allowances: number;
-  variable_pay: number;
-  gratuity: number;
-  professional_tax: number;
-  lta: number;
+  components?: { name: string; amount: number; addition?: boolean; deduction?: boolean }[];
   leave_allocations?: LeaveAllocationEntry[]; // Add this to the interface
 }
 

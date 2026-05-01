@@ -92,7 +92,7 @@ const rawSidebarData = [
               { label: "Designation", link: routes.jobPositionsKHR },
               { label: "Document", link: routes.documentTamplateKHR },
               { label: "Branch", link: routes.branchKHR },
-              { label: "Work Location", link: routes.workLocationKHR },
+              // { label: "Work Location", link: routes.workLocationKHR },
             ],
           },
           {

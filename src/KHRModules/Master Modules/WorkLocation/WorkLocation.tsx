@@ -398,8 +398,8 @@ const WorkLocation = () => {
                 parentMenu="HR"
                 activeMenu="Locations"
                 routes={routes}
-                buttonText="Add Work Location"
-                modalTarget="#add_work_location"
+                // buttonText="Add Work Location"
+                // modalTarget="#add_work_location"
                 rightActions={
                   <>
                     {/* Group By Dropdown */}

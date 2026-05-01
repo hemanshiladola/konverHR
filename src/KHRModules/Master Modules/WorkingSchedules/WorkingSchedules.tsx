@@ -51,11 +51,23 @@ const WorkingSchedules = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this schedule?")) {
       try {
-        await deleteWorkingSchedule(id);
-        toast.success("Deleted successfully");
+        const response: any = await deleteWorkingSchedule(id);
+        const successMessage =
+          response?.data?.message ||
+          response?.message ||
+          "Deleted successfully";
+
+        toast.success(successMessage);
+
         fetchData();
-      } catch (error) {
-        toast.error("Failed to delete");
+      } catch (error: any) {
+        const errorMessage =
+          error?.response?.data?.message || // Standard Axios error path
+          error?.data?.message || // Alternative path
+          error?.message || // Fallback to raw error message
+          "Error saving data"; // Final fallback
+
+        toast.error(errorMessage);
       }
     }
   };

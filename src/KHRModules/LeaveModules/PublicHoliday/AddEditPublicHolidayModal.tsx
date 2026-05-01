@@ -168,9 +168,15 @@ const AddEditPublicHolidayModal: React.FC<Props> = ({ onSuccess, data }) => {
       onSuccess();
       const closeBtn = document.getElementById("close-btn-policy");
       closeBtn?.click();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Error saving data");
+      const errorMessage =
+        err?.response?.data?.message || // Standard Axios error path
+        err?.data?.message || // Alternative path
+        err?.message || // Fallback to raw error message
+        "Error saving data"; // Final fallback
+
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
