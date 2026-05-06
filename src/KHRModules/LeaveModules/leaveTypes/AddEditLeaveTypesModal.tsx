@@ -33,7 +33,7 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
   const [leaveCategory, setLeaveCategory] = useState<string>("");
   const [requestUnit, setRequestUnit] = useState<string>("half_day");
 
-  const [eligibleAfter, setEligibleAfter] = useState<string>("");
+  const [eligibleAfter, setEligibleAfter] = useState<string>("confirmation");
   const [eligibleAfterDays, setEligibleAfterDays] = useState<number | string>(
     "",
   );
@@ -113,7 +113,7 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
       setLeaveTypeCode(data.leave_type_code || "");
       setLeaveCategory(data.leave_category || "");
 
-      setEligibleAfter(data.eligiable_after || "");
+      setEligibleAfter(data.eligiable_after || "confirmation");
       setEligibleAfterDays(data.eligiable_after_days || "");
       setEmployeeCategory(data.employee_category || "");
       setGenderRestriction(data.gender_restrication || "");
@@ -136,7 +136,7 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
     setRequiresAllocation("");
     setEmployeeRequests("");
     setResponsibleIds([]);
-    setEligibleAfter("");
+    setEligibleAfter("confirmation");
     setEligibleAfterDays("");
     setEmployeeCategory("");
     setGenderRestriction("");

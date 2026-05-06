@@ -32,6 +32,7 @@ const EmployeeKHR = () => {
   // ✅ Filter States
   const [searchText, setSearchText] = useState("");
   const [filterDept, setFilterDept] = useState("");
+  const [filterBranch, setFilterBranch] = useState(""); // ✅ Added Branch Filter State
   const [filterStatus, setFilterStatus] = useState(""); // ✅ Added Status Filter State
 
   // ✅ NEW: Draft Management States
@@ -148,8 +149,14 @@ const EmployeeKHR = () => {
       const statusMatch =
         filterStatus === "" || empStatus === filterStatus.toLowerCase();
 
-      // 2. If the search box is empty, just return the department filter result
-      if (!searchLower) return deptMatch && statusMatch;
+      // Branch filter logic
+      const branchValue = Array.isArray(emp.name_of_site)
+        ? String(emp.name_of_site[1])
+        : String(emp.name_of_site || "");
+      const branchMatch = filterBranch === "" || branchValue === filterBranch;
+
+      // 2. If the search box is empty, just return the specific filter results
+      if (!searchLower) return deptMatch && statusMatch && branchMatch;
 
       // 3. Perform a deep scan across all employee card properties
       const matchesSearch = Object.values(emp).some((value) => {
@@ -172,11 +179,11 @@ const EmployeeKHR = () => {
         return String(value).toLowerCase().includes(searchLower);
       });
 
-      return deptMatch && matchesSearch;
+      return deptMatch && statusMatch && branchMatch && matchesSearch;
     });
 
     setFilteredEmployees(filtered);
-  }, [searchText, filterDept, filterStatus, employees]);
+  }, [searchText, filterDept, filterStatus, filterBranch, employees]);
 
   const totalCount = employees.length;
   const activeCount = employees.filter(
@@ -390,6 +397,17 @@ const EmployeeKHR = () => {
         Array.isArray(emp.department_id)
           ? emp.department_id[1]
           : emp.department_id,
+      ),
+    ),
+  ).filter(Boolean);
+
+  // Get unique branches for filter dropdown
+  const uniqueBranches = Array.from(
+    new Set(
+      employees.map((emp: any) =>
+        Array.isArray(emp.name_of_site)
+          ? emp.name_of_site[1]
+          : emp.name_of_site,
       ),
     ),
   ).filter(Boolean);
@@ -630,7 +648,7 @@ const EmployeeKHR = () => {
         <div className="card mb-4 shadow-sm border-0">
           <div className="card-body p-3">
             <div className="row g-3 align-items-center">
-              <div className="col-md-4">
+              <div className="col-md-3">
                 <div className="input-group">
                   <span className="input-group-text bg-light border-end-0">
                     <i className="ti ti-search text-muted"></i>
@@ -644,7 +662,7 @@ const EmployeeKHR = () => {
                   />
                 </div>
               </div>
-              <div className="col-md-3">
+              <div className="col-md-2">
                 <select
                   className="form-select"
                   value={filterDept}
@@ -661,10 +679,24 @@ const EmployeeKHR = () => {
               <div className="col-md-3">
                 <select
                   className="form-select"
+                  value={filterBranch}
+                  onChange={(e) => setFilterBranch(e.target.value)}
+                >
+                  <option value="">All Branches</option>
+                  {uniqueBranches.map((branch) => (
+                    <option key={branch} value={branch}>
+                      {branch}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-2">
+                <select
+                  className="form-select"
                   value={filterStatus}
                   onChange={(e) => setFilterStatus(e.target.value)}
                 >
-                  <option value="">All Statuses</option>
+                  <option value="">All</option>
                   <option value="active">Active Only</option>
                   <option value="inactive">Inactive Only</option>
                 </select>
@@ -684,6 +716,7 @@ const EmployeeKHR = () => {
                   onClick={() => {
                     setSearchText("");
                     setFilterDept("");
+                    setFilterBranch("");
                     setFilterStatus("");
                   }}
                 >
@@ -853,7 +886,7 @@ const EmployeeKHR = () => {
           onSuccess={() => {
             fetchEmployees();
           }}
-          onClose={() => { }}
+          onClose={() => {}}
         />
       </div>
     </div>

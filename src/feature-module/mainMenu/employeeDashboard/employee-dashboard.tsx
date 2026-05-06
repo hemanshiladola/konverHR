@@ -13,10 +13,14 @@ import CommonSelect from "../../../core/common/commonSelect";
 import CollapseHeader from "../../../core/common/collapse-header/collapse-header";
 import { getDashboadrdCount, TBSelector } from "@/Store/Reducers/TBSlice";
 import { useDispatch, useSelector } from "react-redux";
+import { getEmployeesBasicInfo } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
 
 const EmployeeDashboard = () => {
   const routes = all_routes;
   const userName = localStorage.getItem("full_name") || "John Doe";
+
+  const [employeeProfile, setEmployeeProfile] = useState<any>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState<boolean>(true);
 
   const [date, setDate] = useState(new Date("2024"));
   const dispatch = useDispatch();
@@ -26,6 +30,41 @@ const EmployeeDashboard = () => {
     isgetDashboadrdCountFetching,
     getDashboadrdCountData,
   } = useSelector(TBSelector);
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  useEffect(() => {
+    const fetchEmployeeProfile = async () => {
+      try {
+        // 🔥 Use your custom API function here
+        const response: any = await getEmployeesBasicInfo();
+
+        // Safely extract the data depending on how your service function returns it
+        // (Handles if it returns the full axios response, or just the parsed array)
+        const apiData = response?.data?.data || response?.data || response;
+
+        if (Array.isArray(apiData) && apiData.length > 0) {
+          setEmployeeProfile(apiData[0]);
+        } else if (apiData && !Array.isArray(apiData)) {
+          setEmployeeProfile(apiData); // Fallback if it returns the single object directly
+        }
+      } catch (error) {
+        console.error("Error fetching employee profile:", error);
+      } finally {
+        setIsProfileLoading(false);
+      }
+    };
+
+    fetchEmployeeProfile();
+  }, []);
 
   //New Chart
   const [leavesChart] = useState<any>({
@@ -215,11 +254,11 @@ const EmployeeDashboard = () => {
                 <div className="ms-3">
                   <h3 className="mb-2">
                     Welcome Back, {userName}{" "}
-                    <Link to="#" className="edit-icon">
+                    {/* <Link to="#" className="edit-icon">
                       <i className="ti ti-edit fs-14" />
-                    </Link>
+                    </Link> */}
                   </h3>
-                  <p>
+                  {/* <p>
                     You have{" "}
                     <span className="text-primary text-decoration-underline">
                       21
@@ -229,12 +268,12 @@ const EmployeeDashboard = () => {
                       14
                     </span>{" "}
                     Leave Requests
-                  </p>
+                  </p> */}
                 </div>
               </div>
             </div>
           </div>
-          <div className="alert bg-secondary-transparent alert-dismissible fade show mb-4">
+          {/* <div className="alert bg-secondary-transparent alert-dismissible fade show mb-4">
             Your Leave Request on“24th April 2024”has been Approved!!!
             <button
               type="button"
@@ -244,10 +283,10 @@ const EmployeeDashboard = () => {
             >
               <i className="ti ti-x" />
             </button>
-          </div>
+          </div> */}
 
           <div className="row">
-            <div className="col-xl-4 d-flex">
+            {/* <div className="col-xl-4 d-flex">
               <div className="card position-relative flex-fill">
                 <div className="card-header bg-dark">
                   <div className="d-flex align-items-center">
@@ -295,6 +334,100 @@ const EmployeeDashboard = () => {
                     <p className="text-gray-9">15 Jan 2024</p>
                   </div>
                 </div>
+              </div>
+            </div> */}
+            {/* 🔥 UPDATED PROFILE CARD */}
+            <div className="col-xl-4 d-flex">
+              <div className="card position-relative flex-fill overflow-hidden">
+                {isProfileLoading ? (
+                  <div className="d-flex justify-content-center align-items-center h-100 p-5">
+                    <div
+                      className="spinner-border text-primary"
+                      role="status"
+                    />
+                  </div>
+                ) : employeeProfile ? (
+                  <>
+                    <div className="card-header bg-dark">
+                      <div className="d-flex align-items-center">
+                        <span className="avatar avatar-lg avatar-rounded border border-white border-2 flex-shrink-0 me-2">
+                          <ImageWithBasePath
+                            src="assets/img/users/user-01.jpg" // Change if you have dynamic images
+                            alt={`${employeeProfile.name}'s profile picture`}
+                          />
+                        </span>
+                        <div className="overflow-hidden">
+                          <h5
+                            className="text-white mb-1 text-truncate"
+                            title={employeeProfile.name}
+                          >
+                            {employeeProfile.name || "N/A"}
+                          </h5>
+                          <div className="d-flex align-items-center flex-wrap">
+                            <p
+                              className="text-white fs-12 mb-0 text-truncate"
+                              style={{ maxWidth: "150px" }}
+                              title={employeeProfile.job_position}
+                            >
+                              {employeeProfile.job_position || "No Designation"}
+                            </p>
+                            <span className="mx-1">
+                              <i className="ti ti-point-filled text-primary" />
+                            </span>
+                            <p
+                              className="fs-12 text-truncate text-white-50 mb-0"
+                              style={{ maxWidth: "120px" }}
+                              title={employeeProfile.department}
+                            >
+                              {employeeProfile.department || "N/A"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <Link
+                        to="#"
+                        className="btn btn-icon btn-sm text-white rounded-circle edit-top"
+                      >
+                        <i className="ti ti-edit" />
+                      </Link>
+                    </div>
+                    <div className="card-body">
+                      <div className="mb-3">
+                        <span className="d-block mb-1 fs-13">Phone Number</span>
+                        <p className="text-gray-9">
+                          {employeeProfile.phone || "N/A"}
+                        </p>
+                      </div>
+                      <div className="mb-3">
+                        <span className="d-block mb-1 fs-13">
+                          Email Address
+                        </span>
+                        <p className="text-gray-9 text-break">
+                          {employeeProfile.email || "N/A"}
+                        </p>
+                      </div>
+                      <div className="mb-3">
+                        <span className="d-block mb-1 fs-13">
+                          Reporting Manager
+                        </span>
+                        <p className="text-gray-9">
+                          {employeeProfile.reporting_manager || "Not Assigned"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="d-block mb-1 fs-13">Joined on</span>
+                        {/* Note: Matching your API spelling "joinning_date" */}
+                        <p className="text-gray-9">
+                          {formatDate(employeeProfile.joinning_date)}
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="d-flex justify-content-center align-items-center h-100 p-5 text-muted">
+                    Profile Data Not Found
+                  </div>
+                )}
               </div>
             </div>
             <div className="col-xl-5 d-flex">
@@ -500,7 +633,7 @@ const EmployeeDashboard = () => {
               </div>
             </div>
           </div>
-          <div className="row">
+          {/* <div className="row">
             <div className="col-xl-4 d-flex">
               <div className="card flex-fill border-primary attendance-bg">
                 <div className="card-body">
@@ -753,7 +886,7 @@ const EmployeeDashboard = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
           <div className="row">
             <div className="col-xl-6 d-flex">
               <div className="card flex-fill">

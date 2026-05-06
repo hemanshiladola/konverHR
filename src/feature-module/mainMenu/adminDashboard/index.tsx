@@ -785,9 +785,9 @@ const AdminDashboard = () => {
                 <div className="ms-3">
                   <h3 className="mb-2">
                     Welcome Back, {userName}{" "}
-                    <Link to="#" className="edit-icon">
+                    {/* <Link to="#" className="edit-icon">
                       <i className="ti ti-edit fs-14" />
-                    </Link>
+                    </Link> */}
                   </h3>
                   {/* <p>
                     You have{" "}

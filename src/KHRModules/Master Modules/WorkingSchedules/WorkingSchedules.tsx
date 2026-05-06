@@ -75,9 +75,8 @@ const WorkingSchedules = () => {
   const formatTime = (num: number) => {
     const hrs = Math.floor(num);
     const mins = Math.round((num - hrs) * 60);
-    const ampm = hrs >= 12 ? "PM" : "AM";
-    const displayHrs = hrs % 12 || 12;
-    return `${displayHrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")} ${ampm}`;
+    // 24-hour format directly uses the exact 'hrs' and 'mins' padded with leading zeros
+    return `${hrs.toString().padStart(2, "0")}:${mins.toString().padStart(2, "0")}`;
   };
 
   const getDailyTimeSignature = (slots: AttendanceItem[]) => {
@@ -309,7 +308,7 @@ const WorkingSchedules = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="col-6">
+                          {/* <div className="col-6">
                             <div className="d-flex align-items-center">
                               <i className="ti ti-shield-check text-success fs-18 me-2"></i>
                               <div>
@@ -321,7 +320,7 @@ const WorkingSchedules = () => {
                                 </span>
                               </div>
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     </div>

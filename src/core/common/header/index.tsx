@@ -720,6 +720,19 @@ const Header = React.memo(() => {
             </div>
           </div>
 
+          <div
+            className="d-lg-none d-flex align-items-center justify-content-center"
+            style={{
+              position: "absolute",
+              right: "70px",
+              top: "0",
+              height: "50px",
+              zIndex: 10,
+            }}
+          >
+            <StatusCheckInPopup />
+          </div>
+
           <div className="dropdown mobile-user-menu">
             <Link
               to="#"

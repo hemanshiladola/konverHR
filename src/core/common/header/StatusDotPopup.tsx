@@ -174,19 +174,19 @@ const StatusCheckInPopup: React.FC = () => {
   const formatDate = (date: Date | null) =>
     date
       ? date.toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        })
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      })
       : "---";
 
   const formatTime = (date: Date | null) =>
     date
       ? date.toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true, // Optional: adds AM/PM
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true, // Optional: adds AM/PM
+      })
       : "--:--";
 
   const formatTotal = (min: number) =>

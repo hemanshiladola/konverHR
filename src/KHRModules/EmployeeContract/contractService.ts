@@ -22,7 +22,7 @@ export interface Contract {
   wage_type: string;
   schedule_pay: string;
   wage: number;
-  components?: { name: string; amount: number; addition?: boolean; deduction?: boolean }[];
+  components?: { name?: string; structure_head_id?: number | null; amount: number; addition?: boolean; deduction?: boolean }[];
   leave_allocations?: LeaveAllocationEntry[]; // Add this to the interface
 }
 
@@ -106,6 +106,25 @@ export const getLeaveConfigurations = async () => {
     return response.data?.data || response.data || [];
   } catch (error) {
     console.error("Error fetching leave configurations:", error);
+    return [];
+  }
+};
+
+export const getStructureHeaders = async () => {
+  try {
+    const response = await axios({
+      method: "GET",
+      baseURL: CONFIG.BASE_URL_ALL,
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `${localStorage.getItem("authToken")}`,
+      },
+      url: `/api/get/headers`,
+      params: { user_id },
+    });
+    return response.data?.data || response.data || [];
+  } catch (error) {
+    console.error("Error fetching structure headers:", error);
     return [];
   }
 };

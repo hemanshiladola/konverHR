@@ -81,9 +81,9 @@ const DocumentGenrationKHR = () => {
     >
       <div className="content">
         <CommonHeader
-          title="Generation Studio"
-          parentMenu="KAVACH"
-          activeMenu="Wizard"
+          title="Document Generation"
+          parentMenu="Master"
+          activeMenu="Document Generation"
           routes={all_routes}
         />
 

@@ -13,6 +13,7 @@ import {
   getDepartments,
   getLeaveConfigurations,
   getLeavePreview,
+  getStructureHeaders,
 } from "./contractService";
 import CommonSelect from "@/core/common/commonSelect";
 import { DatePicker } from "antd";
@@ -37,10 +38,10 @@ const initialContractState = {
   schedule_pay: "monthly",
   wage: 0,
   components: [
-    { name: "BASIC", amount: 0, addition: true },
-    { name: "HRA", amount: 0, addition: true },
-    { name: "Skill Allowance", amount: 0, addition: true },
-    { name: "PT", amount: 0, deduction: true },
+    { structure_head_id: 1, amount: 0, addition: true },
+    { structure_head_id: 3, amount: 0, addition: true },
+    { structure_head_id: 4, amount: 0, addition: true },
+    { structure_head_id: 20, amount: 0, deduction: true },
   ],
 };
 
@@ -90,6 +91,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
   const [leaveErrors, setLeaveErrors] = useState<any>({}); // Dedicated validation for the entry form
   const [errors, setErrors] = useState<any>({});
 
+  // Salary Structure Headers
+  const [structureHeaders, setStructureHeaders] = useState<any[]>([]);
+
   // Form States
   const [formData, setFormData] = useState<Omit<Contract, "id">>({
     name: "",
@@ -107,10 +111,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     schedule_pay: "monthly",
     wage: 0,
     components: [
-      { name: "BASIC", amount: 0, addition: true },
-      { name: "HRA", amount: 0, addition: true },
-      { name: "Skill Allowance", amount: 0, addition: true },
-      { name: "PT", amount: 0, deduction: true },
+      { structure_head_id: 1, amount: 0, addition: true },
+      { structure_head_id: 3, amount: 0, addition: true },
+      { structure_head_id: 4, amount: 0, addition: true },
+      { structure_head_id: 20, amount: 0, deduction: true },
     ],
   });
 
@@ -178,6 +182,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
 
         const configRes = await getLeaveConfigurations();
         setLeaveConfigs(extractDataArray(configRes, "LeaveConfigurations"));
+
+        // 6. Check Structure Headers
+        const headersRes = await getStructureHeaders();
+        console.log("CHECKPOINT: getStructureHeaders finished", headersRes);
+        setStructureHeaders(extractDataArray(headersRes, "StructureHeaders"));
 
         console.log("--- CHECKPOINT 2: All states updated ---");
       } catch (error) {
@@ -250,7 +259,59 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         department_id: getVal(data.department_id),
         contract_type_id: getVal(data.contract_type_id),
         structure_type_id: getVal(data.structure_type_id),
-        components: data.components && data.components.length > 0 ? data.components : initialContractState.components,
+        components:
+          (data as any).dynamic_fields && (data as any).dynamic_fields.length > 0
+            ? (data as any).dynamic_fields.map((f: any) => {
+                let headId: any = f.structure_header_id ? Number(f.structure_header_id) : "";
+                
+                // Fallbacks for missing header IDs
+                if (!headId && f.name) {
+                  const nameStr = f.name.toLowerCase().trim();
+                  if (nameStr === "basic") headId = 1;
+                  else if (nameStr === "dearness allowance") headId = 2;
+                  else if (nameStr === "hra") headId = 3;
+                  else if (nameStr === "skill allowance") headId = 4;
+                  else if (nameStr === "attendance allowance") headId = 5;
+                  else if (nameStr === "food allowance") headId = 6;
+                  else if (nameStr === "washing allowance") headId = 7;
+                  else if (nameStr === "conveyance") headId = 8;
+                  else if (nameStr === "leave allowance") headId = 9;
+                  else if (nameStr === "bonus") headId = 10;
+                  else if (nameStr === "gratuity") headId = 11;
+                  else if (nameStr === "other" || nameStr === "other allowance") headId = 12;
+                  else if (nameStr === "uniform allowance") headId = 13;
+                  else if (nameStr === "mobile allowance") headId = 14;
+                  else if (nameStr === "travel allowance") headId = 15;
+                  else if (nameStr === "educational allowance") headId = 16;
+                  else if (nameStr === "city compensatory allowance") headId = 17;
+                  else if (nameStr === "pf employee") headId = 18;
+                  else if (nameStr === "esic employee") headId = 19;
+                  else if (nameStr === "pt" || nameStr === "professional tax") headId = 20;
+                  else if (nameStr === "lta") headId = 21;
+                  else if (nameStr === "variable pay") headId = 22;
+                }
+
+                // If backend sends false for both addition and deduction, default to a category
+                let isAdd = f.is_addition;
+                let isDed = f.is_deduction;
+                if (!isAdd && !isDed) {
+                   if (headId === 18 || headId === 19 || headId === 20) {
+                      isDed = true;
+                   } else {
+                      isAdd = true;
+                   }
+                }
+
+                return {
+                  structure_head_id: headId,
+                  amount: Number(f.value) || 0,
+                  addition: isAdd,
+                  deduction: isDed,
+                };
+              })
+            : data.components && data.components.length > 0
+              ? data.components
+              : initialContractState.components,
       });
 
       // 2. Map Nested Leave Allocations into the Table State
@@ -630,7 +691,14 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       const finalPayload: any = {
         ...contractData,
         employee_id: Number(formData.employee_id),
-        components: (contractData.components || []).filter((c: any) => c.name && c.name.trim() !== ""),
+        components: (contractData.components || []).filter(
+          (c: any) => c.structure_head_id,
+        ).map((c: any) => ({
+          structure_head_id: Number(c.structure_head_id),
+          amount: Number(c.amount),
+          addition: c.addition ? true : undefined,
+          deduction: c.deduction ? true : undefined,
+        })),
         // leave_allocation_ids: leaveAllocations.map((l) => ({
         //   // 3. Conditional ID: Only include the key if l.id exists (for existing items)
         //   ...(l.id ? { id: l.id } : {}),
@@ -678,6 +746,79 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to convert numbers to words (Indian System)
+  const convertNumberToWords = (amount: number) => {
+    if (!amount || isNaN(amount) || amount === 0) return "";
+
+    const single = [
+      "",
+      "One",
+      "Two",
+      "Three",
+      "Four",
+      "Five",
+      "Six",
+      "Seven",
+      "Eight",
+      "Nine",
+      "Ten",
+      "Eleven",
+      "Twelve",
+      "Thirteen",
+      "Fourteen",
+      "Fifteen",
+      "Sixteen",
+      "Seventeen",
+      "Eighteen",
+      "Nineteen",
+    ];
+    const tens = [
+      "",
+      "",
+      "Twenty",
+      "Thirty",
+      "Forty",
+      "Fifty",
+      "Sixty",
+      "Seventy",
+      "Eighty",
+      "Ninety",
+    ];
+
+    const formatCTC = (n: number): string => {
+      if (n < 20) return single[n];
+      if (n < 100)
+        return (
+          tens[Math.floor(n / 10)] + (n % 10 !== 0 ? " " + single[n % 10] : "")
+        );
+      if (n < 1000)
+        return (
+          single[Math.floor(n / 100)] +
+          " Hundred" +
+          (n % 100 !== 0 ? " " + formatCTC(n % 100) : "")
+        );
+      if (n < 100000)
+        return (
+          formatCTC(Math.floor(n / 1000)) +
+          " Thousand" +
+          (n % 1000 !== 0 ? " " + formatCTC(n % 1000) : "")
+        );
+      if (n < 10000000)
+        return (
+          formatCTC(Math.floor(n / 100000)) +
+          " Lakh" +
+          (n % 100000 !== 0 ? " " + formatCTC(n % 100000) : "")
+        );
+      return (
+        formatCTC(Math.floor(n / 10000000)) +
+        " Crore" +
+        (n % 10000000 !== 0 ? " " + formatCTC(n % 10000000) : "")
+      );
+    };
+
+    return formatCTC(Number(amount)) + " Rupees Only";
   };
 
   return (
@@ -1052,10 +1193,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               }
                             />
                           </div>
-
+                          {/* 
                           <div className="col-md-4 px-1">
                             <label className="form-label fs-13 fw-bold">
-                              Wage (CTC) <span className="text-danger">*</span>
+                              Wage (CTC in LPA){" "}
+                              <span className="text-danger">*</span>
                             </label>
                             <div className="input-group">
                               <span className="input-group-text bg-white fw-bold">
@@ -1063,6 +1205,8 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               </span>
                               <input
                                 type="number"
+                                step="0.01"
+                                min="0"
                                 className={`form-control fw-bold text-success ${isSubmitted ? (errors.wage ? "is-invalid border-danger" : "is-valid border-success") : "border-primary"}`}
                                 value={formData.wage}
                                 onChange={(e) => {
@@ -1076,6 +1220,75 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 }}
                               />
                             </div>
+
+                            {isSubmitted && errors.wage && (
+                              <div className="text-danger fs-11 mt-1">
+                                {errors.wage}
+                              </div>
+                            )}
+                          </div> */}
+                          <div className="col-md-4 px-1">
+                            <label className="form-label fs-13 fw-bold">
+                              Wage (CTC in LPA){" "}
+                              <span className="text-danger">*</span>
+                            </label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-white fw-bold text-muted">
+                                ₹
+                              </span>
+                              <input
+                                type="text"
+                                placeholder="e.g. 5,00,000 LPA"
+                                className={`form-control fw-bold text-success ${isSubmitted
+                                  ? errors.wage
+                                    ? "is-invalid border-danger"
+                                    : "is-valid border-success"
+                                  : "border-primary"
+                                  }`}
+                                // 🔥 Removed " LPA" from the value, leaving only the comma-separated number
+                                value={
+                                  !formData.wage || formData.wage === 0
+                                    ? ""
+                                    : Number(formData.wage).toLocaleString(
+                                      "en-IN",
+                                    )
+                                }
+                                onChange={(e) => {
+                                  // 🔥 Removed the /lpa/i regex since it's no longer inside the textbox
+                                  const rawValue = e.target.value
+                                    .replace(/,/g, "")
+                                    .trim();
+
+                                  if (rawValue === "") {
+                                    setFormData({ ...formData, wage: 0 });
+                                    if (errors.wage) {
+                                      setErrors({ ...errors, wage: null });
+                                    }
+                                    return;
+                                  }
+
+                                  // Only update state if the remaining string is a valid number
+                                  const numericValue = Number(rawValue);
+                                  if (!isNaN(numericValue)) {
+                                    setFormData({
+                                      ...formData,
+                                      wage: numericValue,
+                                    });
+                                    if (errors.wage) {
+                                      setErrors({ ...errors, wage: null });
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+
+                            {/* Shows the text format (e.g. "Five Lakh Rupees Only") */}
+                            {formData.wage > 0 && !errors.wage && (
+                              <div className="text-primary fs-16 mt-1 fw-medium fst-italic">
+                                {convertNumberToWords(formData.wage)}
+                              </div>
+                            )}
+
                             {isSubmitted && errors.wage && (
                               <div className="text-danger fs-11 mt-1">
                                 {errors.wage}
@@ -1108,8 +1321,8 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     ...formData,
                                     components: [
                                       ...(formData.components || []),
-                                      { name: "", amount: 0, addition: true }
-                                    ]
+                                      { structure_head_id: null, amount: 0, addition: true },
+                                    ],
                                   });
                                 }}
                               >
@@ -1118,55 +1331,92 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                             </div>
 
                             <div className="row g-2">
-                              {(formData.components || []).map((comp: any, index: number) => {
-                                if (!comp.addition) return null;
-                                return (
-                                  <div className="col-12" key={index}>
-                                    <div className="d-flex gap-2 mb-2">
-                                      <input
-                                        type="text"
-                                        className="form-control form-control-sm w-50"
-                                        placeholder="Allowance Name"
-                                        value={comp.name}
-                                        onChange={(e) => {
-                                          const newComps = [...(formData.components || [])];
-                                          newComps[index] = { ...newComps[index], name: e.target.value };
-                                          setFormData({ ...formData, components: newComps });
-                                        }}
-                                      />
-                                      <div className="input-group input-group-sm w-50">
-                                        <span className="input-group-text bg-light text-muted">₹</span>
-                                        <input
-                                          type="number"
-                                          className="form-control"
-                                          placeholder="0"
-                                          value={comp.amount}
+                              {(formData.components || []).map(
+                                (comp: any, index: number) => {
+                                  if (!comp.addition) return null;
+                                  return (
+                                    <div className="col-12" key={index}>
+                                      <div className="d-flex gap-2 mb-2">
+                                        <select
+                                          className="form-select form-select-sm w-50"
+                                          value={comp.structure_head_id || ""}
                                           onChange={(e) => {
-                                            const newComps = [...(formData.components || [])];
-                                            newComps[index] = { ...newComps[index], amount: Number(e.target.value) };
-                                            setFormData({ ...formData, components: newComps });
-                                          }}
-                                        />
-                                        <button
-                                          type="button"
-                                          className="btn btn-danger-transparent px-2 border-start-0"
-                                          style={{ border: "1px solid #dee2e6" }}
-                                          onClick={() => {
-                                            const newComps = [...(formData.components || [])];
-                                            newComps.splice(index, 1);
-                                            setFormData({ ...formData, components: newComps });
+                                            const newComps = [
+                                              ...(formData.components || []),
+                                            ];
+                                            newComps[index] = {
+                                              ...newComps[index],
+                                              structure_head_id: Number(e.target.value),
+                                            };
+                                            setFormData({
+                                              ...formData,
+                                              components: newComps,
+                                            });
                                           }}
                                         >
-                                          <i className="ti ti-trash"></i>
-                                        </button>
+                                          <option value="" disabled>Select Allowance</option>
+                                          {structureHeaders.map((h) => (
+                                            <option key={h.id} value={h.id}>
+                                              {h.name}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        <div className="input-group input-group-sm w-50">
+                                          <span className="input-group-text bg-light text-muted">
+                                            ₹
+                                          </span>
+                                          <input
+                                            type="number"
+                                            className="form-control"
+                                            placeholder="0"
+                                            value={comp.amount}
+                                            onChange={(e) => {
+                                              const newComps = [
+                                                ...(formData.components || []),
+                                              ];
+                                              newComps[index] = {
+                                                ...newComps[index],
+                                                amount: Number(e.target.value),
+                                              };
+                                              setFormData({
+                                                ...formData,
+                                                components: newComps,
+                                              });
+                                            }}
+                                          />
+                                          <button
+                                            type="button"
+                                            className="btn btn-danger-transparent px-2 border-start-0"
+                                            style={{
+                                              border: "1px solid #dee2e6",
+                                            }}
+                                            onClick={() => {
+                                              const newComps = [
+                                                ...(formData.components || []),
+                                              ];
+                                              newComps.splice(index, 1);
+                                              setFormData({
+                                                ...formData,
+                                                components: newComps,
+                                              });
+                                            }}
+                                          >
+                                            <i className="ti ti-trash"></i>
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
-                              {(!formData.components || !formData.components.some((c: any) => c.addition)) && (
-                                <div className="text-center text-muted py-3 fs-13">No allowances added.</div>
+                                  );
+                                },
                               )}
+                              {(!formData.components ||
+                                !formData.components.some(
+                                  (c: any) => c.addition,
+                                )) && (
+                                  <div className="text-center text-muted py-3 fs-13">
+                                    No allowances added.
+                                  </div>
+                                )}
                             </div>
                           </div>
 
@@ -1185,8 +1435,8 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     ...formData,
                                     components: [
                                       ...(formData.components || []),
-                                      { name: "", amount: 0, deduction: true }
-                                    ]
+                                      { structure_head_id: null, amount: 0, deduction: true },
+                                    ],
                                   });
                                 }}
                               >
@@ -1195,54 +1445,89 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                             </div>
 
                             <div className="row g-2">
-                              {(formData.components || []).map((comp: any, index: number) => {
-                                if (!comp.deduction) return null;
-                                return (
-                                  <div className="col-12" key={index}>
-                                    <div className="d-flex gap-2 mb-2">
-                                      <input
-                                        type="text"
-                                        className="form-control form-control-sm border-danger w-50"
-                                        placeholder="Deduction Name"
-                                        value={comp.name}
-                                        onChange={(e) => {
-                                          const newComps = [...(formData.components || [])];
-                                          newComps[index] = { ...newComps[index], name: e.target.value };
-                                          setFormData({ ...formData, components: newComps });
-                                        }}
-                                      />
-                                      <div className="input-group input-group-sm w-50">
-                                        <span className="input-group-text text-danger border-danger">₹</span>
-                                        <input
-                                          type="number"
-                                          className="form-control border-danger"
-                                          placeholder="0"
-                                          value={comp.amount}
+                              {(formData.components || []).map(
+                                (comp: any, index: number) => {
+                                  if (!comp.deduction) return null;
+                                  return (
+                                    <div className="col-12" key={index}>
+                                      <div className="d-flex gap-2 mb-2">
+                                        <select
+                                          className="form-select form-select-sm border-danger w-50"
+                                          value={comp.structure_head_id || ""}
                                           onChange={(e) => {
-                                            const newComps = [...(formData.components || [])];
-                                            newComps[index] = { ...newComps[index], amount: Number(e.target.value) };
-                                            setFormData({ ...formData, components: newComps });
-                                          }}
-                                        />
-                                        <button
-                                          type="button"
-                                          className="btn btn-danger-transparent px-2 border border-danger border-start-0"
-                                          onClick={() => {
-                                            const newComps = [...(formData.components || [])];
-                                            newComps.splice(index, 1);
-                                            setFormData({ ...formData, components: newComps });
+                                            const newComps = [
+                                              ...(formData.components || []),
+                                            ];
+                                            newComps[index] = {
+                                              ...newComps[index],
+                                              structure_head_id: Number(e.target.value),
+                                            };
+                                            setFormData({
+                                              ...formData,
+                                              components: newComps,
+                                            });
                                           }}
                                         >
-                                          <i className="ti ti-trash"></i>
-                                        </button>
+                                          <option value="" disabled>Select Deduction</option>
+                                          {structureHeaders.map((h) => (
+                                            <option key={h.id} value={h.id}>
+                                              {h.name}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        <div className="input-group input-group-sm w-50">
+                                          <span className="input-group-text text-danger border-danger">
+                                            ₹
+                                          </span>
+                                          <input
+                                            type="number"
+                                            className="form-control border-danger"
+                                            placeholder="0"
+                                            value={comp.amount}
+                                            onChange={(e) => {
+                                              const newComps = [
+                                                ...(formData.components || []),
+                                              ];
+                                              newComps[index] = {
+                                                ...newComps[index],
+                                                amount: Number(e.target.value),
+                                              };
+                                              setFormData({
+                                                ...formData,
+                                                components: newComps,
+                                              });
+                                            }}
+                                          />
+                                          <button
+                                            type="button"
+                                            className="btn btn-danger-transparent px-2 border border-danger border-start-0"
+                                            onClick={() => {
+                                              const newComps = [
+                                                ...(formData.components || []),
+                                              ];
+                                              newComps.splice(index, 1);
+                                              setFormData({
+                                                ...formData,
+                                                components: newComps,
+                                              });
+                                            }}
+                                          >
+                                            <i className="ti ti-trash"></i>
+                                          </button>
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
-                              {(!formData.components || !formData.components.some((c: any) => c.deduction)) && (
-                                <div className="text-center text-muted py-3 fs-13">No deductions added.</div>
+                                  );
+                                },
                               )}
+                              {(!formData.components ||
+                                !formData.components.some(
+                                  (c: any) => c.deduction,
+                                )) && (
+                                  <div className="text-center text-muted py-3 fs-13">
+                                    No deductions added.
+                                  </div>
+                                )}
                             </div>
                           </div>
                         </div>

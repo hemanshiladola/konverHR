@@ -39,8 +39,8 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
 
   const dayPeriods = [
     { value: "morning", label: "Morning" },
-    { value: "lunch", label: "Lunch" },
-    { value: "afternoon", label: "Afternoon" },
+    { value: "lunch", label: "Break" },
+    { value: "afternoon", label: "Evening" },
   ];
 
   const initialAttendance: AttendanceItem = {
@@ -82,9 +82,9 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
 
         const typeOpts = Array.isArray(types)
           ? types.map((t: any) => ({
-              value: t.id,
-              label: t.name || t.code || `Type ${t.id}`,
-            }))
+            value: t.id,
+            label: t.name || t.code || `Type ${t.id}`,
+          }))
           : [];
         setWorkEntryTypeOptions(typeOpts);
       } catch (e) {
@@ -100,11 +100,11 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
       const cleanAttendances =
         data.attendances && data.attendances.length > 0
           ? data.attendances.map((att) => ({
-              ...att,
-              work_entry_type_id: Array.isArray(att.work_entry_type_id)
-                ? att.work_entry_type_id[0]
-                : att.work_entry_type_id,
-            }))
+            ...att,
+            work_entry_type_id: Array.isArray(att.work_entry_type_id)
+              ? att.work_entry_type_id[0]
+              : att.work_entry_type_id,
+          }))
           : [{ ...initialAttendance }];
 
       setFormData({
@@ -122,6 +122,7 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
     }
     setErrors({});
   }, [data]);
+
 
   // 3. Actions
   const handleModalClose = () => {

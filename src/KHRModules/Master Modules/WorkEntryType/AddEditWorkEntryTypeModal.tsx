@@ -317,7 +317,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                       className="form-check-label fw-bold fs-13"
                       htmlFor="isUnforeseen"
                     >
-                      Is Unforeseen?
+                      Is Absent ?
                     </label>
                   </div>
                 </div>
