@@ -136,7 +136,11 @@ const AccruralPlanKHR = () => {
               <div className="mt-2">Fetching Plans...</div>
             </div>
           ) : (
-            <DatatableKHR data={data} columns={columns} selection={true} />
+            <DatatableKHR
+              data={data}
+              columns={columns}
+              // selection={true}
+            />
           )}
         </div>
       </div>

@@ -195,7 +195,9 @@ const ExpenseCategoryKHR = () => {
                 ></div>
               </div>
             ) : (
-              <DatatableKHR columns={columns} data={data} selection={true} />
+              <DatatableKHR columns={columns} data={data}
+              //  selection={true}
+              />
             )}
           </div>
         </div>

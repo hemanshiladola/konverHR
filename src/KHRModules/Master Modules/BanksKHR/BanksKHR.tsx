@@ -297,7 +297,7 @@ const BanksKHR = () => {
 
   const renderGroupedTable = () => {
     if (groupBy === "none") {
-      return <DatatableKHR data={data} columns={columns} selection={true} />;
+      return <DatatableKHR data={data} columns={columns} />;
     }
 
     return (

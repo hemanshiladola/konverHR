@@ -270,7 +270,13 @@ const JobPosition = () => {
 
   const renderGroupedTable = () => {
     if (groupBy === "none") {
-      return <DatatableKHR data={data} columns={columns} selection={true} />;
+      return (
+        <DatatableKHR
+          data={data}
+          columns={columns}
+          // selection={true}
+        />
+      );
     }
 
     return (

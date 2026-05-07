@@ -270,7 +270,11 @@ const SkillKHR = () => {
     if (groupBy === "none") {
       return (
         <div className="table-responsive">
-          <DatatableKHR data={data} columns={columns} selection={true} />
+          <DatatableKHR
+            data={data}
+            columns={columns}
+            // selection={true}
+          />
         </div>
       );
     }
@@ -383,7 +387,7 @@ const SkillKHR = () => {
                   <DatatableKHR
                     data={group.items}
                     columns={columns}
-                    selection={true}
+                    // selection={true}
                   />
                 </div>
               </div>

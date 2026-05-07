@@ -306,7 +306,7 @@ const DepartmentKHR = () => {
         <DatatableKHR
           data={data}
           columns={columns}
-          selection={true}
+          // selection={true}
           textKey="Department_Name"
         />
       );
@@ -428,7 +428,7 @@ const DepartmentKHR = () => {
                 <DatatableKHR
                   data={group.items}
                   columns={columns}
-                  selection={true}
+                  // selection={true}
                   textKey="Department_Name"
                 />
               </div>

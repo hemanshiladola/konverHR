@@ -190,7 +190,7 @@ const WorkEntryType = () => {
         <DatatableKHR
           data={data}
           columns={columns}
-          selection={true}
+          // selection={true}
           textKey="name"
         />
       );
@@ -295,7 +295,7 @@ const WorkEntryType = () => {
                 <DatatableKHR
                   data={group.items}
                   columns={columns}
-                  selection={true}
+                  // selection={true}
                   textKey="name"
                 />
               </div>

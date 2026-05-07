@@ -202,7 +202,7 @@ const RegCategoryKHR = () => {
         <DatatableKHR
           data={data}
           columns={columns}
-          selection={true}
+          // selection={true}
           textKey="type"
         />
       );
@@ -301,7 +301,7 @@ const RegCategoryKHR = () => {
                 <DatatableKHR
                   data={group.items}
                   columns={columns}
-                  selection={true}
+                  // selection={true}
                   textKey="type"
                 />
               </div>
