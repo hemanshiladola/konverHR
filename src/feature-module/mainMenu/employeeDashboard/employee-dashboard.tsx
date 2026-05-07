@@ -543,6 +543,7 @@ const EmployeeDashboard = () => {
                 </div>
               </div>
             </div>
+
             <div className="col-xl-3 d-flex">
               <div className="card flex-fill">
                 <div className="card-header">
@@ -2128,7 +2129,7 @@ const EmployeeDashboard = () => {
             </div>
           </div>
         </div>
-        <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
+        {/* <div className="footer d-sm-flex align-items-center justify-content-between border-top bg-white p-3">
           <p className="mb-0">2014 - 2025 © SmartHR.</p>
           <p>
             Designed &amp; Developed By{" "}
@@ -2136,7 +2137,7 @@ const EmployeeDashboard = () => {
               Dreams
             </Link>
           </p>
-        </div>
+        </div> */}
       </div>
       {/* /Page Wrapper */}
       <>

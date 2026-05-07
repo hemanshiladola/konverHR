@@ -1,3 +1,4 @@
+import React from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -55,33 +56,32 @@ const KavachHelpdesk = () => {
 
   return (
     <div
-      className="floating-helpdesk-container"
-      // style={{
-      //   position: "fixed",
-      //   bottom: "70px",
-      //   right: "30px",
-      //   zIndex: 999999,
-      // }}
+      style={{
+        position: "fixed",
+        right: "30px",
+        bottom: 0,
+        zIndex: 999999
+      }}
     >
       <motion.button
-        whileHover={{ scale: 1.1, y: -5 }}
+        whileHover={{ y: -5 }}
         whileTap={{ scale: 0.9 }}
-        className="helpdesk-fab"
         onClick={handleTriggerPortal}
-        // style={{
-        //   width: "60px",
-        //   height: "60px",
-        //   backgroundColor: "#fe6137",
-        //   border: "none",
-        //   borderRadius: "20px",
-        //   display: "flex",
-        //   alignItems: "center",
-        //   justifyContent: "center",
-        //   cursor: "pointer",
-        //   boxShadow: "0 10px 25px rgba(254, 97, 55, 0.4)",
-        // }}
+        className="btn shadow d-flex align-items-center"
+        style={{
+          backgroundColor: "#fe6137",
+          border: "none",
+          borderTopLeftRadius: "15px",
+          borderTopRightRadius: "15px",
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+          padding: "8px 20px",
+          cursor: "pointer",
+        }}
+        title="Open Helpdesk"
       >
-        <i className="ti ti-headset text-white" style={{ fontSize: "28px" }} />
+        <i className="ti ti-headset text-white me-2" style={{ fontSize: "18px" }} />
+        <span className="text-white fw-bold fs-13">Helpdesk</span>
       </motion.button>
     </div>
   );

@@ -15,7 +15,7 @@ function Datatable<T extends object = object>({
   pageSize = 10,
 }: ExtendedDatatableProps<T>) {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [selections, setSelections] = useState<boolean>(true);
+  const [selections, setSelections] = useState<boolean>(Selection ?? false);
   // const [searchText, setSearchText] = useState<string>("");
   // const [filteredDataSource, setFilteredDataSource] = useState<T[]>(dataSource);
 
@@ -30,7 +30,7 @@ function Datatable<T extends object = object>({
   // }, [dataSource, searchText]);
 
   useEffect(() => {
-    setSelections(Selection ?? true);
+    setSelections(Selection ?? false);
   }, [Selection]);
 
   // Memoize the row selection configuration

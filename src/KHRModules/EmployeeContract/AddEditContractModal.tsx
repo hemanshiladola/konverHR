@@ -262,53 +262,53 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         components:
           (data as any).dynamic_fields && (data as any).dynamic_fields.length > 0
             ? (data as any).dynamic_fields.map((f: any) => {
-                let headId: any = f.structure_header_id ? Number(f.structure_header_id) : "";
-                
-                // Fallbacks for missing header IDs
-                if (!headId && f.name) {
-                  const nameStr = f.name.toLowerCase().trim();
-                  if (nameStr === "basic") headId = 1;
-                  else if (nameStr === "dearness allowance") headId = 2;
-                  else if (nameStr === "hra") headId = 3;
-                  else if (nameStr === "skill allowance") headId = 4;
-                  else if (nameStr === "attendance allowance") headId = 5;
-                  else if (nameStr === "food allowance") headId = 6;
-                  else if (nameStr === "washing allowance") headId = 7;
-                  else if (nameStr === "conveyance") headId = 8;
-                  else if (nameStr === "leave allowance") headId = 9;
-                  else if (nameStr === "bonus") headId = 10;
-                  else if (nameStr === "gratuity") headId = 11;
-                  else if (nameStr === "other" || nameStr === "other allowance") headId = 12;
-                  else if (nameStr === "uniform allowance") headId = 13;
-                  else if (nameStr === "mobile allowance") headId = 14;
-                  else if (nameStr === "travel allowance") headId = 15;
-                  else if (nameStr === "educational allowance") headId = 16;
-                  else if (nameStr === "city compensatory allowance") headId = 17;
-                  else if (nameStr === "pf employee") headId = 18;
-                  else if (nameStr === "esic employee") headId = 19;
-                  else if (nameStr === "pt" || nameStr === "professional tax") headId = 20;
-                  else if (nameStr === "lta") headId = 21;
-                  else if (nameStr === "variable pay") headId = 22;
-                }
+              let headId: any = f.structure_header_id ? Number(f.structure_header_id) : "";
 
-                // If backend sends false for both addition and deduction, default to a category
-                let isAdd = f.is_addition;
-                let isDed = f.is_deduction;
-                if (!isAdd && !isDed) {
-                   if (headId === 18 || headId === 19 || headId === 20) {
-                      isDed = true;
-                   } else {
-                      isAdd = true;
-                   }
-                }
+              // Fallbacks for missing header IDs
+              if (!headId && f.name) {
+                const nameStr = f.name.toLowerCase().trim();
+                if (nameStr === "basic") headId = 1;
+                else if (nameStr === "dearness allowance") headId = 2;
+                else if (nameStr === "hra") headId = 3;
+                else if (nameStr === "skill allowance") headId = 4;
+                else if (nameStr === "attendance allowance") headId = 5;
+                else if (nameStr === "food allowance") headId = 6;
+                else if (nameStr === "washing allowance") headId = 7;
+                else if (nameStr === "conveyance") headId = 8;
+                else if (nameStr === "leave allowance") headId = 9;
+                else if (nameStr === "bonus") headId = 10;
+                else if (nameStr === "gratuity") headId = 11;
+                else if (nameStr === "other" || nameStr === "other allowance") headId = 12;
+                else if (nameStr === "uniform allowance") headId = 13;
+                else if (nameStr === "mobile allowance") headId = 14;
+                else if (nameStr === "travel allowance") headId = 15;
+                else if (nameStr === "educational allowance") headId = 16;
+                else if (nameStr === "city compensatory allowance") headId = 17;
+                else if (nameStr === "pf employee") headId = 18;
+                else if (nameStr === "esic employee") headId = 19;
+                else if (nameStr === "pt" || nameStr === "professional tax") headId = 20;
+                else if (nameStr === "lta") headId = 21;
+                else if (nameStr === "variable pay") headId = 22;
+              }
 
-                return {
-                  structure_head_id: headId,
-                  amount: Number(f.value) || 0,
-                  addition: isAdd,
-                  deduction: isDed,
-                };
-              })
+              // If backend sends false for both addition and deduction, default to a category
+              let isAdd = f.is_addition;
+              let isDed = f.is_deduction;
+              if (!isAdd && !isDed) {
+                if (headId === 18 || headId === 19 || headId === 20) {
+                  isDed = true;
+                } else {
+                  isAdd = true;
+                }
+              }
+
+              return {
+                structure_head_id: headId,
+                amount: Number(f.value) || 0,
+                addition: isAdd,
+                deduction: isDed,
+              };
+            })
             : data.components && data.components.length > 0
               ? data.components
               : initialContractState.components,
@@ -1355,7 +1355,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                           }}
                                         >
                                           <option value="" disabled>Select Allowance</option>
-                                          {structureHeaders.map((h) => (
+                                          {structureHeaders
+                                            .filter((h) => h.header_type === "addition")
+                                            .map((h) => (
                                             <option key={h.id} value={h.id}>
                                               {h.name}
                                             </option>
@@ -1469,7 +1471,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                           }}
                                         >
                                           <option value="" disabled>Select Deduction</option>
-                                          {structureHeaders.map((h) => (
+                                          {structureHeaders
+                                            .filter((h) => h.header_type === "deduction")
+                                            .map((h) => (
                                             <option key={h.id} value={h.id}>
                                               {h.name}
                                             </option>
