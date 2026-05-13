@@ -191,7 +191,7 @@ const GeoKHR = () => {
             <DatatableKHR
               data={data}
               columns={columns}
-              selection={true}
+              // selection={true}
               textKey="name"
             />
           )}

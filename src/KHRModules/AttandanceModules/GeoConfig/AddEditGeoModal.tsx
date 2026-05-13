@@ -118,6 +118,51 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
     }
   };
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 100,
+  ) => {
+    const { name, value } = e.target;
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+    clearError(name);
+  };
+
+  // 🔥 NEW: Coordinate/Decimal handler (allows numbers, decimals, and negative sign, blocks 'e')
+  const handleGeoCoordinateChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLimit: number,
+  ) => {
+    const { name, value } = e.target;
+
+    // Allow digits, one decimal point, and an optional leading minus sign
+    let sanitized = value
+      .replace(/[^0-9.-]/g, "") // remove invalid chars
+      .replace(/(?!^)-/g, "") // remove minus sign if not at start
+      .replace(/(\..*?)\..*/g, "$1"); // allow only one decimal
+
+    if (sanitized === "" || sanitized === "-") {
+      setFormData((prev: any) => ({ ...prev, [name]: sanitized }));
+      clearError(name);
+      return;
+    }
+
+    let num = parseFloat(sanitized);
+    // Enforce absolute max limit (e.g. 180 for Longitude, 90 for Latitude)
+    if (Math.abs(num) > maxLimit) {
+      sanitized = (num > 0 ? maxLimit : -maxLimit).toString();
+    }
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitized }));
+    clearError(name);
+  };
+
   const validate = () => {
     let tempErrors: any = {};
     let isValid = true;
@@ -228,13 +273,16 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
                   </label>
                   <input
                     type="text"
+                    name="name"
                     className={getInputClass("name")}
                     placeholder="e.g. Head Office Zone"
                     value={formData.name}
-                    onChange={(e) => {
-                      setFormData({ ...formData, name: e.target.value });
-                      clearError("name");
-                    }}
+                    // onChange={(e) => {
+                    //   setFormData({ ...formData, name: e.target.value });
+                    //   clearError("name");
+                    // }}
+                    onChange={(e) => handleTextChange(e, 100)} // 🔥 Max 100 chars
+                    maxLength={100}
                   />
                   <div className="invalid-feedback">{errors.name}</div>
                 </div>
@@ -246,13 +294,15 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
                     </label>
                     <input
                       type="number"
+                      name="latitude"
                       className={getInputClass("latitude")}
                       placeholder="e.g. 23.0225"
                       value={formData.latitude}
-                      onChange={(e) => {
-                        setFormData({ ...formData, latitude: e.target.value });
-                        clearError("latitude");
-                      }}
+                      // onChange={(e) => {
+                      //   setFormData({ ...formData, latitude: e.target.value });
+                      //   clearError("latitude");
+                      // }}
+                      onChange={(e) => handleGeoCoordinateChange(e, 90)} // Max Lat is 90
                     />
                     <div className="invalid-feedback">{errors.latitude}</div>
                   </div>
@@ -262,13 +312,15 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
                     </label>
                     <input
                       type="number"
+                      name="longitude"
                       className={getInputClass("longitude")}
                       placeholder="e.g. 72.5714"
                       value={formData.longitude}
-                      onChange={(e) => {
-                        setFormData({ ...formData, longitude: e.target.value });
-                        clearError("longitude");
-                      }}
+                      // onChange={(e) => {
+                      //   setFormData({ ...formData, longitude: e.target.value });
+                      //   clearError("longitude");
+                      // }}
+                      onChange={(e) => handleGeoCoordinateChange(e, 180)} // Max Long is 180
                     />
                     <div className="invalid-feedback">{errors.longitude}</div>
                   </div>
@@ -278,13 +330,15 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
                     </label>
                     <input
                       type="number"
+                      name="radius_km"
                       className={getInputClass("radius_km")}
                       placeholder="e.g. 0.5"
                       value={formData.radius_km}
-                      onChange={(e) => {
-                        setFormData({ ...formData, radius_km: e.target.value });
-                        clearError("radius_km");
-                      }}
+                      // onChange={(e) => {
+                      //   setFormData({ ...formData, radius_km: e.target.value });
+                      //   clearError("radius_km");
+                      // }}
+                      onChange={(e) => handleGeoCoordinateChange(e, 9999)} // Arbitrary max radius
                     />
                     <div className="invalid-feedback">{errors.radius_km}</div>
                   </div>
@@ -324,6 +378,29 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
                       {formData.employees_selection.length} Selected
                     </span>
                   </div>
+
+                  {/* Selected Employees Chips */}
+                  {formData.employees_selection.length > 0 && (
+                    <div className="d-flex flex-wrap gap-1 mb-2 p-2 border rounded bg-light" style={{ maxHeight: '110px', overflowY: 'auto' }}>
+                      {formData.employees_selection.map((emp: any) => (
+                        <span key={`selected-${emp.id}`} className="badge bg-soft-primary text-primary border border-primary d-flex align-items-center px-2 py-1 fw-medium" style={{ fontSize: "11px" }}>
+                          {emp.name || emp.label || emp.employee_name || `Employee #${emp.id}`}
+                          <i 
+                            className="ti ti-x ms-1 cursor-pointer text-danger" 
+                            style={{ fontSize: '14px' }}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const current = [...formData.employees_selection];
+                              setFormData({
+                                ...formData,
+                                employees_selection: current.filter((i: any) => i.id !== emp.id),
+                              });
+                            }}
+                          ></i>
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Search & Filter Bar */}
                   <div className="row g-2 mb-2">

@@ -166,6 +166,48 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
     };
   }, []);
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    errorKey: string,
+    maxLength: number = 50,
+  ) => {
+    const value = e.target.value;
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    if (sanitizedValue.length > maxLength) return;
+
+    setter(sanitizedValue);
+
+    // Clear the specific error
+    if ((touched as any)[errorKey]) {
+      setTouched((prev) => ({ ...prev, [errorKey]: false }));
+    }
+  };
+
+  // 🔥 NEW: Numeric boundary handler (prevents 'e', '-', '.' and enforces max limit)
+  const handleNumericChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string | number>>,
+    maxLimit: number,
+  ) => {
+    const value = e.target.value;
+    let sanitized = value.replace(/\D/g, "");
+
+    if (sanitized === "") {
+      e.target.value = "";
+      setter("");
+      return;
+    }
+
+    let num = parseInt(sanitized, 10);
+    if (num > maxLimit) num = maxLimit;
+
+    e.target.value = num.toString();
+    setter(num);
+  };
+
   // --- SAVE HANDLER ---
   const handleSaveLeaveType = async () => {
     setTouched({
@@ -270,8 +312,12 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                     type="text"
                     className={`form-control ${getValidationClass(touched.name, leaveName)}`}
                     value={leaveName}
-                    onChange={(e) => setLeaveName(e.target.value)}
+                    // onChange={(e) => setLeaveName(e.target.value)}
+                    onChange={(e) =>
+                      handleTextChange(e, setLeaveName, "name", 50)
+                    }
                     onBlur={() => setTouched({ ...touched, name: true })}
+                    maxLength={50}
                     placeholder="Enter leave type name"
                   />
                   {touched.name && !leaveName && (
@@ -290,8 +336,12 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                     type="text"
                     className={`form-control ${getValidationClass(touched.code, leaveTypeCode)}`}
                     value={leaveTypeCode}
-                    onChange={(e) => setLeaveTypeCode(e.target.value)}
+                    // onChange={(e) => setLeaveTypeCode(e.target.value)}
+                    onChange={(e) =>
+                      handleTextChange(e, setLeaveTypeCode, "code", 20)
+                    }
                     onBlur={() => setTouched({ ...touched, code: true })}
+                    maxLength={10}
                     placeholder="e.g. SL, CL, PL"
                   />
                   {touched.code && !leaveTypeCode && (
@@ -357,7 +407,10 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                   type="number"
                   className="form-control"
                   value={eligibleAfterDays}
-                  onChange={(e) => setEligibleAfterDays(e.target.value)}
+                  // onChange={(e) => setEligibleAfterDays(e.target.value)}
+                  onChange={(e) =>
+                    handleNumericChange(e, setEligibleAfterDays, 365)
+                  }
                   placeholder="Enter days"
                 />
               </div>

@@ -79,6 +79,27 @@ const AddEditLeaveRequestModal: React.FC<Props> = ({ onSuccess, data }) => {
     }
   }, [data]);
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+    maxLength: number = 255,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      clearError(name);
+    }
+  };
+
   const resetForm = () => {
     setFormData(initialFormState);
     setErrors({});
@@ -331,13 +352,22 @@ const AddEditLeaveRequestModal: React.FC<Props> = ({ onSuccess, data }) => {
                     <label className="form-label fs-13 fw-bold">Reason</label>
                     <textarea
                       className="form-control"
+                      name="reason"
                       rows={3}
                       value={formData.reason}
-                      onChange={(e) =>
-                        setFormData({ ...formData, reason: e.target.value })
-                      }
+                      // onChange={(e) =>
+                      //   setFormData({ ...formData, reason: e.target.value })
+                      // }
+                      onChange={(e) => handleTextChange(e, 255)} // 🔥 Use boundary handler
+                      maxLength={255} // HTML Fallback
                       placeholder="Optional description..."
                     />
+                  </div>
+                  {/* Character count helper */}
+                  <div className="d-flex justify-content-end mt-1">
+                    <small className="text-muted" style={{ fontSize: "10px" }}>
+                      {(formData.reason || "").length}/255
+                    </small>
                   </div>
                 </div>
 

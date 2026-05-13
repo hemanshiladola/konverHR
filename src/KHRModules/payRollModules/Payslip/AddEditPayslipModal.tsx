@@ -57,9 +57,9 @@ const AddEditPayslipModal: React.FC<Props> = ({
             : [],
           contracts: Array.isArray(c)
             ? c.map((i: any) => ({
-              value: i.contract_id || i.id,
-              label: i.name,
-            }))
+                value: i.contract_id || i.id,
+                label: i.name,
+              }))
             : [],
         });
       } catch (error) {
@@ -110,6 +110,31 @@ const AddEditPayslipModal: React.FC<Props> = ({
   //   }));
   // };
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 100,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear specific field error the moment the user types
+    if (errors[name]) {
+      setErrors((prev: any) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
   const validate = () => {
     const newErrors: any = {};
     if (!formData.employee_id) newErrors.employee_id = "Employee is required.";
@@ -123,7 +148,8 @@ const AddEditPayslipModal: React.FC<Props> = ({
     const employeeName = opt?.label || "";
     const month = dayjs(formData.date_from).format("MMM YYYY");
     const empContractId = opt?.raw?.contract_id;
-    const contractIdToSet = empContractId && empContractId !== false ? String(empContractId) : "";
+    const contractIdToSet =
+      empContractId && empContractId !== false ? String(empContractId) : "";
 
     setFormData((prev: any) => ({
       ...prev,
@@ -299,7 +325,8 @@ const AddEditPayslipModal: React.FC<Props> = ({
                       disabled={currentStep !== "create"}
                       options={dropdowns.employees}
                       value={dropdowns.employees.find(
-                        (o: any) => String(o.value) === String(formData.employee_id),
+                        (o: any) =>
+                          String(o.value) === String(formData.employee_id),
                       )}
                       onChange={handleEmployeeChange}
                     />
@@ -313,10 +340,13 @@ const AddEditPayslipModal: React.FC<Props> = ({
                 <div className="col-md-6">
                   <label className="form-label fs-13 fw-bold">Contract</label>
                   <CommonSelect
-                    disabled={currentStep !== "create" || !!formData.employee_id}
+                    disabled={
+                      currentStep !== "create" || !!formData.employee_id
+                    }
                     options={dropdowns.contracts}
                     value={dropdowns.contracts.find(
-                      (o: any) => String(o.value) === String(formData.contract_id),
+                      (o: any) =>
+                        String(o.value) === String(formData.contract_id),
                     )}
                     onChange={(opt: any) =>
                       updateField("contract_id", opt?.value)
@@ -333,9 +363,12 @@ const AddEditPayslipModal: React.FC<Props> = ({
                   </label>
                   <input
                     disabled={currentStep !== "create"}
+                    name="name"
                     className={`form-control ${isSubmitted && errors.name ? "is-invalid border-danger shadow-sm" : ""}`}
                     value={formData.name}
-                    onChange={(e) => updateField("name", e.target.value)}
+                    // onChange={(e) => updateField("name", e.target.value)}
+                    onChange={(e) => handleTextChange(e, 100)} // 🔥 Use the new text handler
+                    maxLength={100}
                   />
                   {isSubmitted && errors.name && (
                     <div className="invalid-feedback d-block fw-medium mt-1">

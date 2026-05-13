@@ -363,17 +363,18 @@ export const Employeeregularization = createAsyncThunk(
         return result.data;
       } else {
         console.log(result, "uiui");
-        return thunkAPI.rejectWithValue({ error: result.data.errorMessage });
+        return thunkAPI.rejectWithValue({ error: "Unknown API Error" });
       }
     } catch (error: any) {
       console.log(error, "uiui");
-      console.error(
-        "try catch [ AdminWorkingHours ] error.message >>",
-        error?.message,
-      );
+      console.error("try catch [ Employeeregularization ] error >>", error);
       return thunkAPI.rejectWithValue({
+        // 🔥 FIX 2: Check for 'message' since your API uses 'message' instead of 'errorMessage'
         error:
-          error?.response?.data?.errorMessage || error?.message || "API error",
+          error?.response?.data?.message ||
+          error?.response?.data?.errorMessage ||
+          error?.message ||
+          "API error",
       });
     }
   },

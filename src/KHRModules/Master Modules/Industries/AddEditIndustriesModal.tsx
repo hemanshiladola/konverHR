@@ -36,6 +36,27 @@ const AddEditIndustriesModal: React.FC<Props> = ({
     }
   }, [data]);
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      setErrors((prev: any) => ({ ...prev, [name]: "" }));
+    }
+  };
+
   const resetForm = () => {
     setFormData(initialFormState);
     setErrors({});
@@ -140,7 +161,8 @@ const AddEditIndustriesModal: React.FC<Props> = ({
                     isSubmitted ? (errors.name ? "is-invalid" : "is-valid") : ""
                   }`}
                   value={formData.name}
-                  onChange={handleInputChange}
+                  onChange={(e) => handleTextChange(e, 50)} // 🔥 Max 50 chars
+                  maxLength={50}
                   placeholder="e.g. IT Services"
                 />
                 {isSubmitted && errors.name && (
@@ -158,7 +180,8 @@ const AddEditIndustriesModal: React.FC<Props> = ({
                   name="full_name"
                   className="form-control"
                   value={formData.full_name}
-                  onChange={handleInputChange}
+                  onChange={(e) => handleTextChange(e, 100)} // 🔥 Max 100 chars
+                  maxLength={100}
                   placeholder="e.g. Information Technology Services"
                 />
               </div>

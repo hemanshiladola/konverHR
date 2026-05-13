@@ -123,7 +123,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   });
 
   // ? Refs to handle stale closures in global event listeners
-  const latestAttemptClose = useRef<() => void>(() => {});
+  const latestAttemptClose = useRef<() => void>(() => { });
   const latestIsDirty = useRef<boolean>(false);
 
   useEffect(() => {
@@ -927,6 +927,13 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       if (!formData.date_of_marriage)
         tempErrors.date_of_marriage = "Marriage date is required.";
     }
+    if (!formData.work_phone || !/^[0-9]{10}$/.test(formData.work_phone))
+      tempErrors.work_phone = "Valid 10-digit mobile required.";
+    if (
+      !formData.private_email ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.private_email)
+    )
+      tempErrors.private_email = "Valid email is required.";
     setErrors((prev: any) => ({ ...prev, ...tempErrors }));
     return Object.keys(tempErrors).length === 0;
   };
@@ -943,13 +950,6 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
 
   const validateEmergencyTab = () => {
     let tempErrors: any = {};
-    if (!formData.work_phone || !/^[0-9]{10}$/.test(formData.work_phone))
-      tempErrors.work_phone = "Valid 10-digit mobile required.";
-    if (
-      !formData.private_email ||
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.private_email)
-    )
-      tempErrors.private_email = "Valid email is required.";
     if (!formData.emergency_contact_name?.trim())
       tempErrors.emergency_contact_name = "Emergency Contact Name required.";
     if (!formData.emergency_contact_relation?.trim())
@@ -1055,11 +1055,11 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       "blood_group",
       "spouse_name",
       "date_of_marriage",
+      "work_phone",
+      "private_email",
     ],
     address: ["present_address", "permanent_address"],
     emergency: [
-      "work_phone",
-      "private_email",
       "emergency_contact_name",
       "emergency_contact_relation",
       "emergency_contact_mobile",
@@ -2309,25 +2309,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {/* 1. Show EYE ICON if the value is a URL string from the backend */}
                                         {typeof formData.driving_license ===
                                           "string" && (
-                                          <a
-                                            href={formData.driving_license}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
-                                            title="View Current License"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.driving_license}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                              title="View Current License"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
 
                                         {/* 2. Show CHECKMARK if a new File object has been selected */}
                                         {formData.driving_license instanceof
                                           File && (
-                                          <i
-                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
-                                            title="New file selected"
-                                          ></i>
-                                        )}
+                                            <i
+                                              className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                              title="New file selected"
+                                            ></i>
+                                          )}
                                       </div>
                                     )}
                                   </div>
@@ -2383,34 +2383,34 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       // Find the matching option to get the correct label, fallback to capitalization or "Select"
                                       label: formData.marital
                                         ? [
-                                            {
-                                              value: "single",
-                                              label: "Single",
-                                            },
-                                            {
-                                              value: "married",
-                                              label: "Married",
-                                            },
-                                            {
-                                              value: "cohabitant",
-                                              label: "Legal Cohabitant",
-                                            },
-                                            {
-                                              value: "widower",
-                                              label: "Widower",
-                                            },
-                                            {
-                                              value: "divorced",
-                                              label: "Divorced",
-                                            },
-                                          ].find(
-                                            (opt) =>
-                                              opt.value === formData.marital,
-                                          )?.label ||
-                                          formData.marital
-                                            .charAt(0)
-                                            .toUpperCase() +
-                                            formData.marital.slice(1)
+                                          {
+                                            value: "single",
+                                            label: "Single",
+                                          },
+                                          {
+                                            value: "married",
+                                            label: "Married",
+                                          },
+                                          {
+                                            value: "cohabitant",
+                                            label: "Legal Cohabitant",
+                                          },
+                                          {
+                                            value: "widower",
+                                            label: "Widower",
+                                          },
+                                          {
+                                            value: "divorced",
+                                            label: "Divorced",
+                                          },
+                                        ].find(
+                                          (opt) =>
+                                            opt.value === formData.marital,
+                                        )?.label ||
+                                        formData.marital
+                                          .charAt(0)
+                                          .toUpperCase() +
+                                        formData.marital.slice(1)
                                         : "Select",
                                     }}
                                     onChange={(opt) => {
@@ -2544,9 +2544,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       defaultValue={
                                         formData.blood_group
                                           ? {
-                                              value: formData.blood_group,
-                                              label: formData.blood_group,
-                                            }
+                                            value: formData.blood_group,
+                                            label: formData.blood_group,
+                                          }
                                           : undefined
                                       }
                                       onChange={(opt) => {
@@ -2615,10 +2615,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     defaultValue={
                                       formData.category
                                         ? {
-                                            value: formData.category,
-                                            label:
-                                              formData.category.toUpperCase(),
-                                          }
+                                          value: formData.category,
+                                          label:
+                                            formData.category.toUpperCase(),
+                                        }
                                         : undefined
                                     }
                                     onChange={(opt) =>
@@ -2627,6 +2627,103 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       })
                                     }
                                   />
+                                </div>
+                                <div className="col-12">
+                                  <hr className="my-1 opacity-25" />
+                                </div>
+                                <div className="col-md-4">
+                                  <label className="form-label fs-13">
+                                    Primary Mobile{" "}
+                                    <span className="text-danger">*</span>
+                                  </label>
+                                  <div className="input-group">
+                                    <span className="input-group-text fs-12 bg-light">
+                                      +91
+                                    </span>
+                                    <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
+                                      type="text"
+                                      className={`form-control ${isSubmitted ? (errors.work_phone ? "is-invalid" : formData.work_phone ? "is-valid" : "") : ""}`}
+                                      maxLength={10}
+                                      value={formData.work_phone}
+                                      onChange={(e) => {
+                                        updateFormData({
+                                          work_phone: e.target.value.replace(
+                                            /\D/g,
+                                            "",
+                                          ),
+                                        });
+                                        if (errors.work_phone)
+                                          setErrors({
+                                            ...errors,
+                                            work_phone: "",
+                                          });
+                                      }}
+                                    />
+                                  </div>
+                                  {isSubmitted && errors.work_phone && (
+                                    <div className="text-danger fs-11 mt-1">
+                                      {errors.work_phone}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="col-md-4">
+                                  <label className="form-label fs-13">
+                                    Personal Email{" "}
+                                    <span className="text-danger">*</span>
+                                  </label>
+                                  <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
+                                    type="email"
+                                    className={`form-control ${isSubmitted ? (errors.private_email ? "is-invalid" : formData.private_email ? "is-valid" : "") : ""}`}
+                                    maxLength={100}
+                                    placeholder="example@gmail.com"
+                                    value={formData.private_email}
+                                    onChange={(e) => {
+                                      updateFormData({
+                                        private_email: e.target.value,
+                                      });
+                                      if (errors.private_email)
+                                        setErrors({
+                                          ...errors,
+                                          private_email: "",
+                                        });
+                                    }}
+                                  />
+                                  {isSubmitted && errors.private_email && (
+                                    <div className="invalid-feedback d-block">
+                                      {errors.private_email}
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="col-md-4">
+                                  <label className="form-label fs-13">
+                                    Secondary Mobile
+                                  </label>
+                                  <div className="input-group">
+                                    <span className="input-group-text fs-12 bg-light">
+                                      +91
+                                    </span>
+                                    <input
+                                      disabled={isViewOnly || isSubmitting}
+                                      readOnly={isViewOnly}
+                                      type="text"
+                                      className="form-control"
+                                      maxLength={10}
+                                      placeholder="Mobile No."
+                                      value={formData.mobile_phone}
+                                      onChange={(e) =>
+                                        updateFormData({
+                                          mobile_phone: e.target.value.replace(
+                                            /\D/g,
+                                            "",
+                                          ),
+                                        })
+                                      }
+                                    />
+                                  </div>
                                 </div>
                                 <div className="col-12">
                                   <hr className="my-1 opacity-25" />
@@ -2714,15 +2811,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         )}
                                         {typeof formData.cv_file ===
                                           "string" && (
-                                          <a
-                                            href={formData.cv_file}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-2"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.cv_file}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-2"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
                                       </div>
                                     )}
                                   </div>
@@ -3009,103 +3106,6 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                 </div>
                               </div>
                               <div className="row g-4">
-                                <div className="col-md-4">
-                                  <label className="form-label fs-13">
-                                    Primary Mobile{" "}
-                                    <span className="text-danger">*</span>
-                                  </label>
-                                  <div className="input-group">
-                                    <span className="input-group-text fs-12 bg-light">
-                                      +91
-                                    </span>
-                                    <input
-                                      disabled={isViewOnly || isSubmitting}
-                                      readOnly={isViewOnly}
-                                      type="text"
-                                      className={`form-control ${isSubmitted ? (errors.work_phone ? "is-invalid" : formData.work_phone ? "is-valid" : "") : ""}`}
-                                      maxLength={10}
-                                      value={formData.work_phone}
-                                      onChange={(e) => {
-                                        updateFormData({
-                                          work_phone: e.target.value.replace(
-                                            /\D/g,
-                                            "",
-                                          ),
-                                        });
-                                        if (errors.work_phone)
-                                          setErrors({
-                                            ...errors,
-                                            work_phone: "",
-                                          });
-                                      }}
-                                    />
-                                  </div>
-                                  {isSubmitted && errors.work_phone && (
-                                    <div className="text-danger fs-11 mt-1">
-                                      {errors.work_phone}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="col-md-4">
-                                  <label className="form-label fs-13">
-                                    Personal Email{" "}
-                                    <span className="text-danger">*</span>
-                                  </label>
-                                  <input
-                                    disabled={isViewOnly || isSubmitting}
-                                    readOnly={isViewOnly}
-                                    type="email"
-                                    className={`form-control ${isSubmitted ? (errors.private_email ? "is-invalid" : formData.private_email ? "is-valid" : "") : ""}`}
-                                    maxLength={100}
-                                    placeholder="example@gmail.com"
-                                    value={formData.private_email}
-                                    onChange={(e) => {
-                                      updateFormData({
-                                        private_email: e.target.value,
-                                      });
-                                      if (errors.private_email)
-                                        setErrors({
-                                          ...errors,
-                                          private_email: "",
-                                        });
-                                    }}
-                                  />
-                                  {isSubmitted && errors.private_email && (
-                                    <div className="invalid-feedback d-block">
-                                      {errors.private_email}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="col-md-4">
-                                  <label className="form-label fs-13">
-                                    Secondary Mobile
-                                  </label>
-                                  <div className="input-group">
-                                    <span className="input-group-text fs-12 bg-light">
-                                      +91
-                                    </span>
-                                    <input
-                                      disabled={isViewOnly || isSubmitting}
-                                      readOnly={isViewOnly}
-                                      type="text"
-                                      className="form-control"
-                                      maxLength={10}
-                                      placeholder="Mobile No."
-                                      value={formData.mobile_phone}
-                                      onChange={(e) =>
-                                        updateFormData({
-                                          mobile_phone: e.target.value.replace(
-                                            /\D/g,
-                                            "",
-                                          ),
-                                        })
-                                      }
-                                    />
-                                  </div>
-                                </div>
-                                <div className="col-12">
-                                  <hr className="my-1 opacity-25" />
-                                </div>
                                 <div className="col-md-4">
                                   <label className="form-label fs-13">
                                     Emergency Contact Name{" "}
@@ -3544,10 +3544,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     defaultValue={
                                       formData.status
                                         ? {
-                                            value: formData.status,
-                                            label:
-                                              formData.status.toUpperCase(),
-                                          }
+                                          value: formData.status,
+                                          label:
+                                            formData.status.toUpperCase(),
+                                        }
                                         : undefined
                                     }
                                     onChange={(opt) =>
@@ -3813,25 +3813,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {/* 1. Show EYE ICON if the value is an existing URL string */}
                                         {typeof formData.upload_passbook ===
                                           "string" && (
-                                          <a
-                                            href={formData.upload_passbook}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
-                                            title="View Current Passbook"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.upload_passbook}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                              title="View Current Passbook"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
 
                                         {/* 2. Show CHECKMARK if a new File object has been selected */}
                                         {formData.upload_passbook instanceof
                                           File && (
-                                          <i
-                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
-                                            title="New file selected"
-                                          ></i>
-                                        )}
+                                            <i
+                                              className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                              title="New file selected"
+                                            ></i>
+                                          )}
                                       </div>
                                     )}
                                     <div className="text-info fs-11 lh-sm">
@@ -3897,15 +3897,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       defaultValue={
                                         formData.type_of_sepration
                                           ? {
-                                              value: formData.type_of_sepration,
-                                              label:
-                                                formData.type_of_sepration
-                                                  .charAt(0)
-                                                  .toUpperCase() +
-                                                formData.type_of_sepration.slice(
-                                                  1,
-                                                ),
-                                            }
+                                            value: formData.type_of_sepration,
+                                            label:
+                                              formData.type_of_sepration
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                              formData.type_of_sepration.slice(
+                                                1,
+                                              ),
+                                          }
                                           : undefined
                                       }
                                       onChange={(opt) => {
@@ -4241,7 +4241,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               key={`user-select-${index}-${line.group_id}-${(groupUserOptions[String(line.group_id)] || []).length}`}
                                               options={
                                                 groupUserOptions[
-                                                  String(line.group_id)
+                                                String(line.group_id)
                                                 ] || []
                                               }
                                               placeholder={
@@ -4251,7 +4251,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               }
                                               defaultValue={(
                                                 groupUserOptions[
-                                                  String(line.group_id)
+                                                String(line.group_id)
                                                 ] || []
                                               ).find(
                                                 (u) =>

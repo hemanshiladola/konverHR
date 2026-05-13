@@ -71,6 +71,47 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
     }
   };
 
+  // 🔥 NEW: Standard text handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
+    const { name, value } = e.target;
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+
+    if (errors[name]) {
+      setErrors((prev: any) => ({ ...prev, [name]: null }));
+    }
+  };
+
+  // 🔥 NEW: Code specific handler (uppercase, underscores, boundaries)
+  const handleCodeChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 20,
+  ) => {
+    const { name, value } = e.target;
+
+    // Remove leading spaces, uppercase, and replace inner spaces with underscore
+    const sanitizedValue = value
+      .replace(/^\s+/, "")
+      .toUpperCase()
+      .replace(/\s/g, "_");
+
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+
+    if (errors[name]) {
+      setErrors((prev: any) => ({ ...prev, [name]: null }));
+    }
+  };
+
   const validate = () => {
     let tempErrors: any = {};
     if (!formData.name.trim()) tempErrors.name = "Contract Name is required";
@@ -168,9 +209,12 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
                   </label>
                   <input
                     type="text"
+                    name="name"
                     className={getInputClass("name")}
                     value={formData.name}
-                    onChange={(e) => handleChange("name", e.target.value)}
+                    // onChange={(e) => handleTextChange(e, 50)}
+                    onChange={(e) => handleTextChange(e, 50)} // 🔥 Max 50 chars
+                    maxLength={50}
                     placeholder="e.g. Full-Time Contract"
                   />
                   <div className="invalid-feedback">{errors.name}</div>
@@ -183,13 +227,16 @@ const AddEditHRContractTypeModal: React.FC<Props> = ({ onSuccess, data }) => {
                   <input
                     type="text"
                     className={getInputClass("code")}
+                    name="code"
                     value={formData.code}
-                    onChange={(e) =>
-                      handleChange(
-                        "code",
-                        e.target.value.toUpperCase().replace(/\s/g, "_"),
-                      )
-                    }
+                    // onChange={(e) =>
+                    //   handleChange(
+                    //     "code",
+                    //     e.target.value.toUpperCase().replace(/\s/g, "_"),
+                    //   )
+                    // }
+                    onChange={(e) => handleCodeChange(e, 20)} // 🔥 Max 20 chars
+                    maxLength={20}
                     placeholder="e.g. FT_CONTRACT"
                   />
                   <small className="text-muted fs-11">

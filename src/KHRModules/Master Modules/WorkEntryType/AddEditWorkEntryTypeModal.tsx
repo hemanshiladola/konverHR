@@ -51,6 +51,27 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
     }
   }, [data]);
 
+  // 🔥 NEW: Specific handler for text boundaries (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
+    const { name, value } = e.target;
+
+    // Prevent leading spaces
+    if (value.startsWith(" ")) return;
+
+    // Enforce maximum character limit
+    if (value.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
+
+    // Clear Error
+    if (errors[name]) {
+      setErrors((prev: any) => ({ ...prev, [name]: null }));
+    }
+  };
+
   // 2. BOOTSTRAP EVENT LISTENER: Force clear on close
   useEffect(() => {
     const modalElement = document.getElementById("add_work_entry_type");
@@ -206,7 +227,8 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                     name="name"
                     className={getInputClass("name")}
                     value={formData.name}
-                    onChange={handleInputChange}
+                    onChange={(e) => handleTextChange(e, 50)} // 🔥 specific text handler
+                    maxLength={50}
                     placeholder="e.g. Regular Work"
                   />
                   {isSubmitted && errors.name && (
@@ -215,6 +237,9 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                       {errors.name}
                     </div>
                   )}
+                  {/* <small className="text-muted" style={{ fontSize: "10px" }}>
+                    {(formData.name || "").length}/50
+                  </small> */}
                 </div>
 
                 {/* Code */}
@@ -227,7 +252,8 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                     name="code"
                     className={getInputClass("code")}
                     value={formData.code}
-                    onChange={handleInputChange}
+                    onChange={(e) => handleTextChange(e, 50)} // 🔥 specific text handler
+                    maxLength={50}
                     placeholder="e.g. REG"
                   />
                   {isSubmitted && errors.code && (
@@ -248,7 +274,8 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                     name="external_code"
                     className={getInputClass("external_code")}
                     value={formData.external_code}
-                    onChange={handleInputChange}
+                    onChange={(e) => handleTextChange(e, 50)} // 🔥 specific text handler
+                    maxLength={50}
                     placeholder="e.g. EXT_001"
                   />
                   {isSubmitted && errors.external_code && (

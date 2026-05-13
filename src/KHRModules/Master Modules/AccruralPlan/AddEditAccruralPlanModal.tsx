@@ -94,6 +94,31 @@ const AddEditAccruralPlanModal: React.FC<Props> = ({
     setIsSubmitting(false);
   };
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      setErrors((prev: any) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -196,7 +221,8 @@ const AddEditAccruralPlanModal: React.FC<Props> = ({
                       : ""
                   }`}
                   value={formData.name}
-                  onChange={handleInputChange}
+                  onChange={(e) => handleTextChange(e, 50)} // 🔥 Use the new boundary handler
+                  maxLength={50}
                   placeholder="e.g. Annual Leave Plan 2025"
                 />
                 {isSubmitted && errors.name && (

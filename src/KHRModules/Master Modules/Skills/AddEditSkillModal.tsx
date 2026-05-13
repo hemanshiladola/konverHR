@@ -79,6 +79,29 @@ const AddEditSkillModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
     setSkillNames(skillNames.filter((_, i) => i !== index));
   };
 
+  // 🔥 NEW: Reusable text boundary handler
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    errorKey: string,
+    maxLength: number = 50,
+  ) => {
+    const value = e.target.value;
+
+    // Prevent leading spaces
+    if (value.startsWith(" ")) return;
+
+    // Enforce max length
+    if (value.length > maxLength) return;
+
+    setter(value);
+
+    // Clear error
+    if (errors[errorKey]) {
+      setErrors((prev: any) => ({ ...prev, [errorKey]: null }));
+    }
+  };
+
   // --- 4. Validation & Submit ---
   const validate = () => {
     let tempErrors: any = {};
@@ -166,11 +189,15 @@ const AddEditSkillModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
                         : ""
                     }`}
                     value={skillTypeName}
-                    onChange={(e) => {
-                      setSkillTypeName(e.target.value);
-                      if (errors.skillTypeName)
-                        setErrors({ ...errors, skillTypeName: "" });
-                    }}
+                    // onChange={(e) => {
+                    //   setSkillTypeName(e.target.value);
+                    //   if (errors.skillTypeName)
+                    //     setErrors({ ...errors, skillTypeName: "" });
+                    // }}
+                    onChange={(e) =>
+                      handleTextChange(e, setSkillTypeName, "skillTypeName", 50)
+                    }
+                    maxLength={50}
                     placeholder="e.g. Technical HR, Design Tools"
                   />
                   {isSubmitted && errors.skillTypeName && (
@@ -210,7 +237,16 @@ const AddEditSkillModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
                         isSubmitted && errors.skillNames ? "is-invalid" : ""
                       }`}
                       value={currentSkillInput}
-                      onChange={(e) => setCurrentSkillInput(e.target.value)}
+                      // onChange={(e) => setCurrentSkillInput(e.target.value)}
+                      onChange={(e) =>
+                        handleTextChange(
+                          e,
+                          setCurrentSkillInput,
+                          "skillNames",
+                          50,
+                        )
+                      }
+                      maxLength={50}
                       onKeyDown={handleKeyDown}
                       placeholder="Type skill name and press Enter (e.g. React)"
                     />

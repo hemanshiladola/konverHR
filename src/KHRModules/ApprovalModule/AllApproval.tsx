@@ -104,6 +104,27 @@ const AllApproval = () => {
     fetchData();
   }, []);
 
+  // 🔥 NEW: Text boundary handler for reject remarks (prevents leading spaces & enforces max length)
+  const handleRejectRemarksChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+    maxLength: number = 255,
+  ) => {
+    const value = e.target.value;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setRejectRemarks(sanitizedValue);
+
+    // Instantly clear the error state when user types valid text
+    if (rejectError) {
+      setRejectError(null);
+    }
+  };
+
   // --- Filter Logic ---
   const filteredData =
     activeTab === "All"
@@ -410,13 +431,15 @@ const AllApproval = () => {
                   rows={3}
                   placeholder="Enter remarks..."
                   value={rejectRemarks}
-                  onChange={(e) => {
-                    setRejectRemarks(e.target.value);
-                    // 🔥 Instantly clear the error state when user types
-                    if (rejectError) {
-                      setRejectError(null);
-                    }
-                  }}
+                  // onChange={(e) => {
+                  //   setRejectRemarks(e.target.value);
+                  //   // 🔥 Instantly clear the error state when user types
+                  //   if (rejectError) {
+                  //     setRejectError(null);
+                  //   }
+                  // }}
+                  onChange={(e) => handleRejectRemarksChange(e, 255)} // 🔥 Use boundary handler
+                  maxLength={255} // 🔥 HTML Fallback
                 ></textarea>
                 {/* 🔥 Validation Error Message */}
                 {isRejectSubmitted && rejectError && (
@@ -424,6 +447,9 @@ const AllApproval = () => {
                     {rejectError}
                   </div>
                 )}
+                <small className="text-muted" style={{ fontSize: "10px" }}>
+                  {(rejectRemarks || "").length}/255
+                </small>
               </div>
               <div className="modal-footer border-top-0">
                 <button

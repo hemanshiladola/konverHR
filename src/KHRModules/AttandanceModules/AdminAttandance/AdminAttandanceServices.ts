@@ -163,9 +163,13 @@ export const exportAttendanceToPdf = async (
     const result = response.data;
 
     // PDF response uses `success: true`, `file_base64`, and `file_name`
-    if ((result.success === true || result.status === "success") && result.data) {
+    if (
+      (result.success === true || result.status === "success") &&
+      result.data
+    ) {
       const fileBase64 = result.data.file_base64 || result.data.file;
-      const fileName = result.data.file_name || result.data.filename || "Attendance.pdf";
+      const fileName =
+        result.data.file_name || result.data.filename || "Attendance.pdf";
 
       if (fileBase64 && fileName) {
         downloadBase64File(fileBase64, fileName, "application/pdf");

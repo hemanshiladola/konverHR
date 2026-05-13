@@ -300,7 +300,7 @@ const AttendancePolicy = () => {
                 <DatatableKHR
                   data={group.items}
                   columns={columns}
-                  selection={true}
+                  // selection={true}
                   textKey="name"
                 />
               </div>

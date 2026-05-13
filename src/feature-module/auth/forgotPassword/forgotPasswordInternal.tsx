@@ -16,6 +16,22 @@ const ForgotPasswordInternal = () => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
+  // 🔥 NEW: Email boundary handler (removes all spaces & enforces max length)
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Aggressively remove ALL spaces (emails cannot contain spaces)
+    const sanitizedValue = e.target.value.replace(/\s/g, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > 100) return;
+
+    setEmail(sanitizedValue);
+
+    // Clear validation error if it exists
+    if (errors.email) {
+      setErrors({});
+    }
+  };
+
   const handleSendMail = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
@@ -126,7 +142,8 @@ const ForgotPasswordInternal = () => {
                               type="email"
                               className={`form-control border-start-0 ps-0 ${errors.email ? "is-invalid" : ""}`}
                               value={email}
-                              onChange={(e) => setEmail(e.target.value)}
+                              onChange={handleEmailChange} // 🔥 Use the specific email handler
+                              maxLength={100} // 🔥 HTML Fallback
                               placeholder="e.g. adrian@konverthr.com"
                             />
                           </div>

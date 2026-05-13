@@ -55,9 +55,31 @@ const AddEditRegCategory: React.FC<Props> = ({ onSuccess, data, onClose }) => {
     setIsSubmitting(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const { name, value } = e.target;
+  //   setFormData({ ...formData, [name]: value });
+
+  //   if (errors[name]) {
+  //     const newErrors = { ...errors };
+  //     delete newErrors[name];
+  //     setErrors(newErrors);
+  //   }
+  // };
+
+  // 🔥 NEW: Specific handler for text boundaries (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+
+    // Prevent leading spaces
+    if (value.startsWith(" ")) return;
+
+    // Enforce maximum character limit
+    if (value.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
 
     if (errors[name]) {
       const newErrors = { ...errors };
@@ -142,7 +164,8 @@ const AddEditRegCategory: React.FC<Props> = ({ onSuccess, data, onClose }) => {
                   }`}
                   placeholder="e.g. Late Coming, Work From Home"
                   value={formData.type}
-                  onChange={handleInputChange}
+                  onChange={(e) => handleTextChange(e, 50)}
+                  maxLength={50} // HTML fallback boundary
                 />
                 {isSubmitted && errors.type && (
                   <div className="invalid-feedback fs-11">{errors.type}</div>

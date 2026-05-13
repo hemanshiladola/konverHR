@@ -94,12 +94,50 @@ const AddEditJobPositionModal: React.FC<Props> = ({
     fetchDropdowns();
   }, []);
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 100,
+  ) => {
+    const { name, value } = e.target;
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+    if (errors[name]) {
+      setErrors((prev: any) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  // 🔥 NEW: Numeric boundary handler (prevents 'e', '-', '.' and enforces max limit)
+  const handleNumericChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLimit: number,
+  ) => {
+    const { name, value } = e.target;
+    let sanitized = value.replace(/\D/g, "");
+
+    if (sanitized === "") {
+      e.target.value = "";
+      setFormData((prev: any) => ({ ...prev, [name]: "" }));
+      return;
+    }
+
+    let num = parseInt(sanitized, 10);
+    if (num > maxLimit) num = maxLimit;
+
+    e.target.value = num.toString();
+    setFormData((prev: any) => ({ ...prev, [name]: num }));
+  };
+
   // --- 2. Populate Data on Edit ---
   useEffect(() => {
     if (data) {
       // Helper to safely extract ID from various formats
       const getVal = (val: any) => {
-        if (!val|| val === false) return "";
+        if (!val || val === false) return "";
         if (Array.isArray(val)) return String(val[0]);
         if (typeof val === "object" && val.id) return String(val.id);
         return String(val);
@@ -264,7 +302,8 @@ const AddEditJobPositionModal: React.FC<Props> = ({
                       }`}
                       placeholder="e.g. Senior Software Engineer"
                       value={formData.name}
-                      onChange={handleInputChange}
+                      onChange={(e) => handleTextChange(e, 100)} // 🔥 Max 100 chars
+                      maxLength={100}
                     />
                     {isSubmitted && errors.name && (
                       <div className="text-danger fs-11 mt-1 animate__animated animate__fadeIn">
@@ -369,7 +408,7 @@ const AddEditJobPositionModal: React.FC<Props> = ({
                         className="form-control border-start-0"
                         min="1"
                         value={formData.no_of_recruitment}
-                        onChange={handleInputChange}
+                        onChange={(e) => handleNumericChange(e, 999)} // 🔥 Max 999 hires
                       />
                     </div>
                   </div>

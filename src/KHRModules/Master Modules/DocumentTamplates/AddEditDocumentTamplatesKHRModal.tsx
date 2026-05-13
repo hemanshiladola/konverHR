@@ -80,6 +80,24 @@ const AddEditDocumentTamplatesKHRModal: React.FC<Props> = ({
     }
   };
 
+  // Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
+    // Aggressively remove leading spaces
+    const sanitizedValue = e.target.value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    // Assuming your state is just `const [name, setName] = useState("")`
+    setName(sanitizedValue);
+
+    // If you are tracking errors, clear it here:
+    // if (errors.name) setErrors({ ...errors, name: "" });
+  };
+
   const variables = [
     { label: "Current Date", value: "{{date}}" },
     { label: "Company Logo", value: "{{company_logo}}" },
@@ -130,8 +148,14 @@ const AddEditDocumentTamplatesKHRModal: React.FC<Props> = ({
             ></button>
           </div>
 
-          <div className="modal-body p-0 d-flex bg-light" style={{ overflow: "hidden" }}>
-            <div className="bg-white border-end p-4 d-flex flex-column" style={{ width: "300px" }}>
+          <div
+            className="modal-body p-0 d-flex bg-light"
+            style={{ overflow: "hidden" }}
+          >
+            <div
+              className="bg-white border-end p-4 d-flex flex-column"
+              style={{ width: "300px" }}
+            >
               <h6 className="fs-10 fw-black text-muted text-uppercase mb-3">
                 Placeholders
               </h6>
@@ -146,7 +170,9 @@ const AddEditDocumentTamplatesKHRModal: React.FC<Props> = ({
                     onClick={() => injectVariable(v.value)}
                   >
                     <span className="fs-12 fw-bold text-start">{v.label}</span>
-                    <code className="text-primary fs-11 bg-light px-1 rounded">{v.value}</code>
+                    <code className="text-primary fs-11 bg-light px-1 rounded">
+                      {v.value}
+                    </code>
                   </button>
                 ))}
               </div>
@@ -171,7 +197,9 @@ const AddEditDocumentTamplatesKHRModal: React.FC<Props> = ({
                     type="text"
                     className="form-control fw-bold"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    // onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => handleTextChange(e, 50)}
+                    maxLength={50} // HTML fallback
                   />
                 </div>
                 <div className="col-md-4">

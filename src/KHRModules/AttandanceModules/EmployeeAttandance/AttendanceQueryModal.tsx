@@ -73,6 +73,31 @@ const AttendanceQueryModal: React.FC<Props> = ({
     }
   }, [attendance]);
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+    maxLength: number = 255,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      setErrors((prev: any) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
   // useEffect(() => {
 
   //         if (!isError) {
@@ -88,16 +113,16 @@ const AttendanceQueryModal: React.FC<Props> = ({
   //         }
   //     }, [isError])
 
-  useEffect(() => {
-    if (isError) {
-      toast.error(errorMessage || "Failed to submit regularization", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+  // useEffect(() => {
+  //   if (isError) {
+  //     toast.error(errorMessage || "Failed to submit regularization", {
+  //       position: "top-right",
+  //       autoClose: 3000,
+  //     });
 
-      dispatch(updateState({ isError: false }));
-    }
-  }, [isError, errorMessage, dispatch]);
+  //     dispatch(updateState({ isError: false }));
+  //   }
+  // }, [isError, errorMessage, dispatch]);
 
   useEffect(() => {
     dispatch(EmployeeRegcategories());
@@ -135,7 +160,20 @@ const AttendanceQueryModal: React.FC<Props> = ({
     const result: any = await dispatch(Employeeregularization(payload));
 
     // Check if the request was successful
-    if (result.type === 'Employeeregularization/fulfilled') {
+    if (result.type === "Employeeregularization/fulfilled") {
+      // Safety check for 200 OK responses that are actually errors
+      if (result.payload?.status === "error") {
+        toast.error(
+          result.payload.message || "Failed to submit regularization",
+          {
+            position: "top-right",
+            autoClose: 3000,
+          },
+        );
+        return; // Stop execution here
+      }
+
+      // Success!
       toast.success("Attendance regularization submitted successfully!", {
         position: "top-right",
         autoClose: 3000,
@@ -288,10 +326,13 @@ const AttendanceQueryModal: React.FC<Props> = ({
               <textarea
                 className="form-control"
                 rows={3}
+                name="reg_reason"
                 value={formData.reg_reason}
-                onChange={(e) =>
-                  setFormData({ ...formData, reg_reason: e.target.value })
-                }
+                // onChange={(e) =>
+                //   setFormData({ ...formData, reg_reason: e.target.value })
+                // }
+                onChange={(e) => handleTextChange(e, 255)} // 🔥 Use boundary handler
+                maxLength={255} // HTML Fallback
               />
               {isSubmitted && errors.reg_reason && (
                 <div className="text-danger fs-11">{errors.reg_reason}</div>

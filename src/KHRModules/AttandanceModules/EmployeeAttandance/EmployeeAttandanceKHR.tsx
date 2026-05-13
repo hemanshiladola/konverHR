@@ -1071,9 +1071,8 @@ const EmployeeAttendanceKHR = () => {
                       ))}
                     </ul>
                   </div>
-
                   {/* View Switch */}
-                  <div className="d-flex border bg-white rounded p-1 me-2">
+                  {/* <div className="d-flex border bg-white rounded p-1 me-2">
                     <Link
                       to={all_routes.attendaceEmployeeKHR}
                       className="btn btn-icon btn-sm me-1"
@@ -1086,10 +1085,9 @@ const EmployeeAttendanceKHR = () => {
                     >
                       <i className="ti ti-calendar-event" />
                     </Link>
-                  </div>
+                  </div> */}
 
-                  {/* Export */}
-                  <div className="dropdown me-2">
+                  {/* <div className="dropdown me-2">
                     <button
                       className="btn btn-white dropdown-toggle d-flex align-items-center"
                       data-bs-toggle="dropdown"
@@ -1123,17 +1121,16 @@ const EmployeeAttendanceKHR = () => {
                         </button>
                       </li>
                     </ul>
-                  </div>
-
+                  </div> */}
                   {/* Report */}
-                  <button
+                  {/* <button
                     className="btn btn-primary d-flex align-items-center"
                     data-bs-toggle="modal"
                     data-bs-target="#attendance_report"
                   >
                     <i className="ti ti-file-analytics me-2" />
                     Report
-                  </button>
+                  </button> */}
                 </>
               }
             />

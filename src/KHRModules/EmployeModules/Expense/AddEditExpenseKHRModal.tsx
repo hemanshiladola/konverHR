@@ -41,6 +41,52 @@ const AddEditExpenseKHRModal: React.FC<Props> = ({
   // Dropdown States
   const [categories, setCategories] = useState<any[]>([]);
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 255,
+  ) => {
+    const { name, value } = e.target;
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      setErrors((prev: any) => ({ ...prev, [name]: null }));
+    }
+  };
+
+  // 🔥 NEW: Safe Currency boundary handler (allows decimals, blocks 'e' and '-')
+  const handleAmountChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLimit: number = 99999999,
+  ) => {
+    const { name, value } = e.target;
+
+    // Allow only digits and a single decimal point
+    let sanitized = value.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
+
+    if (sanitized === "") {
+      setFormData((prev: any) => ({ ...prev, [name]: "" }));
+      if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: null }));
+      return;
+    }
+
+    // Enforce logical max limit
+    let num = parseFloat(sanitized);
+    if (num > maxLimit) {
+      sanitized = maxLimit.toString();
+    }
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitized }));
+    if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: null }));
+  };
+
   // --- 1. Fetch Dropdowns ---
   useEffect(() => {
     const fetchDropdowns = async () => {
@@ -245,7 +291,9 @@ const AddEditExpenseKHRModal: React.FC<Props> = ({
                   className={getInputClass("name")}
                   placeholder="e.g. Client Lunch at Downtown"
                   value={formData.name}
-                  onChange={handleInputChange}
+                  // onChange={handleInputChange}
+                  onChange={(e) => handleTextChange(e, 255)} // 🔥 Use text boundary handler
+                  maxLength={255}
                 />
                 {isSubmitted && errors.name && (
                   <div className="text-danger fs-11 mt-1 animate__animated animate__fadeIn">
@@ -308,7 +356,8 @@ const AddEditExpenseKHRModal: React.FC<Props> = ({
                       className={`form-control border-start-0 ${isSubmitted && errors.total_amount_currency ? "is-invalid" : ""}`}
                       placeholder="0.00"
                       value={formData.total_amount_currency}
-                      onChange={handleInputChange}
+                      // onChange={handleInputChange}
+                      onChange={(e) => handleAmountChange(e, 99999999)} // 🔥 Use safe currency handler
                     />
                   </div>
                   {isSubmitted && errors.total_amount_currency && (

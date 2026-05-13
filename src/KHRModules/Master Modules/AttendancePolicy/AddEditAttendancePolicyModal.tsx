@@ -22,7 +22,7 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
   const initialFormState = {
     name: "",
     type: "regular", // Default: regular
-    absent_if: "in_out_abs", // Default: in_out_abs
+    absent_if: "in_out_abs", // Default: in_out_abs 
     day_after: 0,
     grace_minutes: 0,
     no_pay_minutes: 0,
@@ -100,16 +100,80 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
     return "form-select";
   };
 
+  // const handleChange = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  // ) => {
+  //   const { name, value } = e.target;
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     [name]: value,
+  //   }));
+
+  //   // Clear error immediately
+  //   if (errors[name]) {
+  //     setErrors((prev: any) => ({ ...prev, [name]: null }));
+  //   }
+  // };
+
+  // Standard handler for text/select
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev: any) => ({ ...prev, [name]: null }));
+    }
+  };
 
-    // Clear error immediately
+  // 🔥 NEW: Specific handler for numeric boundaries
+  const handleNumericChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLimit: number
+  ) => {
+    const { name, value } = e.target;
+
+    // Remove any non-digit characters (prevents 'e', '-', '.')
+    let sanitized = value.replace(/\D/g, "");
+
+    // Allow empty field while typing
+    if (sanitized === "") {
+      e.target.value = ""; // 🔥 FIX: Force DOM to clear
+      setFormData((prev) => ({ ...prev, [name]: "" }));
+      return;
+    }
+
+    let num = parseInt(sanitized, 10);
+
+    // Enforce Maximum Boundary
+    if (num > maxLimit) num = maxLimit;
+
+    // 🔥 FIX: Force the input box to immediately show the cleaned number
+    // This stops React from ignoring the update if the number hasn't mathematically changed
+    e.target.value = num.toString();
+
+    setFormData((prev) => ({ ...prev, [name]: num }));
+
+    if (errors[name]) {
+      setErrors((prev: any) => ({ ...prev, [name]: null }));
+    }
+  };
+
+  // 🔥 NEW: Specific handler for text boundaries (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50
+  ) => {
+    const { name, value } = e.target;
+
+    // Prevent leading spaces
+    if (value.startsWith(" ")) return;
+
+    // Enforce maximum character limit
+    if (value.length > maxLength) return;
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (errors[name]) {
       setErrors((prev: any) => ({ ...prev, [name]: null }));
     }
@@ -256,8 +320,9 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                       name="name"
                       className={getInputClass("name")}
                       value={formData.name}
-                      onChange={handleChange}
+                      onChange={(e) => handleTextChange(e, 50)}
                       placeholder="e.g. Standard Office Policy"
+                      maxLength={50}
                     />
                     <div className="invalid-feedback">{errors.name}</div>
                   </div>
@@ -311,10 +376,11 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     <label className="form-label fs-13">Day After (Mins)</label>
                     <input
                       type="number"
+                      inputMode="numeric" // Shows the number keypad on mobile phones
                       name="day_after"
                       className="form-control"
                       value={formData.day_after}
-                      onChange={handleChange}
+                      onChange={(e) => handleNumericChange(e, 31)} // Limit to 31 days
                     />
                   </div>
 
@@ -322,10 +388,11 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     <label className="form-label fs-13">Grace Minutes</label>
                     <input
                       type="number"
+                      inputMode="numeric" // Shows the number keypad on mobile phones
                       name="grace_minutes"
                       className="form-control"
                       value={formData.grace_minutes}
-                      onChange={handleChange}
+                      onChange={(e) => handleNumericChange(e, 720)} // Limit to 12 hours
                     />
                   </div>
 
@@ -333,10 +400,11 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     <label className="form-label fs-13">No Pay Minutes</label>
                     <input
                       type="number"
+                      inputMode="numeric" // Shows the number keypad on mobile phones
                       name="no_pay_minutes"
                       className="form-control"
                       value={formData.no_pay_minutes}
-                      onChange={handleChange}
+                      onChange={(e) => handleNumericChange(e, 720)} // Limit to 12 hours
                     />
                   </div>
 
@@ -344,10 +412,11 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     <label className="form-label fs-13">Half Day Minutes</label>
                     <input
                       type="number"
+                      inputMode="numeric" // Shows the number keypad on mobile phones
                       name="half_day_minutes"
                       className="form-control"
                       value={formData.half_day_minutes}
-                      onChange={handleChange}
+                      onChange={(e) => handleNumericChange(e, 720)} // Limit to 12 hours
                     />
                   </div>
 
@@ -357,10 +426,11 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     </label>
                     <input
                       type="number"
+                      inputMode="numeric" // Shows the number keypad on mobile phones
                       name="early_grace_minutes"
                       className="form-control"
                       value={formData.early_grace_minutes}
-                      onChange={handleChange}
+                      onChange={(e) => handleNumericChange(e, 720)} // Limit to 12 hours
                     />
                   </div>
 
@@ -368,10 +438,11 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     <label className="form-label fs-13">Late Beyond Days</label>
                     <input
                       type="number"
+                      inputMode="numeric" // Shows the number keypad on mobile phones
                       name="late_beyond_days"
                       className="form-control"
                       value={formData.late_beyond_days}
-                      onChange={handleChange}
+                      onChange={(e) => handleNumericChange(e, 31)}
                     />
                   </div>
 
@@ -379,10 +450,11 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     <label className="form-label fs-13">Late Beyond Time</label>
                     <input
                       type="number"
+                      inputMode="numeric" // Shows the number keypad on mobile phones
                       name="late_beyond_time"
                       className="form-control"
                       value={formData.late_beyond_time}
-                      onChange={handleChange}
+                      onChange={(e) => handleNumericChange(e, 720)}
                     />
                   </div>
                 </div>

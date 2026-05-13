@@ -41,8 +41,63 @@ const ResetPasswordInternal = () => {
     setPasswordVisibility((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const onChangeNewPassword = (password: string) => {
-    setNewPassword(password);
+  // 🔥 NEW: Password boundary handler (prevents leading spaces & enforces max length)
+  const handlePasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    maxLength: number = 50,
+  ) => {
+    // Aggressively remove leading spaces
+    const sanitizedValue = e.target.value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setter(sanitizedValue);
+  };
+
+  // const onChangeNewPassword = (password: string) => {
+  //   setNewPassword(password);
+  //   if (password.length === 0) {
+  //     setPasswordResponce({
+  //       passwordResponceText: "",
+  //       passwordResponceKey: "",
+  //     });
+  //   } else if (password.length < 8) {
+  //     setPasswordResponce({
+  //       passwordResponceText: "Weak. Minimum 8 characters.",
+  //       passwordResponceKey: "0",
+  //     });
+  //   } else if (password.search(/[A-Z]/) < 0 || password.search(/[0-9]/) < 0) {
+  //     setPasswordResponce({
+  //       passwordResponceText: "Average. Add uppercase & numbers.",
+  //       passwordResponceKey: "1",
+  //     });
+  //   } else if (password.search(/(?=.*?[#?!@$%^&*-])/) < 0) {
+  //     setPasswordResponce({
+  //       passwordResponceText: "Almost! Add a special symbol.",
+  //       passwordResponceKey: "2",
+  //     });
+  //   } else {
+  //     setPasswordResponce({
+  //       passwordResponceText: "Strong password.",
+  //       passwordResponceKey: "3",
+  //     });
+  //   }
+  // };
+
+  // 🔥 UPDATED: Added boundary checks to the new password handler
+  const onChangeNewPassword = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
+    const sanitizedValue = e.target.value.replace(/^\s+/, "");
+
+    if (sanitizedValue.length > maxLength) return;
+
+    setNewPassword(sanitizedValue);
+    const password = sanitizedValue;
+
     if (password.length === 0) {
       setPasswordResponce({
         passwordResponceText: "",
@@ -158,7 +213,11 @@ const ResetPasswordInternal = () => {
                             }
                             className="form-control"
                             value={tempPassword}
-                            onChange={(e) => setTempPassword(e.target.value)}
+                            // onChange={(e) => setTempPassword(e.target.value)}
+                            onChange={(e) =>
+                              handlePasswordChange(e, setTempPassword, 50)
+                            } // 🔥 Boundary handler
+                            maxLength={50} // 🔥 HTML Fallback
                             placeholder="Enter current password"
                           />
                           <span
@@ -183,9 +242,11 @@ const ResetPasswordInternal = () => {
                             }
                             className="form-control"
                             value={newPassword}
-                            onChange={(e) =>
-                              onChangeNewPassword(e.target.value)
-                            }
+                            // onChange={(e) =>
+                            //   onChangeNewPassword(e.target.value)
+                            // }
+                            onChange={(e) => onChangeNewPassword(e, 50)} // 🔥 Boundary handler
+                            maxLength={50} // 🔥 HTML Fallback
                             placeholder="Create new password"
                           />
                           <span
@@ -221,7 +282,11 @@ const ResetPasswordInternal = () => {
                             }
                             className="form-control"
                             value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            // onChange={(e) => setConfirmPassword(e.target.value)}
+                            onChange={(e) =>
+                              handlePasswordChange(e, setConfirmPassword, 50)
+                            } // 🔥 Boundary handler
+                            maxLength={50} // 🔥 HTML Fallback
                             placeholder="Confirm new password"
                           />
                           <span

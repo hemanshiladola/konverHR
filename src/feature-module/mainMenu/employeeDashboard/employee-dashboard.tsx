@@ -196,7 +196,7 @@ const EmployeeDashboard = () => {
               </nav>
             </div>
             <div className="d-flex my-xl-auto right-content align-items-center flex-wrap ">
-              <div className="me-2 mb-2">
+              {/* <div className="me-2 mb-2">
                 <div className="dropdown">
                   <Link
                     to="#"
@@ -221,7 +221,7 @@ const EmployeeDashboard = () => {
                     </li>
                   </ul>
                 </div>
-              </div>
+              </div> */}
               {/* <div className="input-icon w-120 position-relative mb-2">
                 <span className="input-icon-addon">
                   <i className="ti ti-calendar text-gray-9" />

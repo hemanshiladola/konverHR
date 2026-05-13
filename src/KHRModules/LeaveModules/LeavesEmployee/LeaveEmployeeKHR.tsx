@@ -90,6 +90,27 @@ const LeaveEmployeeKHR = () => {
     }
   };
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+    maxLength: number = 255
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      clearError(name);
+    }
+  };
+
   useEffect(() => {
     fetchData();
     const modal = document.getElementById("add_leave_modal");
@@ -165,8 +186,8 @@ const LeaveEmployeeKHR = () => {
           parentMenu="Employee"
           activeMenu="Leaves"
           routes={routes}
-          // buttonText="Apply Leave"
-          // modalTarget="#add_leave_modal"
+        // buttonText="Apply Leave"
+        // modalTarget="#add_leave_modal"
         />
 
         <div className="row">
@@ -221,7 +242,11 @@ const LeaveEmployeeKHR = () => {
 
         <div className="mt-4">
           <div className="">
-            <DatatableKHR data={data} columns={columns} selection={true} />
+            <DatatableKHR
+              data={data}
+              columns={columns}
+            // selection={true}
+            />
           </div>
         </div>
       </div>

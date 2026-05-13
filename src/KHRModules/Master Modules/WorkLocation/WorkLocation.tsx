@@ -154,7 +154,7 @@ const WorkLocation = () => {
         case "location_type":
           groupKey = item.location_type
             ? item.location_type.charAt(0).toUpperCase() +
-              item.location_type.slice(1)
+            item.location_type.slice(1)
             : "Unknown Type";
           break;
 

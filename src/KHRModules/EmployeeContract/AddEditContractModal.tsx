@@ -260,55 +260,61 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         contract_type_id: getVal(data.contract_type_id),
         structure_type_id: getVal(data.structure_type_id),
         components:
-          (data as any).dynamic_fields && (data as any).dynamic_fields.length > 0
+          (data as any).dynamic_fields &&
+          (data as any).dynamic_fields.length > 0
             ? (data as any).dynamic_fields.map((f: any) => {
-              let headId: any = f.structure_header_id ? Number(f.structure_header_id) : "";
+                let headId: any = f.structure_header_id
+                  ? Number(f.structure_header_id)
+                  : "";
 
-              // Fallbacks for missing header IDs
-              if (!headId && f.name) {
-                const nameStr = f.name.toLowerCase().trim();
-                if (nameStr === "basic") headId = 1;
-                else if (nameStr === "dearness allowance") headId = 2;
-                else if (nameStr === "hra") headId = 3;
-                else if (nameStr === "skill allowance") headId = 4;
-                else if (nameStr === "attendance allowance") headId = 5;
-                else if (nameStr === "food allowance") headId = 6;
-                else if (nameStr === "washing allowance") headId = 7;
-                else if (nameStr === "conveyance") headId = 8;
-                else if (nameStr === "leave allowance") headId = 9;
-                else if (nameStr === "bonus") headId = 10;
-                else if (nameStr === "gratuity") headId = 11;
-                else if (nameStr === "other" || nameStr === "other allowance") headId = 12;
-                else if (nameStr === "uniform allowance") headId = 13;
-                else if (nameStr === "mobile allowance") headId = 14;
-                else if (nameStr === "travel allowance") headId = 15;
-                else if (nameStr === "educational allowance") headId = 16;
-                else if (nameStr === "city compensatory allowance") headId = 17;
-                else if (nameStr === "pf employee") headId = 18;
-                else if (nameStr === "esic employee") headId = 19;
-                else if (nameStr === "pt" || nameStr === "professional tax") headId = 20;
-                else if (nameStr === "lta") headId = 21;
-                else if (nameStr === "variable pay") headId = 22;
-              }
-
-              // If backend sends false for both addition and deduction, default to a category
-              let isAdd = f.is_addition;
-              let isDed = f.is_deduction;
-              if (!isAdd && !isDed) {
-                if (headId === 18 || headId === 19 || headId === 20) {
-                  isDed = true;
-                } else {
-                  isAdd = true;
+                // Fallbacks for missing header IDs
+                if (!headId && f.name) {
+                  const nameStr = f.name.toLowerCase().trim();
+                  if (nameStr === "basic") headId = 1;
+                  else if (nameStr === "dearness allowance") headId = 2;
+                  else if (nameStr === "hra") headId = 3;
+                  else if (nameStr === "skill allowance") headId = 4;
+                  else if (nameStr === "attendance allowance") headId = 5;
+                  else if (nameStr === "food allowance") headId = 6;
+                  else if (nameStr === "washing allowance") headId = 7;
+                  else if (nameStr === "conveyance") headId = 8;
+                  else if (nameStr === "leave allowance") headId = 9;
+                  else if (nameStr === "bonus") headId = 10;
+                  else if (nameStr === "gratuity") headId = 11;
+                  else if (nameStr === "other" || nameStr === "other allowance")
+                    headId = 12;
+                  else if (nameStr === "uniform allowance") headId = 13;
+                  else if (nameStr === "mobile allowance") headId = 14;
+                  else if (nameStr === "travel allowance") headId = 15;
+                  else if (nameStr === "educational allowance") headId = 16;
+                  else if (nameStr === "city compensatory allowance")
+                    headId = 17;
+                  else if (nameStr === "pf employee") headId = 18;
+                  else if (nameStr === "esic employee") headId = 19;
+                  else if (nameStr === "pt" || nameStr === "professional tax")
+                    headId = 20;
+                  else if (nameStr === "lta") headId = 21;
+                  else if (nameStr === "variable pay") headId = 22;
                 }
-              }
 
-              return {
-                structure_head_id: headId,
-                amount: Number(f.value) || 0,
-                addition: isAdd,
-                deduction: isDed,
-              };
-            })
+                // If backend sends false for both addition and deduction, default to a category
+                let isAdd = f.is_addition;
+                let isDed = f.is_deduction;
+                if (!isAdd && !isDed) {
+                  if (headId === 18 || headId === 19 || headId === 20) {
+                    isDed = true;
+                  } else {
+                    isAdd = true;
+                  }
+                }
+
+                return {
+                  structure_head_id: headId,
+                  amount: Number(f.value) || 0,
+                  addition: isAdd,
+                  deduction: isDed,
+                };
+              })
             : data.components && data.components.length > 0
               ? data.components
               : initialContractState.components,
@@ -481,6 +487,81 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     } finally {
       setLoadingPreview(false);
     }
+  };
+
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 100,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      setErrors((prev: any) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  // 🔥 NEW: Wage/CTC boundary handler (blocks 'e' and '-', max logical limit)
+  const handleWageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLimit: number = 999999999,
+  ) => {
+    const { name, value } = e.target;
+
+    // Remove formatting commas and non-digits (except decimal)
+    let sanitized = value
+      .replace(/,/g, "")
+      .replace(/[^0-9.]/g, "")
+      .replace(/(\..*?)\..*/g, "$1");
+
+    if (sanitized === "") {
+      setFormData((prev: any) => ({ ...prev, [name]: 0 }));
+      if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: null }));
+      return;
+    }
+
+    let num = parseFloat(sanitized);
+    if (num > maxLimit) {
+      num = maxLimit;
+    }
+
+    setFormData((prev: any) => ({ ...prev, [name]: num }));
+    if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: null }));
+  };
+
+  // 🔥 NEW: Array numeric boundary handler for Allowances and Deductions
+  const handleComponentAmountChange = (
+    index: number,
+    value: string,
+    maxLimit: number = 99999999, // Max 9.99 Crores per component
+  ) => {
+    // Allow numbers and one decimal point. Block 'e', '-', '+'
+    let sanitized = value.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
+
+    let num = 0;
+    if (sanitized !== "") {
+      num = parseFloat(sanitized);
+      if (num > maxLimit) {
+        num = maxLimit;
+      }
+    }
+
+    const newComps = [...(formData.components || [])];
+    newComps[index] = { ...newComps[index], amount: num };
+    setFormData({ ...formData, components: newComps });
   };
 
   const validateLeaveEntry = () => {
@@ -691,14 +772,14 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       const finalPayload: any = {
         ...contractData,
         employee_id: Number(formData.employee_id),
-        components: (contractData.components || []).filter(
-          (c: any) => c.structure_head_id,
-        ).map((c: any) => ({
-          structure_head_id: Number(c.structure_head_id),
-          amount: Number(c.amount),
-          addition: c.addition ? true : undefined,
-          deduction: c.deduction ? true : undefined,
-        })),
+        components: (contractData.components || [])
+          .filter((c: any) => c.structure_head_id)
+          .map((c: any) => ({
+            structure_head_id: Number(c.structure_head_id),
+            amount: Number(c.amount),
+            addition: c.addition ? true : undefined,
+            deduction: c.deduction ? true : undefined,
+          })),
         // leave_allocation_ids: leaveAllocations.map((l) => ({
         //   // 3. Conditional ID: Only include the key if l.id exists (for existing items)
         //   ...(l.id ? { id: l.id } : {}),
@@ -937,19 +1018,40 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 key={`emp-select-${employees.length}`} // Forces re-render when data loads
                                 options={employees.map((e) => ({
                                   value: String(e.id),
-                                  label: e.name || "Unknown Employee",
+                                  // label: e.name || "Unknown Employee",
+                                  label: e.employee_code
+                                    ? `${e.name} (${e.employee_code})`
+                                    : e.name || "Unknown Employee",
                                 }))}
                                 placeholder="Select Employee"
+                                // value={
+                                //   formData.employee_id
+                                //     ? {
+                                //         value: String(formData.employee_id),
+                                //         label:
+                                //           employees.find(
+                                //             (e) =>
+                                //               e.id === formData.employee_id,
+                                //           )?.name || "",
+                                //       }
+                                //     : null
+                                // }
                                 value={
                                   formData.employee_id
                                     ? {
-                                      value: String(formData.employee_id),
-                                      label:
-                                        employees.find(
-                                          (e) =>
-                                            e.id === formData.employee_id,
-                                        )?.name || "",
-                                    }
+                                        value: String(formData.employee_id),
+                                        // 🔥 Make sure the selected value also shows the code
+                                        label: (() => {
+                                          const emp = employees.find(
+                                            (e: any) =>
+                                              e.id === formData.employee_id,
+                                          );
+                                          if (!emp) return "";
+                                          return emp.employee_code
+                                            ? `${emp.name} (${emp.employee_code})`
+                                            : emp.name;
+                                        })(),
+                                      }
                                     : null
                                 }
                                 onChange={(opt) => {
@@ -976,12 +1078,14 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               className="form-control"
                               value={formData.name}
                               disabled={!!formData.employee_id} // 🔥 Disable after selection
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  name: e.target.value,
-                                })
-                              }
+                              // onChange={(e) =>
+                              //   setFormData({
+                              //     ...formData,
+                              //     name: e.target.value,
+                              //   })
+                              // }
+                              onChange={(e) => handleTextChange(e, 100)} // 🔥 Max 100 chars
+                              maxLength={100}
                             />
                           </div>
                         </div>
@@ -1100,18 +1204,18 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.resource_calendar_id
                                   ? {
-                                    value: String(
-                                      formData.resource_calendar_id,
-                                    ),
-                                    label:
-                                      workingSchedules.find(
-                                        (s: any) =>
-                                          s.id ===
-                                          Number(
-                                            formData.resource_calendar_id,
-                                          ),
-                                      )?.name || "",
-                                  }
+                                      value: String(
+                                        formData.resource_calendar_id,
+                                      ),
+                                      label:
+                                        workingSchedules.find(
+                                          (s: any) =>
+                                            s.id ===
+                                            Number(
+                                              formData.resource_calendar_id,
+                                            ),
+                                        )?.name || "",
+                                    }
                                   : null
                               }
                               onChange={(opt) => {
@@ -1147,13 +1251,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.department_id
                                   ? {
-                                    value: String(formData.department_id),
-                                    label:
-                                      departments.find(
-                                        (d) =>
-                                          d.id === formData.department_id,
-                                      )?.name || "",
-                                  }
+                                      value: String(formData.department_id),
+                                      label:
+                                        departments.find(
+                                          (d) =>
+                                            d.id === formData.department_id,
+                                        )?.name || "",
+                                    }
                                   : null
                               }
                               onChange={(opt) =>
@@ -1177,12 +1281,12 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.wage_type
                                   ? {
-                                    value: formData.wage_type,
-                                    label:
-                                      formData.wage_type === "monthly"
-                                        ? "Fixed Wage"
-                                        : "Hourly Wage",
-                                  }
+                                      value: formData.wage_type,
+                                      label:
+                                        formData.wage_type === "monthly"
+                                          ? "Fixed Wage"
+                                          : "Hourly Wage",
+                                    }
                                   : null
                               }
                               onChange={(opt) =>
@@ -1238,47 +1342,50 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               </span>
                               <input
                                 type="text"
+                                name="wage"
                                 placeholder="e.g. 5,00,000 LPA"
-                                className={`form-control fw-bold text-success ${isSubmitted
-                                  ? errors.wage
-                                    ? "is-invalid border-danger"
-                                    : "is-valid border-success"
-                                  : "border-primary"
-                                  }`}
+                                className={`form-control fw-bold text-success ${
+                                  isSubmitted
+                                    ? errors.wage
+                                      ? "is-invalid border-danger"
+                                      : "is-valid border-success"
+                                    : "border-primary"
+                                }`}
                                 // 🔥 Removed " LPA" from the value, leaving only the comma-separated number
                                 value={
                                   !formData.wage || formData.wage === 0
                                     ? ""
                                     : Number(formData.wage).toLocaleString(
-                                      "en-IN",
-                                    )
+                                        "en-IN",
+                                      )
                                 }
-                                onChange={(e) => {
-                                  // 🔥 Removed the /lpa/i regex since it's no longer inside the textbox
-                                  const rawValue = e.target.value
-                                    .replace(/,/g, "")
-                                    .trim();
+                                // onChange={(e) => {
+                                //   // 🔥 Removed the /lpa/i regex since it's no longer inside the textbox
+                                //   const rawValue = e.target.value
+                                //     .replace(/,/g, "")
+                                //     .trim();
 
-                                  if (rawValue === "") {
-                                    setFormData({ ...formData, wage: 0 });
-                                    if (errors.wage) {
-                                      setErrors({ ...errors, wage: null });
-                                    }
-                                    return;
-                                  }
+                                //   if (rawValue === "") {
+                                //     setFormData({ ...formData, wage: 0 });
+                                //     if (errors.wage) {
+                                //       setErrors({ ...errors, wage: null });
+                                //     }
+                                //     return;
+                                //   }
 
-                                  // Only update state if the remaining string is a valid number
-                                  const numericValue = Number(rawValue);
-                                  if (!isNaN(numericValue)) {
-                                    setFormData({
-                                      ...formData,
-                                      wage: numericValue,
-                                    });
-                                    if (errors.wage) {
-                                      setErrors({ ...errors, wage: null });
-                                    }
-                                  }
-                                }}
+                                //   // Only update state if the remaining string is a valid number
+                                //   const numericValue = Number(rawValue);
+                                //   if (!isNaN(numericValue)) {
+                                //     setFormData({
+                                //       ...formData,
+                                //       wage: numericValue,
+                                //     });
+                                //     if (errors.wage) {
+                                //       setErrors({ ...errors, wage: null });
+                                //     }
+                                //   }
+                                // }}
+                                onChange={(e) => handleWageChange(e, 999999999)} // 🔥 Use safe wage handler
                               />
                             </div>
 
@@ -1321,7 +1428,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     ...formData,
                                     components: [
                                       ...(formData.components || []),
-                                      { structure_head_id: null, amount: 0, addition: true },
+                                      {
+                                        structure_head_id: null,
+                                        amount: 0,
+                                        addition: true,
+                                      },
                                     ],
                                   });
                                 }}
@@ -1346,7 +1457,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                             ];
                                             newComps[index] = {
                                               ...newComps[index],
-                                              structure_head_id: Number(e.target.value),
+                                              structure_head_id: Number(
+                                                e.target.value,
+                                              ),
                                             };
                                             setFormData({
                                               ...formData,
@@ -1354,37 +1467,48 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                             });
                                           }}
                                         >
-                                          <option value="" disabled>Select Allowance</option>
+                                          <option value="" disabled>
+                                            Select Allowance
+                                          </option>
                                           {structureHeaders
-                                            .filter((h) => h.header_type === "addition")
+                                            .filter(
+                                              (h) =>
+                                                h.header_type === "addition",
+                                            )
                                             .map((h) => (
-                                            <option key={h.id} value={h.id}>
-                                              {h.name}
-                                            </option>
-                                          ))}
+                                              <option key={h.id} value={h.id}>
+                                                {h.name}
+                                              </option>
+                                            ))}
                                         </select>
                                         <div className="input-group input-group-sm w-50">
                                           <span className="input-group-text bg-light text-muted">
                                             ₹
                                           </span>
                                           <input
-                                            type="number"
+                                            type="text"
                                             className="form-control"
                                             placeholder="0"
                                             value={comp.amount}
-                                            onChange={(e) => {
-                                              const newComps = [
-                                                ...(formData.components || []),
-                                              ];
-                                              newComps[index] = {
-                                                ...newComps[index],
-                                                amount: Number(e.target.value),
-                                              };
-                                              setFormData({
-                                                ...formData,
-                                                components: newComps,
-                                              });
-                                            }}
+                                            // onChange={(e) => {
+                                            //   const newComps = [
+                                            //     ...(formData.components || []),
+                                            //   ];
+                                            //   newComps[index] = {
+                                            //     ...newComps[index],
+                                            //     amount: Number(e.target.value),
+                                            //   };
+                                            //   setFormData({
+                                            //     ...formData,
+                                            //     components: newComps,
+                                            //   });
+                                            // }}
+                                            onChange={(e) =>
+                                              handleComponentAmountChange(
+                                                index,
+                                                e.target.value,
+                                              )
+                                            } // 🔥 Use the new array handler
                                           />
                                           <button
                                             type="button"
@@ -1415,10 +1539,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 !formData.components.some(
                                   (c: any) => c.addition,
                                 )) && (
-                                  <div className="text-center text-muted py-3 fs-13">
-                                    No allowances added.
-                                  </div>
-                                )}
+                                <div className="text-center text-muted py-3 fs-13">
+                                  No allowances added.
+                                </div>
+                              )}
                             </div>
                           </div>
 
@@ -1437,7 +1561,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     ...formData,
                                     components: [
                                       ...(formData.components || []),
-                                      { structure_head_id: null, amount: 0, deduction: true },
+                                      {
+                                        structure_head_id: null,
+                                        amount: 0,
+                                        deduction: true,
+                                      },
                                     ],
                                   });
                                 }}
@@ -1462,7 +1590,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                             ];
                                             newComps[index] = {
                                               ...newComps[index],
-                                              structure_head_id: Number(e.target.value),
+                                              structure_head_id: Number(
+                                                e.target.value,
+                                              ),
                                             };
                                             setFormData({
                                               ...formData,
@@ -1470,37 +1600,48 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                             });
                                           }}
                                         >
-                                          <option value="" disabled>Select Deduction</option>
+                                          <option value="" disabled>
+                                            Select Deduction
+                                          </option>
                                           {structureHeaders
-                                            .filter((h) => h.header_type === "deduction")
+                                            .filter(
+                                              (h) =>
+                                                h.header_type === "deduction",
+                                            )
                                             .map((h) => (
-                                            <option key={h.id} value={h.id}>
-                                              {h.name}
-                                            </option>
-                                          ))}
+                                              <option key={h.id} value={h.id}>
+                                                {h.name}
+                                              </option>
+                                            ))}
                                         </select>
                                         <div className="input-group input-group-sm w-50">
                                           <span className="input-group-text text-danger border-danger">
                                             ₹
                                           </span>
                                           <input
-                                            type="number"
+                                            type="text"
                                             className="form-control border-danger"
                                             placeholder="0"
                                             value={comp.amount}
-                                            onChange={(e) => {
-                                              const newComps = [
-                                                ...(formData.components || []),
-                                              ];
-                                              newComps[index] = {
-                                                ...newComps[index],
-                                                amount: Number(e.target.value),
-                                              };
-                                              setFormData({
-                                                ...formData,
-                                                components: newComps,
-                                              });
-                                            }}
+                                            // onChange={(e) => {
+                                            //   const newComps = [
+                                            //     ...(formData.components || []),
+                                            //   ];
+                                            //   newComps[index] = {
+                                            //     ...newComps[index],
+                                            //     amount: Number(e.target.value),
+                                            //   };
+                                            //   setFormData({
+                                            //     ...formData,
+                                            //     components: newComps,
+                                            //   });
+                                            // }}
+                                            onChange={(e) =>
+                                              handleComponentAmountChange(
+                                                index,
+                                                e.target.value,
+                                              )
+                                            } // 🔥 Use the new array handler
                                           />
                                           <button
                                             type="button"
@@ -1528,10 +1669,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 !formData.components.some(
                                   (c: any) => c.deduction,
                                 )) && (
-                                  <div className="text-center text-muted py-3 fs-13">
-                                    No deductions added.
-                                  </div>
-                                )}
+                                <div className="text-center text-muted py-3 fs-13">
+                                  No deductions added.
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1559,13 +1700,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     (c) => String(c.id) === selectedLeaveConfig,
                                   )
                                     ? {
-                                      value: selectedLeaveConfig,
-                                      label: leaveConfigs.find(
-                                        (c) =>
-                                          String(c.id) ===
-                                          selectedLeaveConfig,
-                                      )?.name,
-                                    }
+                                        value: selectedLeaveConfig,
+                                        label: leaveConfigs.find(
+                                          (c) =>
+                                            String(c.id) ===
+                                            selectedLeaveConfig,
+                                        )?.name,
+                                      }
                                     : null
                                 }
                                 onChange={(opt) =>

@@ -40,7 +40,7 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
   const dayPeriods = [
     { value: "morning", label: "Morning" },
     { value: "lunch", label: "Break" },
-    { value: "afternoon", label: "Evening" },
+    { value: "afternoon", label: "Afternoon" },
   ];
 
   const initialAttendance: AttendanceItem = {
@@ -82,9 +82,9 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
 
         const typeOpts = Array.isArray(types)
           ? types.map((t: any) => ({
-            value: t.id,
-            label: t.name || t.code || `Type ${t.id}`,
-          }))
+              value: t.id,
+              label: t.name || t.code || `Type ${t.id}`,
+            }))
           : [];
         setWorkEntryTypeOptions(typeOpts);
       } catch (e) {
@@ -100,11 +100,11 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
       const cleanAttendances =
         data.attendances && data.attendances.length > 0
           ? data.attendances.map((att) => ({
-            ...att,
-            work_entry_type_id: Array.isArray(att.work_entry_type_id)
-              ? att.work_entry_type_id[0]
-              : att.work_entry_type_id,
-          }))
+              ...att,
+              work_entry_type_id: Array.isArray(att.work_entry_type_id)
+                ? att.work_entry_type_id[0]
+                : att.work_entry_type_id,
+            }))
           : [{ ...initialAttendance }];
 
       setFormData({
@@ -122,7 +122,6 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
     }
     setErrors({});
   }, [data]);
-
 
   // 3. Actions
   const handleModalClose = () => {
@@ -162,35 +161,136 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
     setFormData({ ...formData, attendances: list });
   };
 
+  // 🔥 UPDATED: Specific handler for Text boundaries
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces (allows spaces between words)
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  // 🔥 NEW: Specific handler for Numeric boundaries (Weekly Hours, Overtime)
+  const handleNumericChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLimit: number,
+  ) => {
+    const { name, value } = e.target;
+    // Remove non-digits
+    let sanitized = value.replace(/\D/g, "");
+
+    if (sanitized === "") {
+      e.target.value = ""; // Force DOM clear
+      setFormData((prev: any) => ({ ...prev, [name]: 0 }));
+      return;
+    }
+
+    let num = parseInt(sanitized, 10);
+    if (num > maxLimit) num = maxLimit;
+
+    e.target.value = num.toString(); // Force DOM update to prevent React bailout
+    setFormData((prev: any) => ({ ...prev, [name]: num }));
+  };
+
+  // 🔥 NEW: Specific handler for the dynamic Row Label
+  const handleRowTextChange = (
+    idx: number,
+    value: string,
+    maxLength: number = 50,
+  ) => {
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    if (sanitizedValue.length > maxLength) return;
+
+    handleRowChange(idx, "name", sanitizedValue);
+  };
+
+  // 4. Validation
+  // const validate = () => {
+  //   const newErrors: { [key: string]: string } = {};
+  //   let isValid = true;
+
+  //   if (!formData.name.trim()) {
+  //     newErrors.name = "Required";
+  //     isValid = false;
+  //   }
+  //   if (!formData.tz) {
+  //     newErrors.tz = "Required";
+  //     isValid = false;
+  //   }
+  //   if (formData.full_time_required_hours <= 0) {
+  //     newErrors.hours = "Invalid";
+  //     isValid = false;
+  //   }
+
+  //   if (!formData.flexible_hours) {
+  //     if (formData.attendances.length === 0) {
+  //       toast.error("Fixed schedules need at least one time slot.");
+  //       isValid = false;
+  //     }
+  //     formData.attendances.forEach((row, idx) => {
+  //       if (row.hour_from >= row.hour_to) {
+  //         newErrors[`row_${idx}_time`] = "Check time";
+  //         isValid = false;
+  //       }
+  //     });
+  //   }
+
+  //   setErrors(newErrors);
+  //   return isValid;
+  // };
+
   // 4. Validation
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
     let isValid = true;
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Required";
+    // 🔥 Make sure the trimmed value isn't empty
+    if (!formData.name || formData.name.trim() === "") {
+      newErrors.name = "Schedule Name is required";
       isValid = false;
     }
+
     if (!formData.tz) {
-      newErrors.tz = "Required";
+      newErrors.tz = "Timezone is required";
       isValid = false;
     }
-    if (formData.full_time_required_hours <= 0) {
-      newErrors.hours = "Invalid";
+    if (
+      !formData.full_time_required_hours ||
+      formData.full_time_required_hours <= 0
+    ) {
+      newErrors.hours = "Must be greater than 0";
       isValid = false;
     }
 
     if (!formData.flexible_hours) {
-      if (formData.attendances.length === 0) {
+      if (!formData.attendances || formData.attendances.length === 0) {
         toast.error("Fixed schedules need at least one time slot.");
         isValid = false;
+      } else {
+        formData.attendances.forEach((row, idx) => {
+          // Check if row label is empty
+          if (!row.name || row.name.trim() === "") {
+            toast.error(`Label is required for time slot ${idx + 1}`);
+            isValid = false;
+          }
+          if (row.hour_from >= row.hour_to) {
+            newErrors[`row_${idx}_time`] = "Check time";
+            isValid = false;
+          }
+        });
       }
-      formData.attendances.forEach((row, idx) => {
-        if (row.hour_from >= row.hour_to) {
-          newErrors[`row_${idx}_time`] = "Check time";
-          isValid = false;
-        }
-      });
     }
 
     setErrors(newErrors);
@@ -288,14 +388,17 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                       </label>
                       <input
                         type="text"
+                        name="name"
                         className={`form-control ${errors.name ? "is-invalid" : ""}`}
                         placeholder="e.g. Regular Shift"
                         value={formData.name}
-                        onChange={(e) => {
-                          setFormData({ ...formData, name: e.target.value });
-                          if (e.target.value)
-                            setErrors({ ...errors, name: "" });
-                        }}
+                        // onChange={(e) => {
+                        //   setFormData({ ...formData, name: e.target.value });
+                        //   if (e.target.value)
+                        //     setErrors({ ...errors, name: "" });
+                        // }}
+                        onChange={(e) => handleTextChange(e, 50)} // 🔥 Limit to 50 chars
+                        maxLength={50}
                       />
                       {errors.name && (
                         <div className="invalid-feedback">{errors.name}</div>
@@ -327,14 +430,16 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                       <div className="input-group">
                         <input
                           type="number"
+                          name="full_time_required_hours"
                           className={`form-control ${errors.hours ? "is-invalid" : ""}`}
                           value={formData.full_time_required_hours}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              full_time_required_hours: Number(e.target.value),
-                            })
-                          }
+                          onChange={(e) => handleNumericChange(e, 168)} // 🔥 Max 168 hours in a week
+                          // onChange={(e) =>
+                          //   setFormData({
+                          //     ...formData,
+                          //     full_time_required_hours: Number(e.target.value),
+                          //   })
+                          // }
                         />
                         <span className="input-group-text bg-white text-muted">
                           Hrs
@@ -346,16 +451,18 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                       <div className="input-group">
                         <input
                           type="number"
+                          name="total_overtime_hours_allowed"
                           className="form-control"
                           value={formData.total_overtime_hours_allowed}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              total_overtime_hours_allowed: Number(
-                                e.target.value,
-                              ),
-                            })
-                          }
+                          // onChange={(e) =>
+                          //   setFormData({
+                          //     ...formData,
+                          //     total_overtime_hours_allowed: Number(
+                          //       e.target.value,
+                          //     ),
+                          //   })
+                          // }
+                          onChange={(e) => handleNumericChange(e, 168)} // 🔥 Max 168 hours
                         />
                         <span className="input-group-text bg-white text-muted">
                           Hrs
@@ -387,6 +494,7 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                     <div className="card-body d-flex align-items-center p-3">
                       <div className={`form-check form-switch me-3`}>
                         <input
+                          name="flexible_hours"
                           className="form-check-input"
                           type="checkbox"
                           checked={formData.flexible_hours}
@@ -419,6 +527,7 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                         <input
                           className="form-check-input"
                           type="checkbox"
+                          name="is_night_shift"
                           checked={formData.is_night_shift}
                           readOnly
                         />
@@ -475,12 +584,17 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                           <tr key={i}>
                             <td style={{ paddingLeft: "20px" }}>
                               <input
+                                name={`row_${i}_name`}
                                 type="text"
                                 className="form-control"
                                 value={row.name}
+                                // onChange={(e) =>
+                                //   handleRowChange(i, "name", e.target.value)
+                                // }
                                 onChange={(e) =>
-                                  handleRowChange(i, "name", e.target.value)
+                                  handleRowTextChange(i, e.target.value, 50)
                                 }
+                                maxLength={50}
                                 placeholder="Label"
                               />
                             </td>

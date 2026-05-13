@@ -779,7 +779,7 @@ const AdminAttandanceKHR = () => {
     }
   }, [isAttendancesGetApi, isAttendancesGetApiFetching]);
 
-  useEffect(() => {}, []);
+  useEffect(() => { }, []);
 
   // Update grouped data when main data changes
   useEffect(() => {
@@ -862,11 +862,10 @@ const AdminAttandanceKHR = () => {
       dataIndex: "Status",
       render: (text: string, record: AttendanceAdminData) => (
         <span
-          className={`badge ${
-            text === "Present"
-              ? "badge-success-transparent"
-              : "badge-danger-transparent"
-          } d-inline-flex align-items-center`}
+          className={`badge ${text === "Present"
+            ? "badge-success-transparent"
+            : "badge-danger-transparent"
+            } d-inline-flex align-items-center`}
         >
           <i className="ti ti-point-filled me-1" />
           {record.Status}
@@ -904,14 +903,13 @@ const AdminAttandanceKHR = () => {
       dataIndex: "ProductionHours",
       render: (_text: string, record: AttendanceAdminData) => (
         <span
-          className={`badge d-inline-flex align-items-center badge-sm ${
-            parseFloat(record.ProductionHours) < 8
-              ? "badge-danger"
-              : parseFloat(record.ProductionHours) >= 8 &&
-                  parseFloat(record.ProductionHours) <= 9
-                ? "badge-success"
-                : "badge-info"
-          }`}
+          className={`badge d-inline-flex align-items-center badge-sm ${parseFloat(record.ProductionHours) < 8
+            ? "badge-danger"
+            : parseFloat(record.ProductionHours) >= 8 &&
+              parseFloat(record.ProductionHours) <= 9
+              ? "badge-success"
+              : "badge-info"
+            }`}
         >
           <i className="ti ti-clock-hour-11 me-1"></i>
           {record.ProductionHours}
@@ -973,8 +971,8 @@ const AdminAttandanceKHR = () => {
                       <i className="ti ti-user me-1" />
                       {selectedEmployeeId
                         ? employees.find(
-                            (emp) => emp.id.toString() === selectedEmployeeId,
-                          )?.name || "Select Employee"
+                          (emp) => emp.id.toString() === selectedEmployeeId,
+                        )?.name || "Select Employee"
                         : "All Employees"}
                     </button>
                     <ul
@@ -1060,7 +1058,7 @@ const AdminAttandanceKHR = () => {
                     </ul>
                   </div>
 
-                  <div className="d-flex border bg-white rounded p-1">
+                  {/* <div className="d-flex border bg-white rounded p-1">
                     <Link
                       // to={all_routes.attendanceemployee}
                       className="btn btn-icon btn-sm me-1"
@@ -1073,7 +1071,7 @@ const AdminAttandanceKHR = () => {
                     >
                       <i className="ti ti-calendar-event" />
                     </Link>
-                  </div>
+                  </div> */}
 
                   {/* Export */}
                   <div className="position-relative" ref={exportDropdownRef}>
@@ -1160,14 +1158,14 @@ const AdminAttandanceKHR = () => {
                   </div>
 
                   {/* Report */}
-                  <button
+                  {/* <button
                     className="btn btn-primary d-flex align-items-center"
                     data-bs-toggle="modal"
                     data-bs-target="#attendance_report"
                   >
                     <i className="ti ti-file-analytics me-2" />
                     Report
-                  </button>
+                  </button> */}
                 </>
               }
             />
@@ -1292,13 +1290,13 @@ const AdminAttandanceKHR = () => {
                     {["last_month", "last_3_months", "last_6_months"].includes(
                       groupBy,
                     ) && (
-                      <span className="ms-2 badge badge-info">
-                        <i className="ti ti-calendar me-1"></i>
-                        {groupBy === "last_month" && "Previous Month Only"}
-                        {groupBy === "last_3_months" && "Previous 3 Months"}
-                        {groupBy === "last_6_months" && "Previous 6 Months"}
-                      </span>
-                    )}
+                        <span className="ms-2 badge badge-info">
+                          <i className="ti ti-calendar me-1"></i>
+                          {groupBy === "last_month" && "Previous Month Only"}
+                          {groupBy === "last_3_months" && "Previous 3 Months"}
+                          {groupBy === "last_6_months" && "Previous 6 Months"}
+                        </span>
+                      )}
                   </div>
                   <div className="btn-group btn-group-sm">
                     <button

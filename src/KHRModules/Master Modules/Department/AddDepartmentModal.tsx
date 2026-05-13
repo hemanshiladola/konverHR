@@ -40,6 +40,27 @@ const AddDepartmentModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
     };
   }, []);
 
+  // 🔥 NEW: Specific handler for text boundaries (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 50,
+  ) => {
+    const value = e.target.value;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce maximum character limit
+    if (sanitizedValue.length > maxLength) return;
+
+    setName(sanitizedValue);
+
+    // Clear Error
+    if (errors.name) {
+      setErrors({});
+    }
+  };
+
   const resetForm = () => {
     setName("");
     setErrors({});
@@ -126,15 +147,20 @@ const AddDepartmentModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
                     isSubmitted ? (errors.name ? "is-invalid" : "is-valid") : ""
                   }`}
                   value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    if (errors.name) setErrors({});
-                  }}
+                  onChange={(e) => handleTextChange(e, 50)} // 🔥 Use the new handler
+                  maxLength={50} // HTML fallback
+                  // onChange={(e) => {
+                  //   setName(e.target.value);
+                  //   if (errors.name) setErrors({});
+                  // }}
                   placeholder="e.g. Human Resources"
                 />
                 {isSubmitted && errors.name && (
                   <div className="invalid-feedback fs-11">{errors.name}</div>
                 )}
+                <small className="text-muted" style={{ fontSize: "10px" }}>
+                  {(name || "").length}/50
+                </small>
               </div>
 
               {/* Footer Styles Matching Banks/Employee Modal */}

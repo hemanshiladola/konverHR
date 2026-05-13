@@ -94,6 +94,31 @@ const AddHelpDeskTickitsModal = ({ onSuccess, data }: ModalProps) => {
     if (file) processFile(file);
   };
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    maxLength: number = 100,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      setErrors((prev: any) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
   // 2. Custom Validation Function
   const validate = () => {
     const newErrors: any = {};
@@ -177,21 +202,24 @@ const AddHelpDeskTickitsModal = ({ onSuccess, data }: ModalProps) => {
                     </label>
                     <input
                       type="text"
+                      name="name" // 🔥 Ensure name attribute exists
                       // 3. Dynamic classes for red border
                       className={`form-control form-control-lg fs-14 ${isSubmitted && errors.name ? "is-invalid border-danger shadow-sm" : "border-light-gray"}`}
                       placeholder="e.g. Payroll discrepancy in March"
                       value={formData.name}
-                      onChange={(e) => {
-                        setFormData({ ...formData, name: e.target.value });
-                        // 4. Instantly clear error upon typing
-                        if (errors.name) {
-                          setErrors((prev: any) => {
-                            const newErrors = { ...prev };
-                            delete newErrors.name;
-                            return newErrors;
-                          });
-                        }
-                      }}
+                      // onChange={(e) => {
+                      //   setFormData({ ...formData, name: e.target.value });
+                      //   // 4. Instantly clear error upon typing
+                      //   if (errors.name) {
+                      //     setErrors((prev: any) => {
+                      //       const newErrors = { ...prev };
+                      //       delete newErrors.name;
+                      //       return newErrors;
+                      //     });
+                      //   }
+                      // }}
+                      onChange={(e) => handleTextChange(e, 100)} // 🔥 Use text handler
+                      maxLength={100}
                     />
                     {/* 5. Validation Text */}
                     {isSubmitted && errors.name && (
@@ -206,18 +234,26 @@ const AddHelpDeskTickitsModal = ({ onSuccess, data }: ModalProps) => {
                       Issue Description
                     </label>
                     <textarea
+                      name="description" // 🔥 Add name for consistency
                       className="form-control fs-14 border-light-gray"
                       rows={6}
                       placeholder="Please provide as much detail as possible..."
                       value={formData.description}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          description: e.target.value,
-                        })
-                      }
+                      // onChange={(e) =>
+                      //   setFormData({
+                      //     ...formData,
+                      //     description: e.target.value,
+                      //   })
+                      // }
+                      onChange={(e) => handleTextChange(e, 500)} // 🔥 Use text handler
+                      maxLength={500}
                       style={{ resize: "none", borderRadius: "10px" }}
                     ></textarea>
+                  </div>
+                  <div className="d-flex justify-content-end mt-1">
+                    <small className="text-muted" style={{ fontSize: "10px" }}>
+                      {(formData.description || "").length}/500
+                    </small>
                   </div>
                 </div>
 

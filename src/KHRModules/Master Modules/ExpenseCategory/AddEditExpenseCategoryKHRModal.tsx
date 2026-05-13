@@ -115,6 +115,48 @@ const AddEditExpenseCategoryKHRModal: React.FC<Props> = ({
     };
   }, [onClose]);
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    maxLength: number = 50,
+  ) => {
+    const { name, value } = e.target;
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+    clearError(name);
+  };
+
+  // 🔥 NEW: Safe Currency boundary handler (allows decimals, blocks 'e' and '-')
+  const handleCostChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLimit: number = 99999999,
+  ) => {
+    const { name, value } = e.target;
+
+    // Allow only digits and a single decimal point
+    let sanitized = value.replace(/[^0-9.]/g, "").replace(/(\..*?)\..*/g, "$1");
+
+    if (sanitized === "") {
+      setFormData((prev: any) => ({ ...prev, [name]: "" }));
+      clearError(name);
+      return;
+    }
+
+    // Enforce logical max limit
+    let num = parseFloat(sanitized);
+    if (num > maxLimit) {
+      sanitized = maxLimit.toString();
+    }
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitized }));
+    clearError(name);
+  };
+
   const resetForm = () => {
     setFormData({
       ...initialFormState,
@@ -291,7 +333,9 @@ const AddEditExpenseCategoryKHRModal: React.FC<Props> = ({
                       className={getInputClass("name")}
                       placeholder="e.g. Office Internet Expense"
                       value={formData.name}
-                      onChange={handleChange}
+                      // onChange={handleChange}
+                      onChange={(e) => handleTextChange(e, 100)} // 🔥 Max 100 chars
+                      maxLength={100}
                     />
                     <div className="invalid-feedback fw-medium mt-1">
                       {errors.name || "Product Name is required"}
@@ -330,7 +374,9 @@ const AddEditExpenseCategoryKHRModal: React.FC<Props> = ({
                         className="form-control"
                         placeholder="e.g. EXP-001"
                         value={formData.reference}
-                        onChange={handleChange}
+                        // onChange={handleChange}
+                        onChange={(e) => handleTextChange(e, 50)} // 🔥 Max 50 chars
+                        maxLength={50}
                       />
                     </div>
 
@@ -347,7 +393,8 @@ const AddEditExpenseCategoryKHRModal: React.FC<Props> = ({
                           className={getInputClass("cost")}
                           placeholder="0.00"
                           value={formData.cost}
-                          onChange={handleChange}
+                          // onChange={handleChange}
+                          onChange={(e) => handleCostChange(e, 99999999)} // 🔥 Max 99,999,999
                         />
                         <div className="invalid-feedback">{errors.cost}</div>
                       </div>
@@ -362,7 +409,9 @@ const AddEditExpenseCategoryKHRModal: React.FC<Props> = ({
                         className="form-control"
                         placeholder="Guidelines for employees..."
                         value={formData.description}
-                        onChange={handleChange}
+                        // onChange={handleChange}
+                        onChange={(e) => handleTextChange(e, 255)} // 🔥 Max 255 chars
+                        maxLength={255}
                       />
                     </div>
                   </div>

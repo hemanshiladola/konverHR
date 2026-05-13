@@ -166,6 +166,31 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
   //   }
   // };
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    maxLength: number = 100,
+  ) => {
+    const { name, value } = e.target;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setFormData((prev: any) => ({ ...prev, [name]: sanitizedValue }));
+
+    // Clear validation error if it exists
+    if (errors[name]) {
+      setErrors((prev: any) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let finalValue = value;
@@ -363,14 +388,17 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="name"
-                      className={`form-control ${isSubmitted && errors.name
-                        ? "is-invalid"
-                        : formData.name
-                          ? "is-valid"
-                          : ""
-                        }`}
+                      className={`form-control ${
+                        isSubmitted && errors.name
+                          ? "is-invalid"
+                          : formData.name
+                            ? "is-valid"
+                            : ""
+                      }`}
                       value={formData.name}
-                      onChange={handleInputChange}
+                      // onChange={handleInputChange}
+                      onChange={(e) => handleTextChange(e, 100)} // 🔥 Max 100 chars
+                      maxLength={100}
                     />
                     {isSubmitted && errors.name && (
                       <div className="invalid-feedback fs-11">
@@ -385,12 +413,13 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="bic"
-                      className={`form-control ${isSubmitted && errors.bic
-                        ? "is-invalid"
-                        : formData.bic
-                          ? "is-valid"
-                          : ""
-                        }`}
+                      className={`form-control ${
+                        isSubmitted && errors.bic
+                          ? "is-invalid"
+                          : formData.bic
+                            ? "is-valid"
+                            : ""
+                      }`}
                       maxLength={11} // Maximum allowed for BIC
                       value={formData.bic}
                       onChange={handleInputChange}
@@ -407,8 +436,9 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                       type="text"
                       name="swift_code"
                       maxLength={11} // Maximum allowed for SWIFT
-                      className={`form-control ${isSubmitted && errors.swift_code ? "is-invalid" : ""
-                        }`}
+                      className={`form-control ${
+                        isSubmitted && errors.swift_code ? "is-invalid" : ""
+                      }`}
                       value={formData.swift_code}
                       onChange={handleInputChange}
                     />
@@ -426,8 +456,9 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                       type="text"
                       name="micr_code"
                       maxLength={9} // Strict 9 digits for MICR
-                      className={`form-control ${isSubmitted && errors.micr_code ? "is-invalid" : ""
-                        }`}
+                      className={`form-control ${
+                        isSubmitted && errors.micr_code ? "is-invalid" : ""
+                      }`}
                       value={formData.micr_code}
                       onChange={handleInputChange}
                     />
@@ -454,7 +485,9 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                         className="form-control mb-1"
                         placeholder="Street Address..."
                         value={formData.street}
-                        onChange={handleInputChange}
+                        // onChange={handleInputChange}
+                        onChange={(e) => handleTextChange(e, 150)} // 🔥 Limit to 150 chars
+                        maxLength={150}
                       />
                       <input
                         type="text"
@@ -462,7 +495,8 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                         className="form-control"
                         placeholder="Street Address 2..."
                         value={formData.street2}
-                        onChange={handleInputChange}
+                        onChange={(e) => handleTextChange(e, 150)} // 🔥 Limit to 150 chars
+                        maxLength={150}
                       />
                     </div>
 
@@ -546,7 +580,9 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                         className="form-control"
                         placeholder="Zip Code"
                         value={formData.zip}
-                        onChange={handleInputChange}
+                        // onChange={handleInputChange}
+                        onChange={(e) => handleTextChange(e, 20)} // 🔥 Limit to 20 chars
+                        maxLength={20}
                       />
                     </div>
                   </div>
@@ -569,8 +605,9 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                         type="text"
                         name="phone"
                         maxLength={10}
-                        className={`form-control ${isSubmitted && errors.phone ? "is-invalid" : ""
-                          }`}
+                        className={`form-control ${
+                          isSubmitted && errors.phone ? "is-invalid" : ""
+                        }`}
                         value={formData.phone}
                         onChange={handleInputChange}
                         placeholder="10-digit mobile"
@@ -593,8 +630,9 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                       <input
                         type="email"
                         name="email"
-                        className={`form-control ${isSubmitted && errors.email ? "is-invalid" : ""
-                          }`}
+                        className={`form-control ${
+                          isSubmitted && errors.email ? "is-invalid" : ""
+                        }`}
                         value={formData.email}
                         onChange={handleInputChange}
                         placeholder="e.g. accounts@bank.com"

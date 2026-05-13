@@ -73,6 +73,33 @@ const AddEditEmployeeCalendarsKHRModal: React.FC<Props> = ({
     return Object.keys(newErrors).length === 0;
   };
 
+  // 🔥 NEW: Text boundary handler (prevents leading spaces & enforces max length)
+  const handleTextChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    setter: React.Dispatch<React.SetStateAction<string>>,
+    errorKey: string | null = null,
+    maxLength: number = 50,
+  ) => {
+    const value = e.target.value;
+
+    // Aggressively remove leading spaces
+    const sanitizedValue = value.replace(/^\s+/, "");
+
+    // Enforce max length
+    if (sanitizedValue.length > maxLength) return;
+
+    setter(sanitizedValue);
+
+    // Clear validation error if it exists
+    if (errorKey && errors[errorKey]) {
+      setErrors((prev: any) => {
+        const newErrors = { ...prev };
+        delete newErrors[errorKey];
+        return newErrors;
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitted(true);
@@ -165,18 +192,21 @@ const AddEditEmployeeCalendarsKHRModal: React.FC<Props> = ({
                 </label>
                 <input
                   type="text"
+                  name="name"
                   className={`form-control ${isSubmitted && errors.name ? "is-invalid border-danger" : ""}`}
                   value={name}
-                  onChange={(e) => {
-                    setName(e.target.value);
-                    if (errors.name) {
-                      setErrors((prev: any) => {
-                        const newErrors = { ...prev };
-                        delete newErrors.name;
-                        return newErrors;
-                      });
-                    }
-                  }}
+                  // onChange={(e) => {
+                  //   setName(e.target.value);
+                  //   if (errors.name) {
+                  //     setErrors((prev: any) => {
+                  //       const newErrors = { ...prev };
+                  //       delete newErrors.name;
+                  //       return newErrors;
+                  //     });
+                  //   }
+                  // }}
+                  onChange={(e) => handleTextChange(e, setName, "name", 100)} // 🔥 Boundary handler
+                  maxLength={100}
                   placeholder="e.g., Meeting with Team"
                 />
                 {isSubmitted && errors.name && (
@@ -318,9 +348,12 @@ const AddEditEmployeeCalendarsKHRModal: React.FC<Props> = ({
                 <label className="form-label">Event Location</label>
                 <input
                   type="text"
+                  name="location"
                   className="form-control"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  // onChange={(e) => setLocation(e.target.value)}
+                  onChange={(e) => handleTextChange(e, setLocation, null, 255)} // 🔥 Boundary handler
+                  maxLength={255}
                   placeholder="e.g., Conference Room"
                 />
               </div>
@@ -345,11 +378,21 @@ const AddEditEmployeeCalendarsKHRModal: React.FC<Props> = ({
                 <label className="form-label">Description</label>
                 <textarea
                   className="form-control"
+                  name="description"
                   rows={3}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  onChange={(e) =>
+                    handleTextChange(e, setDescription, null, 500)
+                  } // 🔥 Boundary handler
+                  maxLength={500}
+                  // onChange={(e) => setDescription(e.target.value)}
                   placeholder="Enter event details..."
                 />
+              </div>
+              <div className="d-flex justify-content-end mt-1">
+                <small className="text-muted" style={{ fontSize: "10px" }}>
+                  {(description || "").length}/500
+                </small>
               </div>
             </div>
           </div>

@@ -11,7 +11,7 @@ const ExpenseKHR = () => {
   const routes = all_routes;
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true); // Loading State
-
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
   const [previewFile, setPreviewFile] = useState<{
     src: string;
@@ -79,11 +79,20 @@ const ExpenseKHR = () => {
 
   const handlePreview = (file: any) => {
     let rawBase64 = file.base64 || "";
-    if (!rawBase64 || rawBase64 === "Base URL " || rawBase64.length < 50) {
+    if (!rawBase64 || rawBase64.length < 50) {
       alert("No valid file data found.");
       return;
     }
-    const isPdf = file.mimetype === "application/pdf";
+
+    // Determine type (Mapping your JSON to valid MimeTypes)
+    let type = file.mimetype;
+    if (!type) {
+      if (file.name.toLowerCase().endsWith(".pdf")) type = "application/pdf";
+      else if (file.name.toLowerCase().endsWith(".png")) type = "image/png";
+      else type = "image/jpeg";
+    }
+
+    const isPdf = type === "application/pdf";
     let finalSrc = "";
 
     if (isPdf) {
@@ -93,24 +102,11 @@ const ExpenseKHR = () => {
     } else {
       finalSrc = rawBase64.startsWith("data:")
         ? rawBase64
-        : `data:${file.mimetype};base64,${rawBase64}`;
+        : `data:${type};base64,${rawBase64}`;
     }
 
-    setPreviewFile({ src: finalSrc, type: file.mimetype, name: file.name });
-
-    // Open Modal logic...
-    const modal = document.getElementById("preview_modal");
-    if (modal) {
-      modal.classList.add("show");
-      modal.style.display = "block";
-      document.body.classList.add("modal-open");
-      if (!document.getElementById("preview_backdrop")) {
-        const backdrop = document.createElement("div");
-        backdrop.className = "modal-backdrop fade show";
-        backdrop.id = "preview_backdrop";
-        document.body.appendChild(backdrop);
-      }
-    }
+    setPreviewFile({ src: finalSrc, type: type, name: file.name });
+    setIsPreviewOpen(true); // TRIGGER STATE
   };
 
   const closePreview = () => {
@@ -121,15 +117,25 @@ const ExpenseKHR = () => {
       URL.revokeObjectURL(previewFile.src);
     }
     setPreviewFile(null);
-    const modal = document.getElementById("preview_modal");
-    if (modal) {
-      modal.classList.remove("show");
-      modal.style.display = "none";
-      document.body.classList.remove("modal-open");
-      const backdrop = document.getElementById("preview_backdrop");
-      if (backdrop) backdrop.remove();
-    }
+    setIsPreviewOpen(false); // CLOSE STATE
   };
+  // const closePreview = () => {
+  //   if (
+  //     previewFile?.type === "application/pdf" &&
+  //     previewFile.src.startsWith("blob:")
+  //   ) {
+  //     URL.revokeObjectURL(previewFile.src);
+  //   }
+  //   setPreviewFile(null);
+  //   const modal = document.getElementById("preview_modal");
+  //   if (modal) {
+  //     modal.classList.remove("show");
+  //     modal.style.display = "none";
+  //     document.body.classList.remove("modal-open");
+  //     const backdrop = document.getElementById("preview_backdrop");
+  //     if (backdrop) backdrop.remove();
+  //   }
+  // };
 
   // ... (Your Columns remain the same) ...
   const columns: any[] = [
@@ -149,21 +155,21 @@ const ExpenseKHR = () => {
         <span className="fw-medium text-dark">{val || "-"}</span>
       ),
     },
-    {
-      title: "Product",
-      dataIndex: "product_id",
-      render: (val: any) => {
-        if (Array.isArray(val) && val.length > 1) {
-          const rawName = val[1];
-          const cleanName =
-            typeof rawName === "string"
-              ? rawName.replace(/^\[.*?\]\s*/, "")
-              : rawName;
-          return <span>{cleanName}</span>;
-        }
-        return <span>-</span>;
-      },
-    },
+    // {
+    //   title: "Product",
+    //   dataIndex: "product_id",
+    //   render: (val: any) => {
+    //     if (Array.isArray(val) && val.length > 1) {
+    //       const rawName = val[1];
+    //       const cleanName =
+    //         typeof rawName === "string"
+    //           ? rawName.replace(/^\[.*?\]\s*/, "")
+    //           : rawName;
+    //       return <span>{cleanName}</span>;
+    //     }
+    //     return <span>-</span>;
+    //   },
+    // },
     {
       title: "Paid By",
       dataIndex: "payment_mode",
@@ -182,21 +188,60 @@ const ExpenseKHR = () => {
       sorter: (a: any, b: any) =>
         Number(a.total_amount) - Number(b.total_amount),
     },
+    // {
+    //   title: "Receipts",
+    //   dataIndex: "attachment_ids",
+    //   render: (attachments: any[]) => {
+    //     if (!attachments || attachments.length === 0)
+    //       return <span className="text-muted">-</span>;
+    //     return (
+    //       <div className="d-flex align-items-center gap-2">
+    //         {attachments.map((file: any, index: number) => {
+    //           const isImage =
+    //             file.mimetype && file.mimetype.startsWith("image/");
+    //           const isPdf = file.mimetype === "application/pdf";
+    //           let iconClass = "ti-file text-secondary";
+    //           if (isImage) iconClass = "ti-photo text-primary";
+    //           if (isPdf) iconClass = "ti-file-type-pdf text-danger";
+    //           return (
+    //             <div
+    //               key={index}
+    //               className="cursor-pointer d-flex align-items-center justify-content-center border rounded bg-white shadow-sm"
+    //               onClick={() => handlePreview(file)}
+    //               title={`View ${file.name}`}
+    //               style={{
+    //                 cursor: "pointer",
+    //                 width: "32px",
+    //                 height: "32px",
+    //                 transition: "all 0.2s",
+    //               }}
+    //             >
+    //               <i className={`ti ${iconClass} fs-18`} />
+    //             </div>
+    //           );
+    //         })}
+    //       </div>
+    //     );
+    //   },
+    // },
     {
       title: "Receipts",
-      dataIndex: "attachment_ids",
+      dataIndex: "attachments", // Match this to your JSON key
       render: (attachments: any[]) => {
         if (!attachments || attachments.length === 0)
           return <span className="text-muted">-</span>;
         return (
           <div className="d-flex align-items-center gap-2">
             {attachments.map((file: any, index: number) => {
-              const isImage =
-                file.mimetype && file.mimetype.startsWith("image/");
-              const isPdf = file.mimetype === "application/pdf";
+              // Detect file type from the name since your JSON doesn't show mimetype
+              const fileName = file.name || "";
+              const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(fileName);
+              const isPdf = /\.pdf$/i.test(fileName);
+
               let iconClass = "ti-file text-secondary";
               if (isImage) iconClass = "ti-photo text-primary";
               if (isPdf) iconClass = "ti-file-type-pdf text-danger";
+
               return (
                 <div
                   key={index}
@@ -302,7 +347,7 @@ const ExpenseKHR = () => {
       />
 
       {/* Preview Modal (Same as before) */}
-      <div
+      {/* <div
         className="modal fade"
         id="preview_modal"
         tabIndex={-1}
@@ -373,13 +418,89 @@ const ExpenseKHR = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
+      {isPreviewOpen && (
+        <>
+          <div
+            className="modal fade show"
+            style={{
+              display: "block",
+              zIndex: 1060,
+              backgroundColor: "rgba(0,0,0,0.5)", // This creates the dark backdrop
+            }}
+            role="dialog"
+          >
+            <div
+              className="modal-dialog modal-dialog-centered"
+              style={{ maxWidth: "700px" }}
+            >
+              <div
+                className="modal-content shadow-lg border-0"
+                style={{ height: "80vh" }}
+              >
+                <div className="modal-header border-bottom bg-light py-2">
+                  <h5 className="modal-title fs-15 fw-bold text-dark text-truncate">
+                    {previewFile?.name || "Preview"}
+                  </h5>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    onClick={closePreview}
+                  ></button>
+                </div>
+
+                <div
+                  className="modal-body p-0 bg-light d-flex align-items-center justify-content-center"
+                  style={{ flex: 1, overflow: "hidden" }}
+                >
+                  {previewFile?.type.startsWith("image/") ? (
+                    <img
+                      src={previewFile.src}
+                      alt="Preview"
+                      className="img-fluid"
+                      style={{ maxHeight: "100%", objectFit: "contain" }}
+                    />
+                  ) : (
+                    <iframe
+                      src={previewFile?.src}
+                      title="PDF Preview"
+                      width="100%"
+                      height="100%"
+                      style={{ border: "none" }}
+                    />
+                  )}
+                </div>
+
+                <div className="modal-footer py-2 px-3 border-top bg-white">
+                  <button
+                    onClick={closePreview}
+                    className="btn btn-secondary btn-sm me-2"
+                  >
+                    Close
+                  </button>
+                  <a
+                    href={previewFile?.src}
+                    download={previewFile?.name}
+                    className="btn btn-primary btn-sm"
+                  >
+                    <i className="ti ti-download"></i> Download
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          {/* Manual backdrop for styling consistency */}
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1050 }}
+          ></div>
+        </>
+      )}
     </div>
   );
 };
 
-export default ExpenseKHR; 
-
+export default ExpenseKHR;
 
 // ====================================================================================================================================================================================
 
