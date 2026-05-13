@@ -294,6 +294,7 @@ export default defineConfig({
       "odoosaas.konverthr.com",
       "odooproduction.konverthr.com",
       "cloud.konverthr.com",
+      "odoostag.konverthr.com"
     ],
   },
 });
