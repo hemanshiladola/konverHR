@@ -119,6 +119,7 @@ const ExpenseKHR = () => {
     setPreviewFile(null);
     setIsPreviewOpen(false); // CLOSE STATE
   };
+
   // const closePreview = () => {
   //   if (
   //     previewFile?.type === "application/pdf" &&

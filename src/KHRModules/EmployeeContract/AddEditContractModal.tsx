@@ -90,6 +90,17 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [leaveErrors, setLeaveErrors] = useState<any>({}); // Dedicated validation for the entry form
   const [errors, setErrors] = useState<any>({});
+  const [manualPFBase, setManualPFBase] = useState<number | null>(null);
+  const [manualESICBase, setManualESICBase] = useState<number | null>(null);
+  const [editingPFBase, setEditingPFBase] = useState(false);
+  const [editingESICBase, setEditingESICBase] = useState(false);
+
+  const [manualEmployerPF, setManualEmployerPF] = useState<number | null>(null);
+  const [manualEmployerESIC, setManualEmployerESIC] = useState<number | null>(null);
+  const [employerPFPct, setEmployerPFPct] = useState<number>(13);
+  const [employerESICPct, setEmployerESICPct] = useState<number>(3.25);
+  const [editingEmployerPF, setEditingEmployerPF] = useState(false);
+  const [editingEmployerESIC, setEditingEmployerESIC] = useState(false);
 
   // Salary Structure Headers
   const [structureHeaders, setStructureHeaders] = useState<any[]>([]);
@@ -261,60 +272,60 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         structure_type_id: getVal(data.structure_type_id),
         components:
           (data as any).dynamic_fields &&
-          (data as any).dynamic_fields.length > 0
+            (data as any).dynamic_fields.length > 0
             ? (data as any).dynamic_fields.map((f: any) => {
-                let headId: any = f.structure_header_id
-                  ? Number(f.structure_header_id)
-                  : "";
+              let headId: any = f.structure_header_id
+                ? Number(f.structure_header_id)
+                : "";
 
-                // Fallbacks for missing header IDs
-                if (!headId && f.name) {
-                  const nameStr = f.name.toLowerCase().trim();
-                  if (nameStr === "basic") headId = 1;
-                  else if (nameStr === "dearness allowance") headId = 2;
-                  else if (nameStr === "hra") headId = 3;
-                  else if (nameStr === "skill allowance") headId = 4;
-                  else if (nameStr === "attendance allowance") headId = 5;
-                  else if (nameStr === "food allowance") headId = 6;
-                  else if (nameStr === "washing allowance") headId = 7;
-                  else if (nameStr === "conveyance") headId = 8;
-                  else if (nameStr === "leave allowance") headId = 9;
-                  else if (nameStr === "bonus") headId = 10;
-                  else if (nameStr === "gratuity") headId = 11;
-                  else if (nameStr === "other" || nameStr === "other allowance")
-                    headId = 12;
-                  else if (nameStr === "uniform allowance") headId = 13;
-                  else if (nameStr === "mobile allowance") headId = 14;
-                  else if (nameStr === "travel allowance") headId = 15;
-                  else if (nameStr === "educational allowance") headId = 16;
-                  else if (nameStr === "city compensatory allowance")
-                    headId = 17;
-                  else if (nameStr === "pf employee") headId = 18;
-                  else if (nameStr === "esic employee") headId = 19;
-                  else if (nameStr === "pt" || nameStr === "professional tax")
-                    headId = 20;
-                  else if (nameStr === "lta") headId = 21;
-                  else if (nameStr === "variable pay") headId = 22;
+              // Fallbacks for missing header IDs
+              if (!headId && f.name) {
+                const nameStr = f.name.toLowerCase().trim();
+                if (nameStr === "basic") headId = 1;
+                else if (nameStr === "dearness allowance") headId = 2;
+                else if (nameStr === "hra") headId = 3;
+                else if (nameStr === "skill allowance") headId = 4;
+                else if (nameStr === "attendance allowance") headId = 5;
+                else if (nameStr === "food allowance") headId = 6;
+                else if (nameStr === "washing allowance") headId = 7;
+                else if (nameStr === "conveyance") headId = 8;
+                else if (nameStr === "leave allowance") headId = 9;
+                else if (nameStr === "bonus") headId = 10;
+                else if (nameStr === "gratuity") headId = 11;
+                else if (nameStr === "other" || nameStr === "other allowance")
+                  headId = 12;
+                else if (nameStr === "uniform allowance") headId = 13;
+                else if (nameStr === "mobile allowance") headId = 14;
+                else if (nameStr === "travel allowance") headId = 15;
+                else if (nameStr === "educational allowance") headId = 16;
+                else if (nameStr === "city compensatory allowance")
+                  headId = 17;
+                else if (nameStr === "pf employee") headId = 18;
+                else if (nameStr === "esic employee") headId = 19;
+                else if (nameStr === "pt" || nameStr === "professional tax")
+                  headId = 20;
+                else if (nameStr === "lta") headId = 21;
+                else if (nameStr === "variable pay") headId = 22;
+              }
+
+              // If backend sends false for both addition and deduction, default to a category
+              let isAdd = f.is_addition;
+              let isDed = f.is_deduction;
+              if (!isAdd && !isDed) {
+                if (headId === 18 || headId === 19 || headId === 20) {
+                  isDed = true;
+                } else {
+                  isAdd = true;
                 }
+              }
 
-                // If backend sends false for both addition and deduction, default to a category
-                let isAdd = f.is_addition;
-                let isDed = f.is_deduction;
-                if (!isAdd && !isDed) {
-                  if (headId === 18 || headId === 19 || headId === 20) {
-                    isDed = true;
-                  } else {
-                    isAdd = true;
-                  }
-                }
-
-                return {
-                  structure_head_id: headId,
-                  amount: Number(f.value) || 0,
-                  addition: isAdd,
-                  deduction: isDed,
-                };
-              })
+              return {
+                structure_head_id: headId,
+                amount: Number(f.value) || 0,
+                addition: isAdd,
+                deduction: isDed,
+              };
+            })
             : data.components && data.components.length > 0
               ? data.components
               : initialContractState.components,
@@ -351,6 +362,16 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     setLeaveErrors({});
     setIsSubmitted(false);
     setActiveTab("basic");
+    setManualPFBase(null);
+    setManualESICBase(null);
+    setEditingPFBase(false);
+    setEditingESICBase(false);
+    setManualEmployerPF(null);
+    setManualEmployerESIC(null);
+    setEmployerPFPct(13);
+    setEmployerESICPct(3.25);
+    setEditingEmployerPF(false);
+    setEditingEmployerESIC(false);
   };
 
   useEffect(() => {
@@ -542,6 +563,110 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     if (errors[name]) setErrors((prev: any) => ({ ...prev, [name]: null }));
   };
 
+  const recalculatePFESIC = (
+    comps: any[],
+    pfBaseOverride: number | null = manualPFBase,
+    esicBaseOverride: number | null = manualESICBase,
+  ) => {
+    const autoPFBase = comps
+      .filter((c) => c.addition && c.is_pf_base)
+      .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+    const autoESICBase = comps
+      .filter((c) => c.addition && c.is_esic_base)
+      .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+
+    const finalPFBase = pfBaseOverride !== null ? pfBaseOverride : autoPFBase;
+    const finalESICBase =
+      esicBaseOverride !== null ? esicBaseOverride : autoESICBase;
+
+    comps.forEach((c) => {
+      if (c.structure_head_id === 18) {
+        const pct = c.percentage !== undefined ? c.percentage : 12; // Employee PF 12%
+        c.percentage = pct;
+        c.amount = parseFloat(((finalPFBase * pct) / 100).toFixed(2));
+      }
+      if (c.structure_head_id === 19) {
+        const pct = c.percentage !== undefined ? c.percentage : 0.75; // Employee ESIC 0.75%
+        c.percentage = pct;
+        c.amount = parseFloat(((finalESICBase * pct) / 100).toFixed(2));
+      }
+    });
+    return comps;
+  };
+
+  useEffect(() => {
+    const autoPFBase = (formData.components || [])
+      .filter((c: any) => c.addition && c.is_pf_base)
+      .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+    const finalPFBase = manualPFBase !== null ? manualPFBase : autoPFBase;
+
+    const autoESICBase = (formData.components || [])
+      .filter((c: any) => c.addition && c.is_esic_base)
+      .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+    const finalESICBase = manualESICBase !== null ? manualESICBase : autoESICBase;
+
+    const employerPF = manualEmployerPF !== null ? manualEmployerPF : (finalPFBase * employerPFPct) / 100;
+    const employerESIC = manualEmployerESIC !== null ? manualEmployerESIC : (finalESICBase * employerESICPct) / 100;
+
+    const grossAllowances = (formData.components || [])
+      .filter((c: any) => c.addition)
+      .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+
+    const totalCTCMonthly = grossAllowances + employerPF + employerESIC;
+    const totalCTCYearly = Math.round(totalCTCMonthly * 12);
+
+    if (totalCTCYearly > 0 && formData.wage !== totalCTCYearly) {
+      setFormData((prev: any) => ({ ...prev, wage: totalCTCYearly }));
+      if (errors.wage) {
+        setErrors((prev: any) => {
+          const newErrors = { ...prev };
+          delete newErrors.wage;
+          return newErrors;
+        });
+      }
+    }
+  }, [
+    formData.components,
+    manualPFBase,
+    manualESICBase,
+    manualEmployerPF,
+    manualEmployerESIC,
+    employerPFPct,
+    employerESICPct
+  ]);
+
+  const handleBaseCheckboxChange = (
+    index: number,
+    field: "is_pf_base" | "is_esic_base",
+    checked: boolean,
+  ) => {
+    let newComps = [...(formData.components || [])];
+    newComps[index] = { ...newComps[index], [field]: checked };
+    newComps = recalculatePFESIC(newComps);
+    setFormData({ ...formData, components: newComps });
+  };
+
+  const handleManualPFBaseChange = (value: number | null) => {
+    setManualPFBase(value);
+    let newComps = [...(formData.components || [])];
+    newComps = recalculatePFESIC(newComps, value, manualESICBase);
+    setFormData({ ...formData, components: newComps });
+  };
+
+  const handleManualESICBaseChange = (value: number | null) => {
+    setManualESICBase(value);
+    let newComps = [...(formData.components || [])];
+    newComps = recalculatePFESIC(newComps, manualPFBase, value);
+    setFormData({ ...formData, components: newComps });
+  };
+
+  const handleDeductionPercentageChange = (index: number, pct: number) => {
+    let newComps = [...(formData.components || [])];
+    newComps[index] = { ...newComps[index], percentage: pct };
+    newComps = recalculatePFESIC(newComps);
+    setFormData({ ...formData, components: newComps });
+  };
+
   // 🔥 NEW: Array numeric boundary handler for Allowances and Deductions
   const handleComponentAmountChange = (
     index: number,
@@ -559,8 +684,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       }
     }
 
-    const newComps = [...(formData.components || [])];
+    let newComps = [...(formData.components || [])];
     newComps[index] = { ...newComps[index], amount: num };
+
+    newComps = recalculatePFESIC(newComps);
     setFormData({ ...formData, components: newComps });
   };
 
@@ -1039,19 +1166,19 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 value={
                                   formData.employee_id
                                     ? {
-                                        value: String(formData.employee_id),
-                                        // 🔥 Make sure the selected value also shows the code
-                                        label: (() => {
-                                          const emp = employees.find(
-                                            (e: any) =>
-                                              e.id === formData.employee_id,
-                                          );
-                                          if (!emp) return "";
-                                          return emp.employee_code
-                                            ? `${emp.name} (${emp.employee_code})`
-                                            : emp.name;
-                                        })(),
-                                      }
+                                      value: String(formData.employee_id),
+                                      // 🔥 Make sure the selected value also shows the code
+                                      label: (() => {
+                                        const emp = employees.find(
+                                          (e: any) =>
+                                            e.id === formData.employee_id,
+                                        );
+                                        if (!emp) return "";
+                                        return emp.employee_code
+                                          ? `${emp.name} (${emp.employee_code})`
+                                          : emp.name;
+                                      })(),
+                                    }
                                     : null
                                 }
                                 onChange={(opt) => {
@@ -1204,18 +1331,18 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.resource_calendar_id
                                   ? {
-                                      value: String(
-                                        formData.resource_calendar_id,
-                                      ),
-                                      label:
-                                        workingSchedules.find(
-                                          (s: any) =>
-                                            s.id ===
-                                            Number(
-                                              formData.resource_calendar_id,
-                                            ),
-                                        )?.name || "",
-                                    }
+                                    value: String(
+                                      formData.resource_calendar_id,
+                                    ),
+                                    label:
+                                      workingSchedules.find(
+                                        (s: any) =>
+                                          s.id ===
+                                          Number(
+                                            formData.resource_calendar_id,
+                                          ),
+                                      )?.name || "",
+                                  }
                                   : null
                               }
                               onChange={(opt) => {
@@ -1251,13 +1378,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.department_id
                                   ? {
-                                      value: String(formData.department_id),
-                                      label:
-                                        departments.find(
-                                          (d) =>
-                                            d.id === formData.department_id,
-                                        )?.name || "",
-                                    }
+                                    value: String(formData.department_id),
+                                    label:
+                                      departments.find(
+                                        (d) =>
+                                          d.id === formData.department_id,
+                                      )?.name || "",
+                                  }
                                   : null
                               }
                               onChange={(opt) =>
@@ -1281,12 +1408,12 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               value={
                                 formData.wage_type
                                   ? {
-                                      value: formData.wage_type,
-                                      label:
-                                        formData.wage_type === "monthly"
-                                          ? "Fixed Wage"
-                                          : "Hourly Wage",
-                                    }
+                                    value: formData.wage_type,
+                                    label:
+                                      formData.wage_type === "monthly"
+                                        ? "Fixed Wage"
+                                        : "Hourly Wage",
+                                  }
                                   : null
                               }
                               onChange={(opt) =>
@@ -1343,49 +1470,23 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               <input
                                 type="text"
                                 name="wage"
-                                placeholder="e.g. 5,00,000 LPA"
-                                className={`form-control fw-bold text-success ${
-                                  isSubmitted
-                                    ? errors.wage
-                                      ? "is-invalid border-danger"
-                                      : "is-valid border-success"
-                                    : "border-primary"
-                                }`}
+                                readOnly
+                                placeholder="Auto-calculated from Salary Structure"
+                                className={`form-control fw-bold text-success bg-light ${isSubmitted
+                                  ? errors.wage
+                                    ? "is-invalid border-danger"
+                                    : "is-valid border-success"
+                                  : "border-primary"
+                                  }`}
                                 // 🔥 Removed " LPA" from the value, leaving only the comma-separated number
                                 value={
                                   !formData.wage || formData.wage === 0
                                     ? ""
                                     : Number(formData.wage).toLocaleString(
-                                        "en-IN",
-                                      )
+                                      "en-IN",
+                                    )
                                 }
-                                // onChange={(e) => {
-                                //   // 🔥 Removed the /lpa/i regex since it's no longer inside the textbox
-                                //   const rawValue = e.target.value
-                                //     .replace(/,/g, "")
-                                //     .trim();
-
-                                //   if (rawValue === "") {
-                                //     setFormData({ ...formData, wage: 0 });
-                                //     if (errors.wage) {
-                                //       setErrors({ ...errors, wage: null });
-                                //     }
-                                //     return;
-                                //   }
-
-                                //   // Only update state if the remaining string is a valid number
-                                //   const numericValue = Number(rawValue);
-                                //   if (!isNaN(numericValue)) {
-                                //     setFormData({
-                                //       ...formData,
-                                //       wage: numericValue,
-                                //     });
-                                //     if (errors.wage) {
-                                //       setErrors({ ...errors, wage: null });
-                                //     }
-                                //   }
-                                // }}
-                                onChange={(e) => handleWageChange(e, 999999999)} // 🔥 Use safe wage handler
+                              // onChange={(e) => handleWageChange(e, 999999999)} // 🔥 Handled by auto-calculate
                               />
                             </div>
 
@@ -1447,12 +1548,22 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                   if (!comp.addition) return null;
                                   return (
                                     <div className="col-12" key={index}>
-                                      <div className="d-flex gap-2 mb-2">
+                                      <div className="d-flex gap-2 mb-2 align-items-center">
+                                        <div className="d-flex flex-column gap-1 me-1" style={{ width: '45px' }}>
+                                          <div className="form-check form-check-sm mb-0 d-flex align-items-center gap-1" title="Include in PF Base">
+                                            <input className="form-check-input mt-0" style={{ width: '14px', height: '14px', cursor: 'pointer' }} type="checkbox" checked={comp.is_pf_base || false} onChange={(e) => handleBaseCheckboxChange(index, 'is_pf_base', e.target.checked)} />
+                                            <label className="form-check-label fs-10 fw-bold text-muted mb-0" style={{ cursor: 'pointer' }}>PF</label>
+                                          </div>
+                                          <div className="form-check form-check-sm mb-0 d-flex align-items-center gap-1" title="Include in ESIC Base">
+                                            <input className="form-check-input mt-0" style={{ width: '14px', height: '14px', cursor: 'pointer' }} type="checkbox" checked={comp.is_esic_base || false} onChange={(e) => handleBaseCheckboxChange(index, 'is_esic_base', e.target.checked)} />
+                                            <label className="form-check-label fs-10 fw-bold text-muted mb-0" style={{ cursor: 'pointer' }}>ESI</label>
+                                          </div>
+                                        </div>
                                         <select
                                           className="form-select form-select-sm w-50"
                                           value={comp.structure_head_id || ""}
                                           onChange={(e) => {
-                                            const newComps = [
+                                            let newComps = [
                                               ...(formData.components || []),
                                             ];
                                             newComps[index] = {
@@ -1461,6 +1572,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                                 e.target.value,
                                               ),
                                             };
+                                            newComps = recalculatePFESIC(newComps);
                                             setFormData({
                                               ...formData,
                                               components: newComps,
@@ -1475,11 +1587,14 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                               (h) =>
                                                 h.header_type === "addition",
                                             )
-                                            .map((h) => (
-                                              <option key={h.id} value={h.id}>
-                                                {h.name}
-                                              </option>
-                                            ))}
+                                            .map((h) => {
+                                              const isSelectedElsewhere = formData.components?.some((c: any, i: number) => i !== index && c.structure_head_id === h.id);
+                                              return (
+                                                <option key={h.id} value={h.id} disabled={isSelectedElsewhere}>
+                                                  {h.name} {isSelectedElsewhere ? "(Already Added)" : ""}
+                                                </option>
+                                              );
+                                            })}
                                         </select>
                                         <div className="input-group input-group-sm w-50">
                                           <span className="input-group-text bg-light text-muted">
@@ -1539,10 +1654,210 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 !formData.components.some(
                                   (c: any) => c.addition,
                                 )) && (
-                                <div className="text-center text-muted py-3 fs-13">
-                                  No allowances added.
+                                  <div className="text-center text-muted py-3 fs-13">
+                                    No allowances added.
+                                  </div>
+                                )}
+                              <div className="mt-3 p-3 bg-light rounded border border-success-subtle">
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                  <span className="fw-bold fs-12 text-muted">PF Base Amount:</span>
+                                  <div className="d-flex align-items-center gap-2">
+                                    {editingPFBase ? (
+                                      <input
+                                        type="number"
+                                        className="form-control form-control-sm text-end"
+                                        style={{ width: "100px" }}
+                                        value={manualPFBase !== null ? manualPFBase : ""}
+                                        placeholder={String(
+                                          (formData.components || [])
+                                            .filter((c: any) => c.addition && c.is_pf_base)
+                                            .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+                                        )}
+                                        onChange={(e) => handleManualPFBaseChange(e.target.value ? Number(e.target.value) : null)}
+                                        onBlur={() => setEditingPFBase(false)}
+                                        autoFocus
+                                      />
+                                    ) : (
+                                      <>
+                                        <span className="fw-bold fs-13 text-primary">
+                                          ₹{manualPFBase !== null
+                                            ? manualPFBase.toFixed(2)
+                                            : (formData.components || [])
+                                              .filter((c: any) => c.addition && c.is_pf_base)
+                                              .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+                                              .toFixed(2)}
+                                        </span>
+                                        <i className="ti ti-edit text-muted" style={{ cursor: "pointer" }} onClick={() => setEditingPFBase(true)} title="Edit PF Base"></i>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
+
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                  <span className="fw-bold fs-12 text-muted">ESIC Base Amount:</span>
+                                  <div className="d-flex align-items-center gap-2">
+                                    {editingESICBase ? (
+                                      <input
+                                        type="number"
+                                        className="form-control form-control-sm text-end"
+                                        style={{ width: "100px" }}
+                                        value={manualESICBase !== null ? manualESICBase : ""}
+                                        placeholder={String(
+                                          (formData.components || [])
+                                            .filter((c: any) => c.addition && c.is_esic_base)
+                                            .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+                                        )}
+                                        onChange={(e) => handleManualESICBaseChange(e.target.value ? Number(e.target.value) : null)}
+                                        onBlur={() => setEditingESICBase(false)}
+                                        autoFocus
+                                      />
+                                    ) : (
+                                      <>
+                                        <span className="fw-bold fs-13 text-primary">
+                                          ₹{manualESICBase !== null
+                                            ? manualESICBase.toFixed(2)
+                                            : (formData.components || [])
+                                              .filter((c: any) => c.addition && c.is_esic_base)
+                                              .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+                                              .toFixed(2)}
+                                        </span>
+                                        <i className="ti ti-edit text-muted" style={{ cursor: "pointer" }} onClick={() => setEditingESICBase(true)} title="Edit ESIC Base"></i>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <hr className="my-2 border-success-subtle" />
+
+                                <div className="d-flex justify-content-between align-items-center mb-1">
+                                  <span className="fw-bold fs-12 text-muted">Employer PF ({employerPFPct}%):</span>
+                                  <div className="d-flex align-items-center gap-2">
+                                    {editingEmployerPF ? (
+                                      <input
+                                        type="number"
+                                        className="form-control form-control-sm text-end"
+                                        style={{ width: "100px" }}
+                                        value={manualEmployerPF !== null ? manualEmployerPF : ""}
+                                        placeholder={String(
+                                          (
+                                            (manualPFBase !== null
+                                              ? manualPFBase
+                                              : (formData.components || [])
+                                                .filter((c: any) => c.addition && c.is_pf_base)
+                                                .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)) *
+                                            employerPFPct
+                                          ) / 100
+                                        )}
+                                        onChange={(e) => setManualEmployerPF(e.target.value ? Number(e.target.value) : null)}
+                                        onBlur={() => setEditingEmployerPF(false)}
+                                        autoFocus
+                                      />
+                                    ) : (
+                                      <>
+                                        <span className="fw-bold fs-13 text-secondary">
+                                          ₹{manualEmployerPF !== null
+                                            ? manualEmployerPF.toFixed(2)
+                                            : (
+                                              ((manualPFBase !== null
+                                                ? manualPFBase
+                                                : (formData.components || [])
+                                                  .filter((c: any) => c.addition && c.is_pf_base)
+                                                  .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)) *
+                                                employerPFPct) /
+                                              100
+                                            ).toFixed(2)}
+                                        </span>
+                                        <i className="ti ti-edit text-muted" style={{ cursor: "pointer" }} onClick={() => setEditingEmployerPF(true)} title="Edit Employer PF"></i>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="d-flex justify-content-between align-items-center mb-2">
+                                  <span className="fw-bold fs-12 text-muted">Employer ESIC ({employerESICPct}%):</span>
+                                  <div className="d-flex align-items-center gap-2">
+                                    {editingEmployerESIC ? (
+                                      <input
+                                        type="number"
+                                        className="form-control form-control-sm text-end"
+                                        style={{ width: "100px" }}
+                                        value={manualEmployerESIC !== null ? manualEmployerESIC : ""}
+                                        placeholder={String(
+                                          (
+                                            (manualESICBase !== null
+                                              ? manualESICBase
+                                              : (formData.components || [])
+                                                .filter((c: any) => c.addition && c.is_esic_base)
+                                                .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)) *
+                                            employerESICPct
+                                          ) / 100
+                                        )}
+                                        onChange={(e) => setManualEmployerESIC(e.target.value ? Number(e.target.value) : null)}
+                                        onBlur={() => setEditingEmployerESIC(false)}
+                                        autoFocus
+                                      />
+                                    ) : (
+                                      <>
+                                        <span className="fw-bold fs-13 text-secondary">
+                                          ₹{manualEmployerESIC !== null
+                                            ? manualEmployerESIC.toFixed(2)
+                                            : (
+                                              ((manualESICBase !== null
+                                                ? manualESICBase
+                                                : (formData.components || [])
+                                                  .filter((c: any) => c.addition && c.is_esic_base)
+                                                  .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)) *
+                                                employerESICPct) /
+                                              100
+                                            ).toFixed(2)}
+                                        </span>
+                                        <i className="ti ti-edit text-muted" style={{ cursor: "pointer" }} onClick={() => setEditingEmployerESIC(true)} title="Edit Employer ESIC"></i>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <hr className="my-2 border-success-subtle" />
+
+                                <div className="d-flex justify-content-between mb-1">
+                                  <span className="fw-bold fs-14 text-dark">Gross Total Amount :</span>
+                                  <span className="fw-bold fs-14 text-success">
+                                    ₹{(formData.components || [])
+                                      .filter((c: any) => c.addition)
+                                      .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+                                      .toFixed(2)}
+                                  </span>
+                                </div>
+
+                                <div className="d-flex justify-content-between">
+                                  <span className="fw-bold fs-14 text-dark">Total CTC:</span>
+                                  <span className="fw-bold fs-14 text-success">
+                                    ₹{(
+                                      ((formData.components || [])
+                                        .filter((c: any) => c.addition)
+                                        .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)) +
+                                      (manualEmployerPF !== null
+                                        ? manualEmployerPF
+                                        : ((manualPFBase !== null
+                                          ? manualPFBase
+                                          : (formData.components || [])
+                                            .filter((c: any) => c.addition && c.is_pf_base)
+                                            .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)) *
+                                          employerPFPct) /
+                                        100) +
+                                      (manualEmployerESIC !== null
+                                        ? manualEmployerESIC
+                                        : ((manualESICBase !== null
+                                          ? manualESICBase
+                                          : (formData.components || [])
+                                            .filter((c: any) => c.addition && c.is_esic_base)
+                                            .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)) *
+                                          employerESICPct) /
+                                        100)
+                                    ).toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
                           </div>
 
@@ -1580,40 +1895,68 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                   if (!comp.deduction) return null;
                                   return (
                                     <div className="col-12" key={index}>
-                                      <div className="d-flex gap-2 mb-2">
-                                        <select
-                                          className="form-select form-select-sm border-danger w-50"
-                                          value={comp.structure_head_id || ""}
-                                          onChange={(e) => {
-                                            const newComps = [
-                                              ...(formData.components || []),
-                                            ];
-                                            newComps[index] = {
-                                              ...newComps[index],
-                                              structure_head_id: Number(
-                                                e.target.value,
-                                              ),
-                                            };
-                                            setFormData({
-                                              ...formData,
-                                              components: newComps,
-                                            });
-                                          }}
-                                        >
-                                          <option value="" disabled>
-                                            Select Deduction
-                                          </option>
-                                          {structureHeaders
-                                            .filter(
-                                              (h) =>
-                                                h.header_type === "deduction",
-                                            )
-                                            .map((h) => (
-                                              <option key={h.id} value={h.id}>
-                                                {h.name}
-                                              </option>
-                                            ))}
-                                        </select>
+                                      <div className="d-flex gap-2 mb-2 align-items-center">
+                                        <div className="w-50 d-flex gap-2 align-items-center">
+                                          <select
+                                            className="form-select form-select-sm border-danger flex-grow-1"
+                                            value={comp.structure_head_id || ""}
+                                            onChange={(e) => {
+                                              let newComps = [
+                                                ...(formData.components || []),
+                                              ];
+                                              newComps[index] = {
+                                                ...newComps[index],
+                                                structure_head_id: Number(
+                                                  e.target.value,
+                                                ),
+                                              };
+                                              newComps = recalculatePFESIC(newComps);
+                                              setFormData({
+                                                ...formData,
+                                                components: newComps,
+                                              });
+                                            }}
+                                          >
+                                            <option value="" disabled>
+                                              Select Deduction
+                                            </option>
+                                            {structureHeaders
+                                              .filter(
+                                                (h) =>
+                                                  h.header_type === "deduction",
+                                              )
+                                              .map((h) => {
+                                                const isSelectedElsewhere = formData.components?.some((c: any, i: number) => i !== index && c.structure_head_id === h.id);
+                                                return (
+                                                  <option key={h.id} value={h.id} disabled={isSelectedElsewhere}>
+                                                    {h.name} {isSelectedElsewhere ? "(Already Added)" : ""}
+                                                  </option>
+                                                );
+                                              })}
+                                          </select>
+
+                                          {(comp.structure_head_id === 18 || comp.structure_head_id === 19) && (
+                                            <div className="input-group input-group-sm flex-shrink-0" style={{ width: '90px' }} title="Employee % Rate">
+                                              <input
+                                                type="number"
+                                                step="0.01"
+                                                className="form-control border-danger px-2"
+                                                placeholder={comp.structure_head_id === 18 ? "12" : "0.75"}
+                                                value={comp.percentage !== undefined ? comp.percentage : ""}
+                                                onChange={(e) =>
+                                                  handleDeductionPercentageChange(
+                                                    index,
+                                                    e.target.value === "" ? (comp.structure_head_id === 18 ? 12 : 0.75) : Number(e.target.value),
+                                                  )
+                                                }
+                                              />
+                                              <span className="input-group-text bg-white text-danger border-danger px-2">
+                                                %
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+
                                         <div className="input-group input-group-sm w-50">
                                           <span className="input-group-text text-danger border-danger">
                                             ₹
@@ -1623,25 +1966,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                             className="form-control border-danger"
                                             placeholder="0"
                                             value={comp.amount}
-                                            // onChange={(e) => {
-                                            //   const newComps = [
-                                            //     ...(formData.components || []),
-                                            //   ];
-                                            //   newComps[index] = {
-                                            //     ...newComps[index],
-                                            //     amount: Number(e.target.value),
-                                            //   };
-                                            //   setFormData({
-                                            //     ...formData,
-                                            //     components: newComps,
-                                            //   });
-                                            // }}
+                                            readOnly={comp.structure_head_id === 18 || comp.structure_head_id === 19}
                                             onChange={(e) =>
                                               handleComponentAmountChange(
                                                 index,
                                                 e.target.value,
                                               )
-                                            } // 🔥 Use the new array handler
+                                            }
                                           />
                                           <button
                                             type="button"
@@ -1669,10 +2000,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 !formData.components.some(
                                   (c: any) => c.deduction,
                                 )) && (
-                                <div className="text-center text-muted py-3 fs-13">
-                                  No deductions added.
-                                </div>
-                              )}
+                                  <div className="text-center text-muted py-3 fs-13">
+                                    No deductions added.
+                                  </div>
+                                )}
                             </div>
                           </div>
                         </div>
@@ -1700,13 +2031,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     (c) => String(c.id) === selectedLeaveConfig,
                                   )
                                     ? {
-                                        value: selectedLeaveConfig,
-                                        label: leaveConfigs.find(
-                                          (c) =>
-                                            String(c.id) ===
-                                            selectedLeaveConfig,
-                                        )?.name,
-                                      }
+                                      value: selectedLeaveConfig,
+                                      label: leaveConfigs.find(
+                                        (c) =>
+                                          String(c.id) ===
+                                          selectedLeaveConfig,
+                                      )?.name,
+                                    }
                                     : null
                                 }
                                 onChange={(opt) =>

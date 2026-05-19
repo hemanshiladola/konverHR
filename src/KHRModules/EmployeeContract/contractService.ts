@@ -22,7 +22,7 @@ export interface Contract {
   wage_type: string;
   schedule_pay: string;
   wage: number;
-  components?: { name?: string; structure_head_id?: number | null; amount: number; addition?: boolean; deduction?: boolean }[];
+  components?: { name?: string; structure_head_id?: number | null; amount: number; addition?: boolean; deduction?: boolean; base_component_id?: number; percentage?: number; is_pf_esic_base?: boolean }[];
   leave_allocations?: LeaveAllocationEntry[]; // Add this to the interface
 }
 
