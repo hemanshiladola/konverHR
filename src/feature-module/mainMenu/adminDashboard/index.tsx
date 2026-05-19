@@ -344,76 +344,28 @@ const AdminDashboard = () => {
   const maxValue = Math.max(...chartValues, 5); // Default to at least 5 for a good look
 
   const empDepartmentConfig: any = {
-    series: [
-      {
-        name: "Employees",
-        data: deptApiData.map((d: any) => d.total_employees),
-      },
-    ],
+    series: deptApiData.map((d: any) => d.total_employees),
     chart: {
-      type: "bar",
-      height: 250,
-      toolbar: { show: true },
+      type: "pie",
+      toolbar: { show: false },
       fontFamily: "inherit",
     },
-    plotOptions: {
-      bar: {
-        horizontal: false, // Set to false for vertical columns
-        columnWidth: "50%", // Spacing between columns
-        borderRadius: 8, // Rounded tops for a modern look
-        borderRadiusApplication: "around",
-        distributed: true, // Unique colors for each department
-      },
-    },
-    colors: ["#F26522", "#03C95A", "#0C4B5E", "#FFC107", "#E70D0D", "#ab7efd"],
+    labels: deptApiData.map((d: any) => d.department),
+    colors: [
+      "#F26522", "#03C95A", "#0C4B5E", "#FFC107", "#E70D0D", "#ab7efd",
+      "#1B84FF", "#00BCD4", "#9C27B0", "#FF5722", "#607D8B", "#8BC34A",
+      "#E91E63", "#795548", "#009688", "#3F51B5", "#CDDC39", "#FF9800",
+    ],
     dataLabels: {
-      enabled: true,
-      offsetY: -20, // Position the label above the column
-      style: {
-        fontSize: "12px",
-        fontWeight: 600,
-        colors: ["#333"],
-      },
+      enabled: false,
     },
-    grid: {
-      show: true,
-      borderColor: "#f1f1f1",
-      yaxis: {
-        lines: { show: true }, // Horizontal lines to judge height
-      },
-      xaxis: {
-        lines: { show: false },
-      },
+    legend: {
+      show: false,
     },
-    xaxis: {
-      categories: deptApiData.map((d: any) => d.department),
-      labels: {
-        rotate: -45, // Rotates labels so they don't overlap
-        rotateAlways: false,
-        style: {
-          fontSize: "12px",
-          fontWeight: 500,
-        },
-      },
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-    },
-    yaxis: {
-      labels: {
-        style: {
-          fontSize: "12px",
-          fontWeight: 500,
-        },
-        formatter: (val: number) => Math.floor(val),
-      },
-    },
-    legend: { show: false },
     tooltip: {
-      theme: "light",
-      y: {
-        formatter: (val: number) => `${val} Employees`,
-      },
+      y: { formatter: (val: number) => `${val} Employees` },
     },
+    stroke: { width: 2, colors: ["#fff"] },
   };
 
   const [empDepartment] = useState<EmpDepartmentOptions>({
@@ -851,14 +803,58 @@ const AdminDashboard = () => {
                       />
                     </div>
                   ) : (
-                    <div className="chartjs-wrapper-demo position-relative">
-                      <ReactApexChart
-                        options={empDepartmentConfig}
-                        series={empDepartmentConfig.series}
-                        type="bar"
-                        height={350}
-                      />
-                    </div>
+                    <>
+                      <div className="d-flex justify-content-center">
+                        <ReactApexChart
+                          options={empDepartmentConfig}
+                          series={empDepartmentConfig.series}
+                          type="pie"
+                          height={220}
+                          width={220}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          maxHeight: "180px",
+                          overflowY: "auto",
+                          fontSize: "12px",
+                          marginTop: "12px",
+                        }}
+                      >
+                        {deptApiData.map((d: any, i: number) => {
+                          const colors = [
+                            "#F26522","#03C95A","#0C4B5E","#FFC107","#E70D0D","#ab7efd",
+                            "#1B84FF","#00BCD4","#9C27B0","#FF5722","#607D8B","#8BC34A",
+                            "#E91E63","#795548","#009688","#3F51B5","#CDDC39","#FF9800",
+                          ];
+                          const total = deptApiData.reduce((s: number, x: any) => s + x.total_employees, 0);
+                          const pct = total > 0 ? ((d.total_employees / total) * 100).toFixed(1) : "0";
+                          return (
+                            <div
+                              key={i}
+                              className="d-flex align-items-center justify-content-between py-1"
+                              style={{ borderBottom: "1px solid #f1f1f1" }}
+                            >
+                              <div className="d-flex align-items-center gap-2" style={{ minWidth: 0 }}>
+                                <span
+                                  style={{
+                                    width: 10, height: 10, borderRadius: "50%",
+                                    background: colors[i % colors.length],
+                                    flexShrink: 0,
+                                  }}
+                                />
+                                <span className="text-truncate" title={d.department}>
+                                  {d.department}
+                                </span>
+                              </div>
+                              <span className="fw-semibold ms-2 text-nowrap">
+                                {d.total_employees} <span className="text-muted fs-11">({pct}%)</span>
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

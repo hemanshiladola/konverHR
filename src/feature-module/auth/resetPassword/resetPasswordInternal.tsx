@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router-dom"; // 1. Added useSearchParams
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { all_routes } from "../../../router/all_routes";
 import Instance from "../../../api/axiosInstance";
 import { toast } from "react-toastify";
@@ -8,7 +8,8 @@ type PasswordField = "tempPassword" | "newPassword" | "confirmPassword";
 
 const ResetPasswordInternal = () => {
   const routes = all_routes;
-  const [searchParams] = useSearchParams(); // 2. Hook to get email from URL
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Form State
   const [email, setEmail] = useState(""); // 3. Added email state
@@ -146,6 +147,7 @@ const ResetPasswordInternal = () => {
         confirm_password: confirmPassword,
       });
       toast.success(res.data.message || "✅ Password updated successfully!");
+      setTimeout(() => navigate(routes.login), 2000);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "❌ Update failed");
     } finally {
