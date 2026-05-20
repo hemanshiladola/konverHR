@@ -1,5 +1,5 @@
-import React, { Suspense, lazy } from "react";
-import { Route, Routes } from "react-router";
+import React, { Suspense, lazy, useCallback } from "react";
+import { Route, Routes, useNavigate } from "react-router";
 import { authRoutes, publicRoutes } from "./router.link";
 import { LoadingSpinner } from "../core/common/LoadingSpinner";
 import { ProtectedRoute, GuestRoute } from "./RouteGuards";
@@ -13,6 +13,7 @@ import {
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import { all_routes as routes } from "./all_routes";
+import { useAutoLogout } from "@/core/hooks/useAutoLogout";
 
 // Lazy load the main feature components
 const LazyFeature = lazy(() => import("../feature-module/feature"));
@@ -44,6 +45,20 @@ const ALLRoutes: React.FC = () => {
     isCheckinCheckout,
   } = useSelector(TBSelector);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // Auto-logout after 30 minutes of inactivity
+  const handleAutoLogout = useCallback(() => {
+    const isLoggedIn = !!localStorage.getItem("user_id");
+    if (!isLoggedIn) return; // don't logout if already logged out
+    localStorage.clear();
+    toast.info("Session expired. Please log in again.", { autoClose: 3000 });
+    setTimeout(() => {
+      window.location.href = routes.login;
+    }, 1000);
+  }, []);
+
+  useAutoLogout(handleAutoLogout);
 
   // Call ApiAuth once on app initialization to get authToken
   React.useEffect(() => {
