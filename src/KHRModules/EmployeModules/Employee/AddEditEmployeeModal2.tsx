@@ -2758,6 +2758,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     readOnly={isViewOnly}
                                     type="text"
                                     className="form-control"
+                                    placeholder="University Name"
                                     value={formData.name_of_any_other_education}
                                     onChange={(e) =>
                                       handleInputChange(

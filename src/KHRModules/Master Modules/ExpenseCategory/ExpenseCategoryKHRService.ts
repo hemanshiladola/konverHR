@@ -104,6 +104,8 @@ export const getSalesTaxesDropdown = async () => {
 export const getPurchaseTaxesDropdown = async () => {
   try {
     const response = await Instance.get("/employee/purchase-tax");
+    console.log(response,"rrrr");
+    
     return Array.isArray(response.data) ? response.data : response.data.data;
   } catch (error) {
     console.error("Error fetching purchase taxes:", error);

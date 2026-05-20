@@ -6,31 +6,32 @@ import CommonHeader from "@/CommonComponent/HeaderKHR/HeaderKHR";
 import AddHelpDeskTickitsModal from "./AddHelpDeskTickitsModal";
 import { all_routes } from "@/router/all_routes";
 
-// Detect mime type from base64 string header bytes
-const getMimeFromBase64 = (b64: string): string => {
-  // Strip whitespace and any non-base64 chars, then pad correctly
-  const clean = b64.replace(/[^A-Za-z0-9+/=]/g, "");
+// Build src from either a URL or base64 string
+const buildSrc = (attachment: string): { src: string; mime: string } => {
+  if (!attachment) return { src: "", mime: "image/png" };
+  // If it's a URL, use directly
+  if (attachment.startsWith("http://") || attachment.startsWith("https://")) {
+    const ext = attachment.split(".").pop()?.toLowerCase() || "";
+    const mime = ext === "pdf" ? "application/pdf" : "image/jpeg";
+    return { src: attachment, mime };
+  }
+  // data URI
+  if (attachment.startsWith("data:")) {
+    return { src: attachment, mime: attachment.split(";")[0].replace("data:", "") };
+  }
+  // base64 — detect mime from header bytes
+  const clean = attachment.replace(/[^A-Za-z0-9+/=]/g, "");
   try {
     const padded = clean + "==".slice((clean.length % 4) || 4);
     const header = atob(padded.substring(0, 20));
     const bytes = header.split("").map((c) => c.charCodeAt(0));
-    if (bytes[0] === 0x89 && bytes[1] === 0x50) return "image/png";
-    if (bytes[0] === 0xff && bytes[1] === 0xd8) return "image/jpeg";
-    if (bytes[0] === 0x47 && bytes[1] === 0x49) return "image/gif";
-    if (bytes[0] === 0x25 && bytes[1] === 0x50) return "application/pdf";
-    if (bytes[0] === 0x52 && bytes[1] === 0x49) return "image/webp";
+    let mime = "image/png";
+    if (bytes[0] === 0xff && bytes[1] === 0xd8) mime = "image/jpeg";
+    if (bytes[0] === 0x47 && bytes[1] === 0x49) mime = "image/gif";
+    if (bytes[0] === 0x25 && bytes[1] === 0x50) mime = "application/pdf";
+    return { src: `data:${mime};base64,${padded}`, mime };
   } catch (_) {}
-  return "image/png";
-};
-
-const buildSrc = (b64: string): { src: string; mime: string } => {
-  if (!b64) return { src: "", mime: "image/png" };
-  const clean = b64.replace(/[^A-Za-z0-9+/=]/g, "");
-  if (b64.startsWith("data:")) return { src: b64, mime: b64.split(";")[0].replace("data:", "") };
-  const mime = getMimeFromBase64(clean);
-  // Ensure correct padding
-  const padded = clean + "==".slice((clean.length % 4) || 4);
-  return { src: `data:${mime};base64,${padded}`, mime };
+  return { src: `data:image/png;base64,${clean}`, mime: "image/png" };
 };
 
 const HelpDeskTickitsKHR = () => {

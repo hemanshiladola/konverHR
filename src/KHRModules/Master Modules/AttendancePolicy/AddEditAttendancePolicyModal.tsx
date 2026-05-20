@@ -252,33 +252,25 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
         {`
           #add_attendance_policy { z-index: 1080 !important; }
           .is-invalid + .invalid-feedback { display: block; }
-
-
-          .modal-content {
-      max-width: 100vw;
-      overflow-x: hidden;
-    }
-
-    /* Force the select and input fields to respect the container width */
-    .form-select, .form-control {
-      max-width: 100%;
-      word-wrap: break-word;
-    }
-
-    /* Fix for long text in select options on mobile */
-    .form-select option {
-      white-space: normal;
-    }
-    
-    @media (max-width: 576px) {
-      .modal-dialog {
-        margin: 10px; /* Give it a little breathing room on the edges */
-      }
-      .modal-body {
-        padding: 1.5rem !important; /* Slightly tighter padding for small screens */
-      }
-    }
-  
+          #add_attendance_policy .modal-content {
+            max-width: 100%;
+            overflow-x: hidden;
+          }
+          #add_attendance_policy .form-select,
+          #add_attendance_policy .form-control {
+            max-width: 100%;
+          }
+          #add_attendance_policy .form-select option {
+            white-space: normal;
+            word-break: break-word;
+          }
+          @media (max-width: 576px) {
+            #add_attendance_policy .modal-dialog {
+              margin: 0.5rem auto !important;
+              max-width: 95vw !important;
+              width: 95vw !important;
+            }
+          }
 
         `}
       </style>
@@ -290,7 +282,7 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
         aria-hidden="true"
         data-bs-backdrop="static"
       >
-        <div className="modal-dialog modal-dialog-centered modal-lg">
+        <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable" style={{ maxWidth: "min(500px, 95vw)", width: "95vw", margin: "0.5rem auto" }}>
           <div className="modal-content border-0 shadow-lg">
             <div className="modal-header border-bottom bg-light py-2">
               <h5 className="modal-title fw-bold fs-15">
@@ -327,42 +319,69 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                     <div className="invalid-feedback">{errors.name}</div>
                   </div>
 
-                  {/* Type - SELECT */}
-                  <div className="col-md-6">
+                  {/* Type - CUSTOM DROPDOWN */}
+                  <div className="col-12 col-md-6">
                     <label className="form-label fs-13 fw-bold">Type</label>
-                    <select
-                      name="type"
-                      className="form-select"
-                      value={formData.type}
-                      onChange={handleChange}
-                    >
-                      <option value="regular">Regular</option>
-                      <option value="accrual">Accrual</option>
-                    </select>
+                    <div className="dropdown w-100">
+                      <button
+                        type="button"
+                        className="form-select text-start w-100"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        style={{ background: "#fff" }}
+                      >
+                        {formData.type === "regular" ? "Regular" : "Accrual"}
+                      </button>
+                      <ul className="dropdown-menu w-100" style={{ zIndex: 9999 }}>
+                        <li>
+                          <button type="button" className={`dropdown-item ${formData.type === "regular" ? "active" : ""}`}
+                            onClick={() => setFormData({ ...formData, type: "regular" })}>
+                            Regular
+                          </button>
+                        </li>
+                        <li>
+                          <button type="button" className={`dropdown-item ${formData.type === "accrual" ? "active" : ""}`}
+                            onClick={() => setFormData({ ...formData, type: "accrual" })}>
+                            Accrual
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
 
-                  {/* Absent If - SELECT */}
-                  <div className="col-md-6">
-                    <label className="form-label fs-13 fw-bold">
-                      Absent Condition
-                    </label>
-                    <select
-                      name="absent_if"
-                      className="form-select fs-13"
-                      value={formData.absent_if}
-                      onChange={handleChange}
-                      style={{ textOverflow: "ellipsis" }}
-                    >
-                      <option value="in_out_abs">
-                        Any of In or Out Entry not done then absent
-                      </option>
-                      <option value="in_abs">
-                        In Entry not done but Out done then absent
-                      </option>
-                      <option value="out_abs">
-                        Out Entry not done but in done then absent
-                      </option>
-                    </select>
+                  {/* Absent If - CUSTOM DROPDOWN */}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label fs-13 fw-bold">Absent Condition</label>
+                    <div className="dropdown w-100">
+                      <button
+                        type="button"
+                        className="form-select text-start w-100"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        style={{ background: "#fff" }}
+                      >
+                        {formData.absent_if === "in_out_abs" && "In & Out not done → Absent"}
+                        {formData.absent_if === "in_abs" && "In not done, Out done → Absent"}
+                        {formData.absent_if === "out_abs" && "Out not done, In done → Absent"}
+                      </button>
+                      <ul className="dropdown-menu w-100" style={{ zIndex: 9999 }}>
+                        {[
+                          { value: "in_out_abs", label: "In & Out not done → Absent" },
+                          { value: "in_abs",     label: "In not done, Out done → Absent" },
+                          { value: "out_abs",    label: "Out not done, In done → Absent" },
+                        ].map((opt) => (
+                          <li key={opt.value}>
+                            <button
+                              type="button"
+                              className={`dropdown-item text-wrap ${formData.absent_if === opt.value ? "active" : ""}`}
+                              onClick={() => setFormData({ ...formData, absent_if: opt.value })}
+                            >
+                              {opt.label}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
 
                   {/* Numeric Fields Section */}

@@ -154,7 +154,7 @@ const AddEditSkillModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
 
   return (
     <div className="modal fade" id="add_skill_modal" role="dialog">
-      <div className="modal-dialog modal-dialog-centered modal-lg">
+      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable" style={{ maxWidth: "min(500px, 95vw)", width: "95vw", margin: "0.5rem auto" }}>
         <div className="modal-content border-0 shadow-lg">
           {/* Standard Header */}
           <div className="modal-header border-bottom bg-light py-2">
@@ -175,7 +175,7 @@ const AddEditSkillModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
             <form noValidate onSubmit={handleSubmit}>
               <div className="row g-3">
                 {/* Skill Type Name */}
-                <div className="col-md-6">
+                <div className="col-12 col-md-6">
                   <label className="form-label fs-13 fw-bold">
                     Skill Type Name <span className="text-danger">*</span>
                   </label>
@@ -209,20 +209,32 @@ const AddEditSkillModal: React.FC<Props> = ({ onSuccess, data, onClose }) => {
                 </div>
 
                 {/* Level Name */}
-                <div className="col-md-6">
-                  <label className="form-label fs-13 fw-bold">
-                    Default Level
-                  </label>
-                  <select
-                    className="form-select"
-                    value={levelName}
-                    onChange={(e) => setLevelName(e.target.value)}
-                  >
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                    <option value="Expert">Expert</option>
-                  </select>
+                <div className="col-12 col-md-6">
+                  <label className="form-label fs-13 fw-bold">Default Level</label>
+                  <div className="dropdown w-100">
+                    <button
+                      type="button"
+                      className="form-select text-start w-100"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      style={{ background: "#fff" }}
+                    >
+                      {levelName}
+                    </button>
+                    <ul className="dropdown-menu w-100" style={{ zIndex: 9999 }}>
+                      {["Beginner", "Intermediate", "Advanced", "Expert"].map((lvl) => (
+                        <li key={lvl}>
+                          <button
+                            type="button"
+                            className={`dropdown-item ${levelName === lvl ? "active" : ""}`}
+                            onClick={() => setLevelName(lvl)}
+                          >
+                            {lvl}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
                 {/* Skills Tag Input */}

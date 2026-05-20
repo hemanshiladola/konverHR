@@ -983,6 +983,7 @@ const AdminAttandanceKHR = () => {
                         <button
                           className={`dropdown-item ${selectedEmployeeId === "" ? "active" : ""}`}
                           onClick={() => handleEmployeeChange("")}
+                          // style={{ display: "flex", alignItems: "center" }}
                         >
                           <i className="ti ti-users me-2" />
                           All Employees
@@ -1014,6 +1015,7 @@ const AdminAttandanceKHR = () => {
                               onClick={() =>
                                 handleEmployeeChange(employee.id.toString())
                               }
+                              style={{ display: "flex", alignItems: "center" }}
                             >
                               <i className="ti ti-user me-2" />
                               <div>

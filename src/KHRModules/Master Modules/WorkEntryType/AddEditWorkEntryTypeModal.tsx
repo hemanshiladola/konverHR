@@ -197,7 +197,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
       tabIndex={-1}
       aria-hidden="true"
     >
-      <div className="modal-dialog modal-dialog-centered modal-lg">
+      <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable" style={{ maxWidth: "min(500px, 95vw)", width: "95vw", margin: "0.5rem auto" }}>
         <div className="modal-content border-0 shadow-lg">
           {/* Header */}
           <div className="modal-header border-bottom bg-light py-2">
@@ -218,7 +218,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
             <form onSubmit={handleSubmit} noValidate>
               <div className="row g-3">
                 {/* Name */}
-                <div className="col-md-6">
+                <div className="col-12 col-md-6">
                   <label className="form-label fs-13 fw-bold">
                     Name <span className="text-danger">*</span>
                   </label>
@@ -227,7 +227,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                     name="name"
                     className={getInputClass("name")}
                     value={formData.name}
-                    onChange={(e) => handleTextChange(e, 50)} // 🔥 specific text handler
+                    onChange={(e) => handleTextChange(e, 50)}
                     maxLength={50}
                     placeholder="e.g. Regular Work"
                   />
@@ -237,13 +237,10 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                       {errors.name}
                     </div>
                   )}
-                  {/* <small className="text-muted" style={{ fontSize: "10px" }}>
-                    {(formData.name || "").length}/50
-                  </small> */}
                 </div>
 
                 {/* Code */}
-                <div className="col-md-6">
+                <div className="col-12 col-md-6">
                   <label className="form-label fs-13 fw-bold">
                     Code <span className="text-danger">*</span>
                   </label>
@@ -252,7 +249,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                     name="code"
                     className={getInputClass("code")}
                     value={formData.code}
-                    onChange={(e) => handleTextChange(e, 50)} // 🔥 specific text handler
+                    onChange={(e) => handleTextChange(e, 50)}
                     maxLength={50}
                     placeholder="e.g. REG"
                   />
@@ -265,7 +262,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                 </div>
 
                 {/* External Code */}
-                <div className="col-md-6">
+                <div className="col-12 col-md-6">
                   <label className="form-label fs-13 fw-bold">
                     External Code <span className="text-danger">*</span>
                   </label>
@@ -274,7 +271,7 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                     name="external_code"
                     className={getInputClass("external_code")}
                     value={formData.external_code}
-                    onChange={(e) => handleTextChange(e, 50)} // 🔥 specific text handler
+                    onChange={(e) => handleTextChange(e, 50)}
                     maxLength={50}
                     placeholder="e.g. EXT_001"
                   />
@@ -286,19 +283,33 @@ const AddEditWorkEntryTypeModal: React.FC<Props> = ({
                   )}
                 </div>
 
-                {/* Round Days */}
-                <div className="col-md-6">
+                {/* Round Days - CUSTOM DROPDOWN */}
+                <div className="col-12 col-md-6">
                   <label className="form-label fs-13 fw-bold">Round Days</label>
-                  <select
-                    name="round_days"
-                    className="form-select"
-                    value={formData.round_days}
-                    onChange={handleInputChange}
-                  >
-                    <option value="NO">NO</option>
-                    <option value="HALF">HALF</option>
-                    <option value="FULL">FULL</option>
-                  </select>
+                  <div className="dropdown w-100">
+                    <button
+                      type="button"
+                      className="form-select text-start w-100"
+                      data-bs-toggle="dropdown"
+                      aria-expanded="false"
+                      style={{ background: "#fff" }}
+                    >
+                      {formData.round_days}
+                    </button>
+                    <ul className="dropdown-menu w-100" style={{ zIndex: 9999 }}>
+                      {["NO", "HALF", "FULL"].map((opt) => (
+                        <li key={opt}>
+                          <button
+                            type="button"
+                            className={`dropdown-item ${formData.round_days === opt ? "active" : ""}`}
+                            onClick={() => setFormData({ ...formData, round_days: opt })}
+                          >
+                            {opt}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
                 {/* Sequence */}

@@ -100,7 +100,7 @@ const DatatableKHR = <T extends object>({
               >
                 Show: {pageSize}
               </button>
-              <ul className="dropdown-menu dropdown-menu-end shadow-sm border-0">
+              <ul className="dropdown-menu shadow-sm border-0" style={{ minWidth: "120px" }}>
                 {[10, 25, 50, 100].map((size) => (
                   <li key={size}>
                     <button
