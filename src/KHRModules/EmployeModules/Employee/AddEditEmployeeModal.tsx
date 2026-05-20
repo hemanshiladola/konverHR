@@ -4205,8 +4205,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
                                         : ""
                                     : ""
                                 }`}
-                                maxLength={10}
-                                value={formData.work_phone}
+                                placeholder="Mobile No."
                                 onChange={(e) => {
                                   setFormData({
                                     ...formData,

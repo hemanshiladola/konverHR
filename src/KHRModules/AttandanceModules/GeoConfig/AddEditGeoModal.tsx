@@ -436,7 +436,7 @@ const AddEditGeoModal: React.FC<Props> = ({ data, onSuccess, onClose }) => {
 
                   {/* Select All Toggle */}
                   <div className="d-flex justify-content-between align-items-center p-2 bg-light border border-bottom-0 rounded-top">
-                    <div className="form-check mb-0">
+                    <div className="form-check mb-0" style={{ paddingLeft: "0.5em" }}>
                       <input
                         className="form-check-input ms-0"
                         type="checkbox"

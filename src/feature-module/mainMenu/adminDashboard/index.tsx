@@ -1221,12 +1221,41 @@ const AdminDashboard = () => {
                                   : "--:--"}
                               </td>
                               <td>
-                                <span
-                                  className={`badge rounded-pill border ${log.check_out ? "bg-soft-danger text-danger border-danger" : "bg-soft-success text-success border-success"}`}
-                                >
-                                  <i className="ti ti-circle-filled fs-6 me-1" />
-                                  {log.check_out ? "Checked Out" : "Active"}
-                                </span>
+                                {log.check_out ? (
+                                  <span style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    padding: "4px 10px",
+                                    borderRadius: "20px",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    background: "#fff1f0",
+                                    color: "#cf1322",
+                                    border: "1px solid #ffa39e",
+                                    lineHeight: "14px",
+                                  }}>
+                                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#cf1322", flexShrink: 0 }} />
+                                    Checked Out
+                                  </span>
+                                ) : (
+                                  <span style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                    padding: "4px 10px",
+                                    borderRadius: "20px",
+                                    fontSize: "11px",
+                                    fontWeight: 600,
+                                    background: "#f6ffed",
+                                    color: "#389e0d",
+                                    border: "1px solid #b7eb8f",
+                                    lineHeight: "14px",
+                                  }}>
+                                    <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#52c41a", flexShrink: 0 }} />
+                                    Active
+                                  </span>
+                                )}
                               </td>
                               <td className="text-end pe-4 fs-12 text-muted">
                                 {dayjs(log.check_in).format("DD MMM, YYYY")}

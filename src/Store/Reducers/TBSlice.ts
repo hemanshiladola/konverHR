@@ -430,14 +430,14 @@ export const getCurrentAttendanceStatus = createAsyncThunk(
         return thunkAPI.rejectWithValue({ error: "Missing user credentials" });
       }
 
-      if (!authToken || authToken === "undefined" || authToken === "null") {
-        console.error(
-          "❌ Missing or invalid authToken for getCurrentAttendanceStatus",
-        );
-        return thunkAPI.rejectWithValue({
-          error: "Missing authentication token",
-        });
-      }
+      // if (!authToken || authToken === "undefined" || authToken === "null") {
+      //   console.error(
+      //     "❌ Missing or invalid authToken for getCurrentAttendanceStatus",
+      //   );
+      //   return thunkAPI.rejectWithValue({
+      //     error: "Missing authentication token",
+      //   });
+      // }
 
       let result = await axios({
         method: "GET",

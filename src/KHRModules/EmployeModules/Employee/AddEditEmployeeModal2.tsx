@@ -2646,6 +2646,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       type="text"
                                       className={`form-control ${isSubmitted ? (errors.work_phone ? "is-invalid" : formData.work_phone ? "is-valid" : "") : ""}`}
                                       maxLength={10}
+                                       placeholder="Mobile No."
                                       value={formData.work_phone}
                                       onChange={(e) => {
                                         updateFormData({

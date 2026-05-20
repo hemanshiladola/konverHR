@@ -40,7 +40,7 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
   const dayPeriods = [
     { value: "morning", label: "Morning" },
     { value: "lunch", label: "Break" },
-    { value: "afternoon", label: "Afternoon" },
+    { value: "afternoon", label: "Night" },
   ];
 
   const initialAttendance: AttendanceItem = {
