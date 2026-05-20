@@ -372,16 +372,6 @@ export const publicRoutes = [
     route: Route,
   },
   {
-    path: routes.resetPassword,
-    element: <ResetPassword />,
-    route: Route,
-  },
-  {
-    path: routes.forgotPassword,
-    element: <ForgotPassword />,
-    route: Route,
-  },
-  {
     path: routes.emailVerification,
     element: <EmailVerification />,
     route: Route,

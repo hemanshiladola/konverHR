@@ -111,7 +111,7 @@ const ExpenseKHR = () => {
 
   const columns: any[] = [
     {
-      title: "#",
+      title: "Id",
       dataIndex: "id",
       render: (_: any, __: any, index: number) => (
         <span className="text-muted">{index + 1}</span>
