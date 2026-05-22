@@ -11,6 +11,7 @@ import {
   exportAttendanceToExcel,
   exportAttendanceToPdf,
 } from "./AdminAttandanceServices";
+import { getBranches, getDepartments } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
 // import { toast } from "react-toastify";
 import Link from "antd/es/typography/Link";
 import CommonAttendanceStatus from "@/CommonComponent/CommonAttendanceStatus/CommonAttendanceStatus";
@@ -102,6 +103,10 @@ const AdminAttandanceKHR = () => {
   const [exportDateTo, setExportDateTo] = useState<Dayjs | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const exportDropdownRef = useRef<HTMLDivElement>(null);
+  const [exportBranchId, setExportBranchId] = useState<number | null>(null);
+  const [exportDepartmentId, setExportDepartmentId] = useState<number | null>(null);
+  const [branches, setBranches] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
 
   // Group by functionality
   const groupByOptions = [
@@ -502,7 +507,7 @@ const AdminAttandanceKHR = () => {
       const finalDateTo = exportDateTo
         ? exportDateTo.format("YYYY-MM-DD")
         : dateTo;
-      await exportAttendanceToExcel(finalDateFrom, finalDateTo);
+      await exportAttendanceToExcel(finalDateFrom, finalDateTo, exportBranchId, exportDepartmentId);
     } catch (error) {
       console.error("Excel Export failed:", error);
     } finally {
@@ -520,7 +525,7 @@ const AdminAttandanceKHR = () => {
       const finalDateTo = exportDateTo
         ? exportDateTo.format("YYYY-MM-DD")
         : dateTo;
-      await exportAttendanceToPdf(finalDateFrom, finalDateTo);
+      await exportAttendanceToPdf(finalDateFrom, finalDateTo, exportBranchId, exportDepartmentId);
     } catch (error) {
       console.error("PDF Export failed:", error);
     } finally {
@@ -797,6 +802,8 @@ const AdminAttandanceKHR = () => {
   // Fetch employees on component mount
   useEffect(() => {
     fetchEmployees();
+    getBranches().then(setBranches).catch(() => {});
+    getDepartments().then(setDepartments).catch(() => {});
   }, []);
 
   // Handle employee data loading
@@ -1125,6 +1132,30 @@ const AdminAttandanceKHR = () => {
                               }
                             />
                           </div>
+                        </li>
+                        {/* Branch & Department filters */}
+                        <li className="mb-1 px-1 mt-2">
+                          <p className="fs-11 text-muted text-uppercase fw-bold mb-1">Filters</p>
+                          <select
+                            className="form-select form-select-sm mb-1"
+                            value={exportBranchId ?? ""}
+                            onChange={(e) => setExportBranchId(e.target.value ? Number(e.target.value) : null)}
+                          >
+                            <option value="">All Branches</option>
+                            {branches.map((b: any) => (
+                              <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                          </select>
+                          <select
+                            className="form-select form-select-sm"
+                            value={exportDepartmentId ?? ""}
+                            onChange={(e) => setExportDepartmentId(e.target.value ? Number(e.target.value) : null)}
+                          >
+                            <option value="">All Departments</option>
+                            {departments.map((d: any) => (
+                              <option key={d.id} value={d.id}>{d.name}</option>
+                            ))}
+                          </select>
                         </li>
                         <li>
                           <hr className="dropdown-divider my-1" />

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from "react";
 
-const TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const TIMEOUT_MS = 30 * 60 * 1000; // 1 minute
 
 const ACTIVITY_EVENTS = [
   "mousemove",

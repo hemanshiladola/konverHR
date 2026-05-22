@@ -8,8 +8,8 @@ import {
   addEmployee,
   getAttendancePolicies,
   getBranches,
-  getBusinessLocations,
-  getBusinessTypes,
+  // getBusinessLocations,
+  // getBusinessTypes,
   getCountries,
   getDepartments,
   getDesignations,
@@ -75,7 +75,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   const [states, setStates] = useState<Option[]>([]);
   const [districts, setDistricts] = useState<Option[]>([]);
   const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
-  const [businessLocations, setBusinessLocations] = useState<Option[]>([]);
+  // const [businessLocations, setBusinessLocations] = useState<Option[]>([]);
   const [departments, setDepartments] = useState<Option[]>([]);
   const [designations, setDesignations] = useState<Option[]>([]);
   const [workLocations, setWorkLocations] = useState<Option[]>([]);
@@ -123,7 +123,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   });
 
   // ? Refs to handle stale closures in global event listeners
-  const latestAttemptClose = useRef<() => void>(() => {});
+  const latestAttemptClose = useRef<() => void>(() => { });
   const latestIsDirty = useRef<boolean>(false);
 
   useEffect(() => {
@@ -1312,9 +1312,11 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
   useEffect(() => {
     const fetchEmploymentData = async () => {
       try {
-        const [bTypes, bLocs, deptsRes, wLocs, empList] = await Promise.all([
-          getBusinessTypes().catch(() => []),
-          getBusinessLocations().catch(() => []),
+        const [deptsRes, wLocs, empList] = await Promise.all([
+          // const [bTypes, bLocs, deptsRes, wLocs, empList] = await Promise.all([
+
+          // getBusinessTypes().catch(() => []),
+          // getBusinessLocations().catch(() => []),
           getDepartments(),
           getWorkLocations().catch(() => []),
           getReportingManagers(),
@@ -1331,18 +1333,18 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
             label: i.name,
           })),
         );
-        setBusinessTypes(
-          (bTypes?.data || bTypes || []).map((i: any) => ({
-            value: String(i.id),
-            label: i.name,
-          })),
-        );
-        setBusinessLocations(
-          (bLocs?.data || bLocs || []).map((i: any) => ({
-            value: String(i.id),
-            label: i.name,
-          })),
-        );
+        // setBusinessTypes(
+        //   (bTypes?.data || bTypes || []).map((i: any) => ({
+        //     value: String(i.id),
+        //     label: i.name,
+        //   })),
+        // );
+        // setBusinessLocations(
+        //   (bLocs?.data || bLocs || []).map((i: any) => ({
+        //     value: String(i.id),
+        //     label: i.name,
+        //   })),
+        // );
         setWorkLocations(
           (wLocs?.data || wLocs || []).map((i: any) => ({
             value: String(i.id),
@@ -2309,25 +2311,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {/* 1. Show EYE ICON if the value is a URL string from the backend */}
                                         {typeof formData.driving_license ===
                                           "string" && (
-                                          <a
-                                            href={formData.driving_license}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
-                                            title="View Current License"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.driving_license}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                              title="View Current License"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
 
                                         {/* 2. Show CHECKMARK if a new File object has been selected */}
                                         {formData.driving_license instanceof
                                           File && (
-                                          <i
-                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
-                                            title="New file selected"
-                                          ></i>
-                                        )}
+                                            <i
+                                              className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                              title="New file selected"
+                                            ></i>
+                                          )}
                                       </div>
                                     )}
                                   </div>
@@ -2383,34 +2385,34 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       // Find the matching option to get the correct label, fallback to capitalization or "Select"
                                       label: formData.marital
                                         ? [
-                                            {
-                                              value: "single",
-                                              label: "Single",
-                                            },
-                                            {
-                                              value: "married",
-                                              label: "Married",
-                                            },
-                                            {
-                                              value: "cohabitant",
-                                              label: "Legal Cohabitant",
-                                            },
-                                            {
-                                              value: "widower",
-                                              label: "Widower",
-                                            },
-                                            {
-                                              value: "divorced",
-                                              label: "Divorced",
-                                            },
-                                          ].find(
-                                            (opt) =>
-                                              opt.value === formData.marital,
-                                          )?.label ||
-                                          formData.marital
-                                            .charAt(0)
-                                            .toUpperCase() +
-                                            formData.marital.slice(1)
+                                          {
+                                            value: "single",
+                                            label: "Single",
+                                          },
+                                          {
+                                            value: "married",
+                                            label: "Married",
+                                          },
+                                          {
+                                            value: "cohabitant",
+                                            label: "Legal Cohabitant",
+                                          },
+                                          {
+                                            value: "widower",
+                                            label: "Widower",
+                                          },
+                                          {
+                                            value: "divorced",
+                                            label: "Divorced",
+                                          },
+                                        ].find(
+                                          (opt) =>
+                                            opt.value === formData.marital,
+                                        )?.label ||
+                                        formData.marital
+                                          .charAt(0)
+                                          .toUpperCase() +
+                                        formData.marital.slice(1)
                                         : "Select",
                                     }}
                                     onChange={(opt) => {
@@ -2544,9 +2546,9 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       defaultValue={
                                         formData.blood_group
                                           ? {
-                                              value: formData.blood_group,
-                                              label: formData.blood_group,
-                                            }
+                                            value: formData.blood_group,
+                                            label: formData.blood_group,
+                                          }
                                           : undefined
                                       }
                                       onChange={(opt) => {
@@ -2615,10 +2617,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     defaultValue={
                                       formData.category
                                         ? {
-                                            value: formData.category,
-                                            label:
-                                              formData.category.toUpperCase(),
-                                          }
+                                          value: formData.category,
+                                          label:
+                                            formData.category.toUpperCase(),
+                                        }
                                         : undefined
                                     }
                                     onChange={(opt) =>
@@ -2646,7 +2648,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       type="text"
                                       className={`form-control ${isSubmitted ? (errors.work_phone ? "is-invalid" : formData.work_phone ? "is-valid" : "") : ""}`}
                                       maxLength={10}
-                                       placeholder="Mobile No."
+                                      placeholder="Mobile No."
                                       value={formData.work_phone}
                                       onChange={(e) => {
                                         updateFormData({
@@ -2813,15 +2815,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         )}
                                         {typeof formData.cv_file ===
                                           "string" && (
-                                          <a
-                                            href={formData.cv_file}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-2"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.cv_file}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-2"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
                                       </div>
                                     )}
                                   </div>
@@ -3206,11 +3208,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   <label className="form-label fs-13">
                                     Contact Address
                                   </label>
+                                                                      <span className="text-danger">*</span>
+
                                   <textarea
                                     disabled={isViewOnly || isSubmitting}
                                     readOnly={isViewOnly}
                                     rows={2}
                                     className="form-control"
+                                    required
+                                    minLength={50}
                                     maxLength={500}
                                     placeholder="Full Residential Address of the contact person"
                                     value={formData.emergency_contact_address}
@@ -3546,10 +3552,10 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     defaultValue={
                                       formData.status
                                         ? {
-                                            value: formData.status,
-                                            label:
-                                              formData.status.toUpperCase(),
-                                          }
+                                          value: formData.status,
+                                          label:
+                                            formData.status.toUpperCase(),
+                                        }
                                         : undefined
                                     }
                                     onChange={(opt) =>
@@ -3815,25 +3821,25 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                         {/* 1. Show EYE ICON if the value is an existing URL string */}
                                         {typeof formData.upload_passbook ===
                                           "string" && (
-                                          <a
-                                            href={formData.upload_passbook}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="btn btn-icon btn-sm btn-ghost-info ms-1"
-                                            title="View Current Passbook"
-                                          >
-                                            <i className="ti ti-eye fs-18"></i>
-                                          </a>
-                                        )}
+                                            <a
+                                              href={formData.upload_passbook}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              className="btn btn-icon btn-sm btn-ghost-info ms-1"
+                                              title="View Current Passbook"
+                                            >
+                                              <i className="ti ti-eye fs-18"></i>
+                                            </a>
+                                          )}
 
                                         {/* 2. Show CHECKMARK if a new File object has been selected */}
                                         {formData.upload_passbook instanceof
                                           File && (
-                                          <i
-                                            className="ti ti-circle-check-filled text-success fs-20 ms-1"
-                                            title="New file selected"
-                                          ></i>
-                                        )}
+                                            <i
+                                              className="ti ti-circle-check-filled text-success fs-20 ms-1"
+                                              title="New file selected"
+                                            ></i>
+                                          )}
                                       </div>
                                     )}
                                     <div className="text-info fs-11 lh-sm">
@@ -3899,15 +3905,15 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                       defaultValue={
                                         formData.type_of_sepration
                                           ? {
-                                              value: formData.type_of_sepration,
-                                              label:
-                                                formData.type_of_sepration
-                                                  .charAt(0)
-                                                  .toUpperCase() +
-                                                formData.type_of_sepration.slice(
-                                                  1,
-                                                ),
-                                            }
+                                            value: formData.type_of_sepration,
+                                            label:
+                                              formData.type_of_sepration
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                              formData.type_of_sepration.slice(
+                                                1,
+                                              ),
+                                          }
                                           : undefined
                                       }
                                       onChange={(opt) => {
@@ -4243,7 +4249,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               key={`user-select-${index}-${line.group_id}-${(groupUserOptions[String(line.group_id)] || []).length}`}
                                               options={
                                                 groupUserOptions[
-                                                  String(line.group_id)
+                                                String(line.group_id)
                                                 ] || []
                                               }
                                               placeholder={
@@ -4253,7 +4259,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               }
                                               defaultValue={(
                                                 groupUserOptions[
-                                                  String(line.group_id)
+                                                String(line.group_id)
                                                 ] || []
                                               ).find(
                                                 (u) =>

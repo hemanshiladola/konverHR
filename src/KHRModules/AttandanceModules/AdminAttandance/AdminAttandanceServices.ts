@@ -96,22 +96,26 @@ const downloadBase64File = (
 export const exportAttendanceToExcel = async (
   dateFrom: string,
   dateTo: string,
+  branchId?: number | null,
+  departmentId?: number | null,
 ): Promise<any> => {
   try {
     const { user_id } = getAuthDetails();
     const token = localStorage.getItem("authToken");
 
+    const params: any = {
+      user_id,
+      date_from: dateFrom,
+      date_to: dateTo,
+    };
+    if (branchId) params.branch_id = branchId;
+    if (departmentId) params.department_id = departmentId;
+
     const response = await axios.get(
       `${CONFIG.BASE_URL_ALL}/api/export/attendance/excel`,
       {
-        params: {
-          user_id,
-          date_from: dateFrom,
-          date_to: dateTo,
-        },
-        headers: {
-          Authorization: token || "",
-        },
+        params,
+        headers: { Authorization: token || "" },
       },
     );
 
@@ -141,22 +145,26 @@ export const exportAttendanceToExcel = async (
 export const exportAttendanceToPdf = async (
   dateFrom: string,
   dateTo: string,
+  branchId?: number | null,
+  departmentId?: number | null,
 ): Promise<any> => {
   try {
     const { user_id } = getAuthDetails();
     const token = localStorage.getItem("authToken");
 
+    const params: any = {
+      user_id,
+      date_from: dateFrom,
+      date_to: dateTo,
+    };
+    if (branchId) params.branch_id = branchId;
+    if (departmentId) params.department_id = departmentId;
+
     const response = await axios.get(
       `${CONFIG.BASE_URL_ALL}/api/export/attendance/pdf`,
       {
-        params: {
-          user_id,
-          date_from: dateFrom,
-          date_to: dateTo,
-        },
-        headers: {
-          Authorization: token || "",
-        },
+        params,
+        headers: { Authorization: token || "" },
       },
     );
 

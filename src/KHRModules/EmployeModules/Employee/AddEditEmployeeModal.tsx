@@ -8,8 +8,8 @@ import {
   addEmployee,
   getAttendancePolicies,
   getBranches,
-  getBusinessLocations,
-  getBusinessTypes,
+  // getBusinessLocations,
+  // getBusinessTypes,
   getCountries,
   getDepartments,
   getDesignations,
@@ -69,7 +69,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   const [states, setStates] = useState<Option[]>([]);
   const [districts, setDistricts] = useState<Option[]>([]);
   const [businessTypes, setBusinessTypes] = useState<Option[]>([]);
-  const [businessLocations, setBusinessLocations] = useState<Option[]>([]);
+  // const [businessLocations, setBusinessLocations] = useState<Option[]>([]);
   const [departments, setDepartments] = useState<Option[]>([]);
   const [designations, setDesignations] = useState<Option[]>([]);
   const [workLocations, setWorkLocations] = useState<Option[]>([]);
@@ -1698,15 +1698,17 @@ const AddEditEmployeeModal: React.FC<Props> = ({
   useEffect(() => {
     const fetchEmploymentData = async () => {
       try {
-        const [bTypes, bLocs, deptsRes, wLocs, empList] = await Promise.all([
-          getBusinessTypes().catch((e) => {
-            console.error("bTypes error", e);
-            return [];
-          }),
-          getBusinessLocations().catch((e) => {
-            console.error("bLocs error", e);
-            return [];
-          }),
+        // const [bTypes, bLocs, deptsRes, wLocs, empList] = await Promise.all([
+        const [ deptsRes, wLocs, empList] = await Promise.all([
+
+          // getBusinessTypes().catch((e) => {
+          //   console.error("bTypes error", e);
+          //   return [];
+          // }),
+          // getBusinessLocations().catch((e) => {
+          //   console.error("bLocs error", e);
+          //   return [];
+          // }),
           getDepartments(), // This is the one we need
           getWorkLocations().catch((e) => {
             console.error("wLocs error", e);
@@ -1731,18 +1733,18 @@ const AddEditEmployeeModal: React.FC<Props> = ({
         setManagers(finalManagers);
 
         // Mapping for others...
-        setBusinessTypes(
-          (bTypes?.data || bTypes || []).map((i: any) => ({
-            value: String(i.id),
-            label: i.name,
-          })),
-        );
-        setBusinessLocations(
-          (bLocs?.data || bLocs || []).map((i: any) => ({
-            value: String(i.id),
-            label: i.name,
-          })),
-        );
+        // setBusinessTypes(
+        //   (bTypes?.data || bTypes || []).map((i: any) => ({
+        //     value: String(i.id),
+        //     label: i.name,
+        //   })),
+        // );
+        // setBusinessLocations(
+        //   (bLocs?.data || bLocs || []).map((i: any) => ({
+        //     value: String(i.id),
+        //     label: i.name,
+        //   })),
+        // );
         setWorkLocations(
           (wLocs?.data || wLocs || []).map((i: any) => ({
             value: String(i.id),

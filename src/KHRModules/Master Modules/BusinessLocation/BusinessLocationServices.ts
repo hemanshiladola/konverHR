@@ -20,19 +20,19 @@ const getUserId = () => {
 };
 
 // GET - http://localhost:4000/employee/business-locations?user_id=219
-export const getBusinessLocations = async (): Promise<
-  APIBusinessLocation[]
-> => {
-  try {
-    const response = await Instance.get("/employee/business-locations", {
-      params: { user_id: getUserId() },
-    });
-    return response.data.data || response.data || [];
-  } catch (error) {
-    console.error("Error fetching business locations:", error);
-    return [];
-  }
-};
+// export const getBusinessLocations = async (): Promise<
+//   APIBusinessLocation[]
+// > => {
+//   try {
+//     const response = await Instance.get("/employee/business-locations", {
+//       params: { user_id: getUserId() },
+//     });
+//     return response.data.data || response.data || [];
+//   } catch (error) {
+//     console.error("Error fetching business locations:", error);
+//     return [];
+//   }
+// };
 
 // POST - http://localhost:4000/employee/create/business-location
 export const addBusinessLocation = async (data: { name: string }) => {

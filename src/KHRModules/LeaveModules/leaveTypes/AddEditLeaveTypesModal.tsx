@@ -113,10 +113,10 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
       setLeaveTypeCode(data.leave_type_code || "");
       setLeaveCategory(data.leave_category || "");
 
-      setEligibleAfter(data.eligiable_after || "confirmation");
-      setEligibleAfterDays(data.eligiable_after_days || "");
+      setEligibleAfter(data.eligible_after || data.eligiable_after || "confirmation");
+      setEligibleAfterDays(data.eligiable_after_days ?? "");
       setEmployeeCategory(data.employee_category || "");
-      setGenderRestriction(data.gender_restrication || "");
+      setGenderRestriction(data.gender_restriction || data.gender_restrication || "");
 
       setRequestUnit(data.request_unit || "half_day");
       setIncludePublicHolidaysInDuration(
@@ -237,9 +237,11 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
         overtime_deductible: overtimeDeductible,
         is_earned_leave: isEarnedLeave,
         eligiable_after: eligibleAfter || undefined,
+        eligible_after: eligibleAfter || undefined,
         eligiable_after_days: eligibleAfterDays ? Number(eligibleAfterDays) : 0,
         employee_category: employeeCategory || undefined,
         gender_restrication: genderRestriction || undefined,
+        gender_restriction: genderRestriction || undefined,
       };
 
       if (data && data.id) {
@@ -391,9 +393,10 @@ const AddEditLeaveTypesModal: React.FC<Props> = ({
                 </label>
                 <CommonSelect
                   options={eligibleAfterOptions}
-                  value={eligibleAfterOptions.find(
-                    (o) => o.value === eligibleAfter,
-                  )}
+                  value={
+                    eligibleAfterOptions.find((o) => o.value === eligibleAfter) ||
+                    (eligibleAfter ? { value: eligibleAfter, label: eligibleAfter } : undefined)
+                  }
                   onChange={(opt) => setEligibleAfter(opt?.value || "")}
                 />
               </div>

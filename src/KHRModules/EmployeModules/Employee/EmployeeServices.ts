@@ -138,19 +138,19 @@ export const getGroupUsers = async (groupId: string, userId?: string) => {
 
 // Add to EmployeeServices.ts
 
-export const getBusinessTypes = async () => {
-  const response = await Instance.get("/employee/business-types", {
-    params: { user_id: getUserId() },
-  });
-  return response.data.data || [];
-};
+// export const getBusinessTypes = async () => {
+//   const response = await Instance.get("/employee/business-types", {
+//     params: { user_id: getUserId() },
+//   });
+//   return response.data.data || [];
+// };
 
-export const getBusinessLocations = async () => {
-  const response = await Instance.get("/employee/business_locations", {
-    params: { user_id: getUserId() },
-  });
-  return response.data.data || [];
-};
+// export const getBusinessLocations = async () => {
+//   const response = await Instance.get("/employee/business_locations", {
+//     params: { user_id: getUserId() },
+//   });
+//   return response.data.data || [];
+// };
 
 export const getDepartments = async () => {
   const response = await Instance.get("/api/department", {

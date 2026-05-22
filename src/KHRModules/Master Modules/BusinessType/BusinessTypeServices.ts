@@ -24,17 +24,17 @@ const getUserId = () => {
 // 3. SERVICE FUNCTIONS
 
 // GET: http://localhost:4000/employee/business-types?user_id=219
-export const getBusinessTypes = async (): Promise<APIBusinessType[]> => {
-  try {
-    const response = await Instance.get("/employee/business-types", {
-      params: { user_id: getUserId() },
-    });
-    return response.data.data || response.data || [];
-  } catch (error) {
-    console.error("Error fetching business types:", error);
-    return [];
-  }
-};
+// export const getBusinessTypes = async (): Promise<APIBusinessType[]> => {
+//   try {
+//     const response = await Instance.get("/employee/business-types", {
+//       params: { user_id: getUserId() },
+//     });
+//     return response.data.data || response.data || [];
+//   } catch (error) {
+//     console.error("Error fetching business types:", error);
+//     return [];
+//   }
+// };
 
 // POST: http://localhost:4000/employee/create/business-type
 export const addBusinessType = async (data: { name: string }) => {
