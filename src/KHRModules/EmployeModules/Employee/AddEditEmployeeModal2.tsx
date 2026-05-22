@@ -111,7 +111,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       model: "leave",
       group_id: "",
       approval_user_id: "",
-      approval_sequance: 0,
+      approval_sequance: 1,
     },
   ]);
 
@@ -507,7 +507,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       {
         group_id: "",
         approval_user_id: "",
-        approval_sequance: 0,
+        approval_sequance: 1,
         model: "leave",
       },
     ]);
@@ -776,7 +776,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
             model: "leave",
             group_id: "",
             approval_user_id: "",
-            approval_sequance: 0,
+            approval_sequance: 1,
           },
         ]);
       }
@@ -924,8 +924,19 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     if (formData.marital === "married") {
       if (!formData.spouse_name?.trim())
         tempErrors.spouse_name = "Spouse name is required.";
-      if (!formData.date_of_marriage)
+      if (!formData.date_of_marriage) {
         tempErrors.date_of_marriage = "Marriage date is required.";
+      } else if (formData.birthday) {
+        const dob = dayjs(formData.birthday);
+        const dom = dayjs(formData.date_of_marriage);
+        // Must be at least 18 years old at time of marriage
+        const ageAtMarriage = dom.diff(dob, "year");
+        if (dom.isBefore(dob) || dom.isSame(dob)) {
+          tempErrors.date_of_marriage = "Marriage date must be after date of birth.";
+        } else if (ageAtMarriage < 18) {
+          tempErrors.date_of_marriage = `Must be at least 18 years old at marriage (age was ${ageAtMarriage}).`;
+        }
+      }
     }
     if (!formData.work_phone || !/^[0-9]{10}$/.test(formData.work_phone))
       tempErrors.work_phone = "Valid 10-digit mobile required.";
@@ -959,6 +970,8 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       !/^[0-9]{10}$/.test(formData.emergency_contact_mobile)
     )
       tempErrors.emergency_contact_mobile = "10-digit mobile required.";
+    if (!formData.emergency_contact_address?.trim() || formData.emergency_contact_address.trim().length < 50)
+      tempErrors.emergency_contact_address = "Contact address must be at least 50 characters.";
     setErrors((prev: any) => ({ ...prev, ...tempErrors }));
     return Object.keys(tempErrors).length === 0;
   };
@@ -1063,6 +1076,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       "emergency_contact_name",
       "emergency_contact_relation",
       "emergency_contact_mobile",
+      "emergency_contact_address",
     ],
     employment: [
       "department_id",
@@ -2474,11 +2488,21 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                           updateFormData({
                                             date_of_marriage: dateStr,
                                           });
-                                          if (errors.date_of_marriage)
-                                            setErrors({
-                                              ...errors,
-                                              date_of_marriage: "",
-                                            });
+                                          // Real-time: validate against DOB
+                                          if (dateStr && formData.birthday) {
+                                            const dob = dayjs(formData.birthday);
+                                            const dom = dayjs(dateStr as string);
+                                            const ageAtMarriage = dom.diff(dob, "year");
+                                            if (dom.isBefore(dob) || dom.isSame(dob)) {
+                                              setErrors((prev: any) => ({ ...prev, date_of_marriage: "Marriage date must be after date of birth." }));
+                                            } else if (ageAtMarriage < 18) {
+                                              setErrors((prev: any) => ({ ...prev, date_of_marriage: `Must be at least 18 years old at marriage (age was ${ageAtMarriage}).` }));
+                                            } else {
+                                              setErrors((prev: any) => ({ ...prev, date_of_marriage: "" }));
+                                            }
+                                          } else {
+                                            setErrors((prev: any) => ({ ...prev, date_of_marriage: "" }));
+                                          }
                                         }}
                                       />
                                       {isSubmitted &&
@@ -2506,7 +2530,20 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     onChange={(_, dateStr) => {
                                       updateFormData({ birthday: dateStr });
                                       if (errors.birthday)
-                                        setErrors({ ...errors, birthday: "" });
+                                        setErrors((prev: any) => ({ ...prev, birthday: "" }));
+                                      // Re-validate marriage date against new DOB in real-time
+                                      if (dateStr && formData.date_of_marriage) {
+                                        const dob = dayjs(dateStr as string);
+                                        const dom = dayjs(formData.date_of_marriage);
+                                        const ageAtMarriage = dom.diff(dob, "year");
+                                        if (dom.isBefore(dob) || dom.isSame(dob)) {
+                                          setErrors((prev: any) => ({ ...prev, date_of_marriage: "Marriage date must be after date of birth." }));
+                                        } else if (ageAtMarriage < 18) {
+                                          setErrors((prev: any) => ({ ...prev, date_of_marriage: `Must be at least 18 years old at marriage (age was ${ageAtMarriage}).` }));
+                                        } else {
+                                          setErrors((prev: any) => ({ ...prev, date_of_marriage: "" }));
+                                        }
+                                      }
                                     }}
                                   />
                                   {isSubmitted && errors.birthday && (
@@ -3208,25 +3245,48 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                   <label className="form-label fs-13">
                                     Contact Address
                                   </label>
-                                                                      <span className="text-danger">*</span>
+                                  <span className="text-danger">*</span>
 
                                   <textarea
                                     disabled={isViewOnly || isSubmitting}
                                     readOnly={isViewOnly}
                                     rows={2}
-                                    className="form-control"
-                                    required
+                                    className={`form-control ${
+                                      isSubmitted
+                                        ? !formData.emergency_contact_address?.trim() || formData.emergency_contact_address.trim().length < 50
+                                          ? "is-invalid"
+                                          : "is-valid"
+                                        : ""
+                                    }`}
                                     minLength={50}
                                     maxLength={500}
                                     placeholder="Full Residential Address of the contact person"
                                     value={formData.emergency_contact_address}
                                     onChange={(e) =>
                                       updateFormData({
-                                        emergency_contact_address:
-                                          e.target.value,
+                                        emergency_contact_address: e.target.value,
                                       })
                                     }
                                   />
+                                  <div className="d-flex justify-content-between mt-1">
+                                    <small className={`${
+                                      (formData.emergency_contact_address?.trim()?.length || 0) < 50
+                                        ? "text-danger"
+                                        : "text-success"
+                                    }`}>
+                                      {(formData.emergency_contact_address?.trim()?.length || 0) < 50
+                                        ? `Minimum 50 characters required (${formData.emergency_contact_address?.trim()?.length || 0}/50)`
+                                        : "✓ Address looks good"}
+                                    </small>
+                                    <small className="text-muted">
+                                      {formData.emergency_contact_address?.length || 0}/500
+                                    </small>
+                                  </div>
+                                  {isSubmitted && (!formData.emergency_contact_address?.trim() || formData.emergency_contact_address.trim().length < 50) && (
+                                    <div className="invalid-feedback d-block">
+                                      Contact address must be at least 50 characters.
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -4340,7 +4400,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                           model: "leave",
                                           group_id: "",
                                           approval_user_id: "",
-                                          approval_sequance: 0,
+                                          approval_sequance: 1,
                                         },
                                       ])
                                     }
@@ -4782,7 +4842,7 @@ export default AddEditEmployeeModal2;
 //       model: "leave",
 //       group_id: "",
 //       approval_user_id: "",
-//       approval_sequance: 0,
+//       approval_sequance: 1,
 //     },
 //   ]);
 
@@ -4918,7 +4978,7 @@ export default AddEditEmployeeModal2;
 //       {
 //         group_id: "",
 //         approval_user_id: "",
-//         approval_sequance: 0,
+//         approval_sequance: 1,
 //         model: "leave",
 //       },
 //     ]);
@@ -5136,7 +5196,7 @@ export default AddEditEmployeeModal2;
 //             model: "leave",
 //             group_id: "",
 //             approval_user_id: "",
-//             approval_sequance: 0,
+//             approval_sequance: 1,
 //           },
 //         ]);
 //       }
@@ -8230,7 +8290,7 @@ export default AddEditEmployeeModal2;
 //                                           model: "leave",
 //                                           group_id: "",
 //                                           approval_user_id: "",
-//                                           approval_sequance: 0,
+//                                           approval_sequance: 1,
 //                                         },
 //                                       ])
 //                                     }

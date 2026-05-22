@@ -413,18 +413,16 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="bic"
-                      className={`form-control ${
-                        isSubmitted && errors.bic
-                          ? "is-invalid"
-                          : formData.bic
-                            ? "is-valid"
-                            : ""
+                      className={`form-control text-uppercase ${
+                        errors.bic ? "is-invalid" : formData.bic && !errors.bic ? "is-valid" : ""
                       }`}
-                      maxLength={11} // Maximum allowed for BIC
+                      maxLength={11}
                       value={formData.bic}
                       onChange={handleInputChange}
+                      placeholder="e.g. SBIN0INB"
                     />
-                    {isSubmitted && errors.bic && (
+                    <div className="form-text fs-11 text-muted">8 or 11 chars · XXXXYYZZAAA</div>
+                    {errors.bic && (
                       <div className="invalid-feedback fs-11">{errors.bic}</div>
                     )}
                   </div>
@@ -435,17 +433,17 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="swift_code"
-                      maxLength={11} // Maximum allowed for SWIFT
-                      className={`form-control ${
-                        isSubmitted && errors.swift_code ? "is-invalid" : ""
+                      maxLength={11}
+                      className={`form-control text-uppercase ${
+                        errors.swift_code ? "is-invalid" : formData.swift_code && !errors.swift_code ? "is-valid" : ""
                       }`}
                       value={formData.swift_code}
                       onChange={handleInputChange}
+                      placeholder="e.g. CHASUS33XXX"
                     />
-                    {isSubmitted && errors.swift_code && (
-                      <div className="invalid-feedback fs-11">
-                        {errors.swift_code}
-                      </div>
+                    <div className="form-text fs-11 text-muted">8 or 11 chars · optional</div>
+                    {errors.swift_code && (
+                      <div className="invalid-feedback fs-11">{errors.swift_code}</div>
                     )}
                   </div>
                   <div className="col-md-4">
@@ -455,17 +453,17 @@ const AddEditBanksKHRModal: React.FC<Props> = ({
                     <input
                       type="text"
                       name="micr_code"
-                      maxLength={9} // Strict 9 digits for MICR
+                      maxLength={9}
                       className={`form-control ${
-                        isSubmitted && errors.micr_code ? "is-invalid" : ""
+                        errors.micr_code ? "is-invalid" : formData.micr_code && !errors.micr_code ? "is-valid" : ""
                       }`}
                       value={formData.micr_code}
                       onChange={handleInputChange}
+                      placeholder="e.g. 400002009"
                     />
-                    {isSubmitted && errors.micr_code && (
-                      <div className="invalid-feedback fs-11">
-                        {errors.micr_code}
-                      </div>
+                    <div className="form-text fs-11 text-muted">Exactly 9 digits · optional</div>
+                    {errors.micr_code && (
+                      <div className="invalid-feedback fs-11">{errors.micr_code}</div>
                     )}
                   </div>
                 </div>

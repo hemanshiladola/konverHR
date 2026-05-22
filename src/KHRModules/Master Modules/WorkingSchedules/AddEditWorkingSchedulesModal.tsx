@@ -557,26 +557,24 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                     </div>
                     <button
                       type="button"
-                      className="btn btn-primary"
+                      className="btn btn-primary btn-sm"
                       onClick={handleAddRow}
                     >
                       <i className="ti ti-plus me-1"></i> Add Slot
                     </button>
                   </div>
-                  <div className="table-responsive">
+
+                  {/* Desktop table */}
+                  <div className="d-none d-md-block table-responsive">
                     <table className="table table-hover align-middle mb-0">
                       <thead className="bg-light text-muted">
                         <tr>
-                          <th style={{ width: "20%", paddingLeft: "20px" }}>
-                            Label
-                          </th>
+                          <th style={{ width: "20%", paddingLeft: "20px" }}>Label</th>
                           <th style={{ width: "15%" }}>Day</th>
                           <th style={{ width: "15%" }}>Period</th>
                           <th style={{ width: "15%" }}>Time Range</th>
                           <th style={{ width: "15%" }}>Type</th>
-                          <th className="text-center" style={{ width: "10%" }}>
-                            Action
-                          </th>
+                          <th className="text-center" style={{ width: "10%" }}>Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -584,135 +582,41 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                           <tr key={i}>
                             <td style={{ paddingLeft: "20px" }}>
                               <input
-                                name={`row_${i}_name`}
                                 type="text"
                                 className="form-control"
                                 value={row.name}
-                                // onChange={(e) =>
-                                //   handleRowChange(i, "name", e.target.value)
-                                // }
-                                onChange={(e) =>
-                                  handleRowTextChange(i, e.target.value, 50)
-                                }
+                                onChange={(e) => handleRowTextChange(i, e.target.value, 50)}
                                 maxLength={50}
                                 placeholder="Label"
                               />
                             </td>
                             <td>
-                              <select
-                                className="form-select"
-                                value={row.dayofweek}
-                                onChange={(e) =>
-                                  handleRowChange(
-                                    i,
-                                    "dayofweek",
-                                    e.target.value,
-                                  )
-                                }
-                              >
-                                {daysOfWeek.map((d) => (
-                                  <option key={d.value} value={d.value}>
-                                    {d.label}
-                                  </option>
-                                ))}
+                              <select className="form-select" value={row.dayofweek} onChange={(e) => handleRowChange(i, "dayofweek", e.target.value)}>
+                                {daysOfWeek.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
                               </select>
                             </td>
                             <td>
-                              <select
-                                className="form-select"
-                                value={row.day_period}
-                                onChange={(e) =>
-                                  handleRowChange(
-                                    i,
-                                    "day_period",
-                                    e.target.value,
-                                  )
-                                }
-                              >
-                                {dayPeriods.map((d) => (
-                                  <option key={d.value} value={d.value}>
-                                    {d.label}
-                                  </option>
-                                ))}
+                              <select className="form-select" value={row.day_period} onChange={(e) => handleRowChange(i, "day_period", e.target.value)}>
+                                {dayPeriods.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
                               </select>
                             </td>
                             <td>
                               <div className="d-flex align-items-center gap-1">
-                                <input
-                                  type="number"
-                                  step="0.5"
-                                  className={`form-control px-1 text-center ${errors[`row_${i}_time`] ? "is-invalid" : ""}`}
-                                  value={row.hour_from}
-                                  onChange={(e) =>
-                                    handleRowChange(
-                                      i,
-                                      "hour_from",
-                                      Number(e.target.value),
-                                    )
-                                  }
-                                />
+                                <input type="number" step="0.5" className={`form-control px-1 text-center ${errors[`row_${i}_time`] ? "is-invalid" : ""}`} value={row.hour_from} onChange={(e) => handleRowChange(i, "hour_from", Number(e.target.value))} />
                                 <span>-</span>
-                                <input
-                                  type="number"
-                                  step="0.5"
-                                  className={`form-control px-1 text-center ${errors[`row_${i}_time`] ? "is-invalid" : ""}`}
-                                  value={row.hour_to}
-                                  onChange={(e) =>
-                                    handleRowChange(
-                                      i,
-                                      "hour_to",
-                                      Number(e.target.value),
-                                    )
-                                  }
-                                />
+                                <input type="number" step="0.5" className={`form-control px-1 text-center ${errors[`row_${i}_time`] ? "is-invalid" : ""}`} value={row.hour_to} onChange={(e) => handleRowChange(i, "hour_to", Number(e.target.value))} />
                               </div>
-                              {errors[`row_${i}_time`] && (
-                                <div
-                                  className="text-danger small mt-1"
-                                  style={{ fontSize: "10px" }}
-                                >
-                                  {errors[`row_${i}_time`]}
-                                </div>
-                              )}
+                              {errors[`row_${i}_time`] && <div className="text-danger small mt-1" style={{ fontSize: "10px" }}>{errors[`row_${i}_time`]}</div>}
                             </td>
                             <td>
-                              <select
-                                className="form-select"
-                                value={
-                                  Array.isArray(row.work_entry_type_id)
-                                    ? row.work_entry_type_id[0]
-                                    : row.work_entry_type_id
-                                }
-                                onChange={(e) =>
-                                  handleRowChange(
-                                    i,
-                                    "work_entry_type_id",
-                                    Number(e.target.value),
-                                  )
-                                }
-                              >
-                                {workEntryTypeOptions.map((t) => (
-                                  <option key={t.value} value={t.value}>
-                                    {t.label}
-                                  </option>
-                                ))}
+                              <select className="form-select" value={Array.isArray(row.work_entry_type_id) ? row.work_entry_type_id[0] : row.work_entry_type_id} onChange={(e) => handleRowChange(i, "work_entry_type_id", Number(e.target.value))}>
+                                {workEntryTypeOptions.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
                               </select>
                             </td>
                             <td className="text-center">
-                              {/* FIX 2: Larger Delete Button 
-                                    Removed 'btn-sm'. Using a transparent button with a large text-danger icon.
-                                 */}
                               {formData.attendances.length > 1 && (
-                                <button
-                                  type="button"
-                                  className="btn text-danger p-2"
-                                  onClick={() => handleRemoveRow(i)}
-                                  title="Remove Slot"
-                                >
-                                  <i
-                                    className="ti ti-trash"
-                                    style={{ fontSize: "1.25rem" }}
-                                  ></i>
+                                <button type="button" className="btn text-danger p-2" onClick={() => handleRemoveRow(i)} title="Remove Slot">
+                                  <i className="ti ti-trash" style={{ fontSize: "1.25rem" }}></i>
                                 </button>
                               )}
                             </td>
@@ -721,10 +625,59 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Mobile card layout */}
+                  <div className="d-md-none p-3 d-flex flex-column gap-3">
+                    {formData.attendances.map((row, i) => (
+                      <div key={i} className="card border shadow-sm rounded-3 p-3">
+                        <div className="d-flex justify-content-between align-items-center mb-2">
+                          <span className="fw-bold fs-13 text-primary">Slot {i + 1}</span>
+                          {formData.attendances.length > 1 && (
+                            <button type="button" className="btn btn-sm text-danger p-1" onClick={() => handleRemoveRow(i)}>
+                              <i className="ti ti-trash fs-16"></i>
+                            </button>
+                          )}
+                        </div>
+                        <div className="row g-2">
+                          <div className="col-12">
+                            <label className="form-label fs-12 mb-1">Label</label>
+                            <input type="text" className="form-control form-control-sm" value={row.name} onChange={(e) => handleRowTextChange(i, e.target.value, 50)} maxLength={50} placeholder="Label" />
+                          </div>
+                          <div className="col-6">
+                            <label className="form-label fs-12 mb-1">Day</label>
+                            <select className="form-select form-select-sm" value={row.dayofweek} onChange={(e) => handleRowChange(i, "dayofweek", e.target.value)}>
+                              {daysOfWeek.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+                            </select>
+                          </div>
+                          <div className="col-6">
+                            <label className="form-label fs-12 mb-1">Period</label>
+                            <select className="form-select form-select-sm" value={row.day_period} onChange={(e) => handleRowChange(i, "day_period", e.target.value)}>
+                              {dayPeriods.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+                            </select>
+                          </div>
+                          <div className="col-6">
+                            <label className="form-label fs-12 mb-1">From</label>
+                            <input type="number" step="0.5" className={`form-control form-control-sm ${errors[`row_${i}_time`] ? "is-invalid" : ""}`} value={row.hour_from} onChange={(e) => handleRowChange(i, "hour_from", Number(e.target.value))} />
+                          </div>
+                          <div className="col-6">
+                            <label className="form-label fs-12 mb-1">To</label>
+                            <input type="number" step="0.5" className={`form-control form-control-sm ${errors[`row_${i}_time`] ? "is-invalid" : ""}`} value={row.hour_to} onChange={(e) => handleRowChange(i, "hour_to", Number(e.target.value))} />
+                          </div>
+                          {errors[`row_${i}_time`] && <div className="col-12 text-danger" style={{ fontSize: "11px" }}>{errors[`row_${i}_time`]}</div>}
+                          <div className="col-12">
+                            <label className="form-label fs-12 mb-1">Type</label>
+                            <select className="form-select form-select-sm" value={Array.isArray(row.work_entry_type_id) ? row.work_entry_type_id[0] : row.work_entry_type_id} onChange={(e) => handleRowChange(i, "work_entry_type_id", Number(e.target.value))}>
+                              {workEntryTypeOptions.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
                   {formData.attendances.length === 0 && (
                     <div className="p-4 text-center text-danger bg-soft-danger">
-                      <i className="ti ti-alert-circle me-1"></i> No slots
-                      added.
+                      <i className="ti ti-alert-circle me-1"></i> No slots added.
                     </div>
                   )}
                 </div>

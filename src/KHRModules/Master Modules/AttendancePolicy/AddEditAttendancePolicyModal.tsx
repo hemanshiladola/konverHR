@@ -351,7 +351,7 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
 
                   {/* Absent If - CUSTOM DROPDOWN */}
                   <div className="col-12 col-md-6">
-                    <label className="form-label fs-13 fw-bold">Absenttttt Condition</label>
+                    <label className="form-label fs-13 fw-bold">Absentttt Condition</label>
                     <div className="dropdown w-100">
                       <button
                         type="button"
