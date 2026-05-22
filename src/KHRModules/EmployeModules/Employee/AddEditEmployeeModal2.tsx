@@ -1097,14 +1097,30 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     return currentTabFields.some((field) => errors[field]);
   };
 
+  const MAX_IMAGE_SIZE_MB = 2;
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      updateFormData({ image_1920: file });
-      const reader = new FileReader();
-      reader.onloadend = () => setImgPreview(reader.result as string);
-      reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected after error
+    e.target.value = "";
+    if (!file) return;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      toast.error("Only image files are allowed (JPG, PNG, WEBP, GIF).");
+      return;
     }
+
+    const sizeMB = file.size / (1024 * 1024);
+    if (sizeMB > MAX_IMAGE_SIZE_MB) {
+      toast.error(`Image size must be under ${MAX_IMAGE_SIZE_MB}MB. Selected file is ${sizeMB.toFixed(1)}MB.`);
+      return;
+    }
+
+    updateFormData({ image_1920: file });
+    const reader = new FileReader();
+    reader.onloadend = () => setImgPreview(reader.result as string);
+    reader.readAsDataURL(file);
   };
 
   const handleProbationChange = (months: number) => {
