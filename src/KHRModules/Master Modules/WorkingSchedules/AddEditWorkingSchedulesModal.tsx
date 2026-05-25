@@ -573,7 +573,7 @@ const AddEditWorkingSchedulesModal: React.FC<Props> = ({
                           <th style={{ width: "15%" }}>Day</th>
                           <th style={{ width: "15%" }}>Period</th>
                           <th style={{ width: "15%" }}>Time Range</th>
-                          <th style={{ width: "15%" }}>Type</th>
+                          <th style={{ width: "15%" }}>work Entry Type</th>
                           <th className="text-center" style={{ width: "10%" }}>Action</th>
                         </tr>
                       </thead>

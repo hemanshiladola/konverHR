@@ -4358,16 +4358,14 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                               }
                                               readOnly={isViewOnly}
                                               type="number"
+                                              min={1}
                                               className="form-control"
-                                              placeholder="0"
+                                              placeholder="1"
                                               value={line.approval_sequance}
-                                              onChange={(e) =>
-                                                handleLineChange(
-                                                  index,
-                                                  "approval_sequance",
-                                                  e.target.value,
-                                                )
-                                              }
+                                              onChange={(e) => {
+                                                const val = Math.max(1, parseInt(e.target.value.replace(/\D/g, "")) || 1);
+                                                handleLineChange(index, "approval_sequance", val);
+                                              }}
                                             />
                                           </td>
                                           <td className="py-3 pe-4 text-center">

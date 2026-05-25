@@ -1152,10 +1152,10 @@ const AdminDashboard = () => {
                     </div>
                     <div className="dropdown">
                       <button
-                        className="btn btn-white btn-sm border dropdown-toggle text-capitalize"
+                        className="btn btn-white btn-sm border dropdown-toggle"
                         data-bs-toggle="dropdown"
                       >
-                        {clockRange}
+                        {clockRange === "this_week" ? "This Week" : clockRange === "today" ? "Today" : clockRange.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}
                       </button>
                       <ul className="dropdown-menu">
                         <li>
