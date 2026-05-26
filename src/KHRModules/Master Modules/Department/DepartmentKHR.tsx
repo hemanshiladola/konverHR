@@ -89,11 +89,6 @@ const DepartmentKHR = () => {
   const groupByOptions = [
     { value: "none", label: "No Grouping" },
     { value: "department_type", label: "Group by Department Type" },
-    { value: "business_type", label: "Group by Business Type" },
-    { value: "manager_status", label: "Group by Manager Status" },
-    { value: "name_length", label: "Group by Name Length" },
-    { value: "created_month", label: "Group by Created Month" },
-    { value: "alphabetical", label: "Group by First Letter" },
   ];
 
   const getDepartmentType = (name: string) => {

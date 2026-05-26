@@ -81,12 +81,7 @@ const HRContractTypeKHR = () => {
   // Group by functionality
   const groupByOptions = [
     { value: "none", label: "No Grouping" },
-    { value: "contract_category", label: "Group by Contract Category" },
-    { value: "alphabetical", label: "Group by First Letter" },
     { value: "code_pattern", label: "Group by Code Pattern" },
-    { value: "name_length", label: "Group by Name Length" },
-    { value: "employment_type", label: "Group by Employment Type" },
-    { value: "duration_type", label: "Group by Duration Type" },
   ];
 
   const getFirstLetter = (text: string) => {

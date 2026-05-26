@@ -97,8 +97,6 @@ const JobPosition = () => {
     { value: "department", label: "Group by Department" },
     { value: "industry", label: "Group by Industry" },
     { value: "contract_type", label: "Group by Contract Type" },
-    { value: "openings_range", label: "Group by Openings Range" },
-    { value: "alphabetical", label: "Group by First Letter" },
   ];
 
   const getFirstLetter = (text: string) => {

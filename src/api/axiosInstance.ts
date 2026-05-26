@@ -69,6 +69,13 @@ Instance.interceptors.request.use(
 Instance.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // If user is logged out, silently ignore all API errors
+    // This prevents "Failed to load X" toasts from in-flight requests after logout
+    const isLoggedIn = !!localStorage.getItem("user_id");
+    if (!isLoggedIn) {
+      return Promise.resolve({ data: null });
+    }
+
     const originalRequest = error.config;
 
     // Check for 401 OR the specific "Token not found" error message in the response

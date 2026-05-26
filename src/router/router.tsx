@@ -51,7 +51,9 @@ const ALLRoutes: React.FC = () => {
   const handleAutoLogout = useCallback(() => {
     const isLoggedIn = !!localStorage.getItem("user_id");
     if (!isLoggedIn) return; // don't logout if already logged out
+    dispatch(resetStore());
     localStorage.clear();
+    toast.dismiss(); // clear all queued error toasts from in-flight requests
     toast.info("Session expired. Please log in again.", { autoClose: 3000 });
     setTimeout(() => {
       window.location.href = routes.login;

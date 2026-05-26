@@ -848,7 +848,7 @@ const AdminDashboard = () => {
                                 </span>
                               </div>
                               <span className="fw-semibold ms-2 text-nowrap">
-                                {d.total_employees} <span className="text-muted fs-11">({pct}%)</span>
+                                {d.total_employees} 
                               </span>
                             </div>
                           );
