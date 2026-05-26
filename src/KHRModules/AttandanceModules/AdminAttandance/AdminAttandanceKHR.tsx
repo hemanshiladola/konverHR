@@ -858,11 +858,12 @@ const AdminAttandanceKHR = () => {
     {
       title: "Date",
       dataIndex: "Date",
+       defaultSortOrder: "descend",
       render: (text: string) => (
         <span className="fw-medium text-dark">{text}</span>
       ),
       sorter: (a: AttendanceAdminData, b: AttendanceAdminData) =>
-        a.Date.localeCompare(b.Date),
+       dayjs(a.Date).unix() - dayjs(b.Date).unix(),
     },
     {
       title: "Status",

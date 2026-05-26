@@ -705,9 +705,11 @@ const Header = React.memo(() => {
                         <Link
                           className="dropdown-item d-inline-flex align-items-center p-0 py-2"
                           to={routes.login}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.preventDefault();
                             localStorage.clear();
                             sessionStorage.clear();
+                            window.location.href = routes.login;
                           }}
                         >
                           <i className="ti ti-login me-2"></i>Logout
@@ -781,9 +783,11 @@ const Header = React.memo(() => {
               <Link
                 className="dropdown-item"
                 to={routes.login}
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault();
                   localStorage.clear();
                   sessionStorage.clear();
+                  window.location.href = routes.login;
                 }}
               >
                 <i className="ti ti-login me-2"></i>Logout

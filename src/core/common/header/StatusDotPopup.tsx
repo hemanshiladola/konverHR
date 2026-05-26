@@ -21,6 +21,7 @@ const StatusCheckInPopup: React.FC = () => {
   const [checkInTime, setCheckInTime] = useState<Date | null>(null);
   const [totalMinutes, setTotalMinutes] = useState(0);
   const [isUserAction, setIsUserAction] = useState(false);
+  const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
 
   console.log(
     getCurrentAttendanceStatusData.status,
@@ -49,13 +50,15 @@ const StatusCheckInPopup: React.FC = () => {
   ===================== */
   useEffect(() => {
     const handler = (e: MouseEvent) => {
+      // Don't close if waiting for geolocation permission
+      if (isWaitingForLocation) return;
       if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  }, [isWaitingForLocation]);
 
   /* =====================
      HANDLE API RESPONSE
@@ -134,11 +137,12 @@ const StatusCheckInPopup: React.FC = () => {
       return;
     }
 
-    // Set flag to indicate this is a user-initiated action
     setIsUserAction(true);
+    setIsWaitingForLocation(true); // prevent popup from closing during permission prompt
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        setIsWaitingForLocation(false);
         const { latitude, longitude } = position.coords;
         dispatch(
           CheckinCheckout({
@@ -149,8 +153,9 @@ const StatusCheckInPopup: React.FC = () => {
       },
       (error) => {
         console.error(error);
+        setIsWaitingForLocation(false);
         toast.error("Unable to get your location");
-        setIsUserAction(false); // Reset flag on error
+        setIsUserAction(false);
       },
       { enableHighAccuracy: true },
     );
@@ -232,9 +237,9 @@ const StatusCheckInPopup: React.FC = () => {
             <button
               className="btn btn-success w-100"
               onClick={handleAction}
-              disabled={isCheckinCheckoutFetching}
+              disabled={isCheckinCheckoutFetching || isWaitingForLocation}
             >
-              {isCheckinCheckoutFetching ? "Checking In..." : "Check In"}
+              {isWaitingForLocation ? "Getting location..." : isCheckinCheckoutFetching ? "Checking In..." : "Check In"}
             </button>
           ) : (
             <>
@@ -287,9 +292,9 @@ const StatusCheckInPopup: React.FC = () => {
               <button
                 className="btn btn-warning w-100"
                 onClick={handleAction}
-                disabled={isCheckinCheckoutFetching}
+                disabled={isCheckinCheckoutFetching || isWaitingForLocation}
               >
-                {isCheckinCheckoutFetching ? "Checking Out..." : "Check Out ↪"}
+                {isWaitingForLocation ? "Getting location..." : isCheckinCheckoutFetching ? "Checking Out..." : "Check Out ↪"}
               </button>
             </>
           )}

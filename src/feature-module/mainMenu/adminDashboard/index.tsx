@@ -1116,7 +1116,7 @@ const AdminDashboard = () => {
                   className="card-header bg-transparent border-0 d-flex justify-content-between align-items-center"
                   style={{ position: "relative", zIndex: 1021 }}
                 >
-                  <h5 className="card-title mb-0 ">Live Clock-In/Out Status</h5>
+                  <h5 className="card-title mb-0 ">Live Check-In/Out Status</h5>
                   <div className="d-flex flax-col gap-2 justify-content-md-end">
                     <div className="dropdown">
                       <button
@@ -1187,8 +1187,8 @@ const AdminDashboard = () => {
                       <thead className="sticky-top bg-light">
                         <tr>
                           <th className="ps-4">Employee</th>
-                          <th>Clock-In</th>
-                          <th>Clock-Out</th>
+                          <th>Check-In</th>
+                          <th>Check-Out</th>
                           <th>Status</th>
                           <th className="text-end pe-4">Date</th>
                         </tr>

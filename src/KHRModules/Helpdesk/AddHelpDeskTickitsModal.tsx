@@ -57,7 +57,13 @@ const AddHelpDeskTickitsModal = ({ onSuccess, data }: ModalProps) => {
     }
   }, [data]);
 
+  const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+
   const processFile = (file: File) => {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast.error("Only images are allowed (JPG, PNG, WEBP, GIF).");
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File size should be less than 5MB");
       return;
@@ -274,7 +280,7 @@ const AddHelpDeskTickitsModal = ({ onSuccess, data }: ModalProps) => {
                       type="file"
                       ref={fileInputRef}
                       className="d-none"
-                      accept="image/*,.pdf"
+                      accept="image/jpeg,image/png,image/webp,image/gif"
                       onChange={handleFileChange}
                     />
 
@@ -296,7 +302,7 @@ const AddHelpDeskTickitsModal = ({ onSuccess, data }: ModalProps) => {
                             Click or drag to upload
                           </p>
                           <p className="x-small text-muted mb-0">
-                            PDF or Images (Max 5MB)
+                           Images (Max 5MB)
                           </p>
                         </>
                       )}
@@ -620,7 +626,7 @@ export default AddHelpDeskTickitsModal;
 //                       type="file"
 //                       ref={fileInputRef}
 //                       className="d-none"
-//                       accept="image/*,.pdf"
+//                       accept="image/jpeg,image/png,image/webp,image/gif"
 //                       onChange={handleFileChange}
 //                     />
 
@@ -902,7 +908,7 @@ export default AddHelpDeskTickitsModal;
 //                         type="file"
 //                         ref={fileInputRef} // Attached ref here
 //                         className="form-control form-control-sm"
-//                         accept="image/*,.pdf"
+//                         accept="image/jpeg,image/png,image/webp,image/gif"
 //                         onChange={handleFileChange}
 //                       />
 //                       <div className="mt-2 text-center p-3 bg-light rounded border border-dashed">
