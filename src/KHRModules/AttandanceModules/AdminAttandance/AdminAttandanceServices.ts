@@ -260,3 +260,73 @@ export const exportAbsentPresentReportToPdf = async (
     throw error;
   }
 };
+
+
+// ===================== ATTENDANCE REPORTS EXPORT =====================
+
+export interface ReportExportPayload {
+  date_from: string;
+  date_to: string;
+  branch_id?: number | null;
+  department_id?: number | null;
+  reporting_manager_id?: number | null;
+  resource_calendar_id?: number | null;
+}
+
+const exportReport = async (endpoint: string, payload: ReportExportPayload, fileName: string, mimeType: string) => {
+  const { user_id } = getAuthDetails();
+  const token = localStorage.getItem("authToken");
+
+  // Only user_id goes as query param, rest goes in POST body
+  const body: any = {
+    date_from: payload.date_from,
+    date_to: payload.date_to,
+  };
+  if (payload.branch_id) body.branch_id = payload.branch_id;
+  if (payload.department_id) body.department_id = payload.department_id;
+  if (payload.reporting_manager_id) body.reporting_manager_id = payload.reporting_manager_id;
+  if (payload.resource_calendar_id) body.resource_calendar_id = payload.resource_calendar_id;
+
+  const response = await axios.post(`${CONFIG.BASE_URL_ALL}${endpoint}`, body, {
+    params: { user_id },
+    headers: { Authorization: token || "", "Content-Type": "application/json" },
+  });
+
+  const result = response.data;
+  if ((result.status === "success" || result.success === true) && result.data) {
+    const fileBase64 = result.data.file_base64 || result.data.file;
+    const fName = result.data.file_name || result.data.filename || fileName;
+    if (fileBase64 && fName) {
+      downloadBase64File(fileBase64, fName, mimeType);
+    }
+  }
+  return result;
+};
+
+// Late Report
+export const exportLateReportExcel = (payload: ReportExportPayload) =>
+  exportReport("/api/export/late_report/excel", payload, "Late_Report.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+export const exportLateReportPdf = (payload: ReportExportPayload) =>
+  exportReport("/api/export/late_login/pdf", payload, "Late_Report.pdf", "application/pdf");
+
+// Missed Punch Report
+export const exportMissedPunchExcel = (payload: ReportExportPayload) =>
+  exportReport("/api/export/missed_punch/excel", payload, "Missed_Punch.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+export const exportMissedPunchPdf = (payload: ReportExportPayload) =>
+  exportReport("/api/export/missed_punch/pdf", payload, "Missed_Punch.pdf", "application/pdf");
+
+// Attendance Regularization Report
+export const exportRegularizationExcel = (payload: ReportExportPayload) =>
+  exportReport("/api/export/regularization/excel", payload, "Regularization.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+export const exportRegularizationPdf = (payload: ReportExportPayload) =>
+  exportReport("/api/export/regularization/pdf", payload, "Regularization.pdf", "application/pdf");
+
+// Absent/Present Report
+export const exportAbsentPresentExcel = (payload: ReportExportPayload) =>
+  exportReport("/api/export/absent_present/excel", payload, "Absent_Present.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+export const exportAbsentPresentPdf = (payload: ReportExportPayload) =>
+  exportReport("/api/export/absent_present/pdf", payload, "Absent_Present.pdf", "application/pdf");

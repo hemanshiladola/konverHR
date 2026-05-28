@@ -17,7 +17,7 @@ import {
   getReportingManagers,
   getShiftRosters,
   getStates,
-  getTimezones,
+  // getTimezones,
   getWorkingSchedules,
   getWorkLocations,
   updateEmployee,
@@ -61,7 +61,7 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     value: string;
     label: string;
   }
-  const [timezones, setTimezones] = useState<Option[]>([]);
+  // const [timezones, setTimezones] = useState<Option[]>([]);
   const [shiftRosters, setShiftRosters] = useState<Option[]>([]);
   const [countries, setCountries] = useState<Option[]>([]);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -1774,13 +1774,13 @@ const AddEditEmployeeModal: React.FC<Props> = ({
     }
   };
 
-  useEffect(() => {
-    const loadTimezones = async () => {
-      const data = await getTimezones();
-      setTimezones(data); // Directly setting the array of {value, label}
-    };
-    loadTimezones();
-  }, []);
+  // useEffect(() => {
+  //   const loadTimezones = async () => {
+  //     const data = await getTimezones();
+  //     setTimezones(data); // Directly setting the array of {value, label}
+  //   };
+  //   loadTimezones();
+  // }, []);
 
   useEffect(() => {
     const loadRosters = async () => {

@@ -71,13 +71,16 @@ export const getWorkingSchedules = async (): Promise<WorkingSchedule[]> => {
   }
 };
 
+// export const getTimezones = async (): Promise<any[]> => {
+//   try {
+//     const response = await Instance.get("api/timezones");
+//     return response.data.data || response.data || [];
+//   } catch (error) {
+//     return ["UTC", "Asia/Kolkata", "America/New_York", "Europe/London"];
+//   }
+// };
 export const getTimezones = async (): Promise<any[]> => {
-  try {
-    const response = await Instance.get("api/timezones");
-    return response.data.data || response.data || [];
-  } catch (error) {
-    return ["UTC", "Asia/Kolkata", "America/New_York", "Europe/London"];
-  }
+  return ["UTC", "Asia/Kolkata", "America/New_York", "Europe/London"];
 };
 
 // export const addWorkingSchedule = async (data: Partial<WorkingSchedule>) => {

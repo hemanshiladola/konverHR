@@ -392,7 +392,7 @@ const AddEditAttendancePolicyModal: React.FC<Props> = ({
                   </div>
 
                   <div className="col-md-4">
-                    <label className="form-label fs-13">Day After (Mins)</label>
+                    <label className="form-label fs-13">Day After</label>
                     <input
                       type="number"
                       inputMode="numeric" // Shows the number keypad on mobile phones

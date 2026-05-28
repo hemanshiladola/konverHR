@@ -332,16 +332,16 @@ export const getDistricts = async (countryId: string, stateId: string) => {
   }
 };
 
-export const getTimezones = async () => {
-  try {
-    const response = await Instance.get("/api/timezones");
-    // Returning the data array which contains {value, label} objects
-    return response.data.data || [];
-  } catch (error) {
-    console.error("Error fetching timezones:", error);
-    return [];
-  }
-};
+// export const getTimezones = async () => {
+//   try {
+//     const response = await Instance.get("/api/timezones");
+//     // Returning the data array which contains {value, label} objects
+//     return response.data.data || [];
+//   } catch (error) {
+//     console.error("Error fetching timezones:", error);
+//     return [];
+//   }
+// };
 
 export const addEmployee = async (payload: any) => {
   const userId = getUserId() || 219;

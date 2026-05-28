@@ -1,5 +1,5 @@
 import { all_routes } from "@/router/all_routes";
-import ImageWithBasePath from "@/core/common/imageWithBasePath";
+// import ImageWithBasePath from "@/core/common/imageWithBasePath";
 
 import { useEffect, useRef, useState } from "react";
 import { DatePicker } from "antd";
@@ -9,11 +9,19 @@ import CommonHeader from "@/CommonComponent/HeaderKHR/HeaderKHR";
 
 import {
   AttendanceExportPayload,
+  ReportExportPayload,
   exportAbsentPresentReportToExcel,
   exportAbsentPresentReportToPdf,
   exportAttendanceToExcel,
   exportAttendanceToPdf,
+  exportLateReportExcel,
+  exportLateReportPdf,
+  exportMissedPunchExcel,
+  exportMissedPunchPdf,
+  exportRegularizationExcel,
+  exportRegularizationPdf,
 } from "./AdminAttandanceServices";
+
 import {
   getBranches,
   getDepartments,
@@ -592,6 +600,90 @@ const AdminAttandanceKHR = () => {
       setIsExporting(false);
     }
   };
+
+  // Helper to build ReportExportPayload from shared filter state
+  const getReportExportPayload = (): ReportExportPayload => {
+    const { dateFrom, dateTo } = getDefaultDateRange();
+    const payload: ReportExportPayload = {
+      date_from: exportDateFrom ? exportDateFrom.format("YYYY-MM-DD") : dateFrom,
+      date_to: exportDateTo ? exportDateTo.format("YYYY-MM-DD") : dateTo,
+    };
+    if (exportBranchId) payload.branch_id = exportBranchId;
+    if (exportDepartmentId) payload.department_id = exportDepartmentId;
+    if (exportManagerId) payload.reporting_manager_id = exportManagerId;
+    if (exportScheduleId) payload.resource_calendar_id = exportScheduleId;
+    return payload;
+  };
+
+  // Late Login Report
+  const handleLateReportExcel = async () => {
+    setIsExporting(true);
+    try {
+      await exportLateReportExcel(getReportExportPayload());
+    } catch (error) {
+      console.error("Late Report Excel Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleLateReportPdf = async () => {
+    setIsExporting(true);
+    try {
+      await exportLateReportPdf(getReportExportPayload());
+    } catch (error) {
+      console.error("Late Report PDF Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Missed Punch Report
+  const handleMissedPunchExcel = async () => {
+    setIsExporting(true);
+    try {
+      await exportMissedPunchExcel(getReportExportPayload());
+    } catch (error) {
+      console.error("Missed Punch Excel Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleMissedPunchPdf = async () => {
+    setIsExporting(true);
+    try {
+      await exportMissedPunchPdf(getReportExportPayload());
+    } catch (error) {
+      console.error("Missed Punch PDF Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Attendance Regularization Report
+  const handleRegularizationExcel = async () => {
+    setIsExporting(true);
+    try {
+      await exportRegularizationExcel(getReportExportPayload());
+    } catch (error) {
+      console.error("Regularization Excel Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleRegularizationPdf = async () => {
+    setIsExporting(true);
+    try {
+      await exportRegularizationPdf(getReportExportPayload());
+    } catch (error) {
+      console.error("Regularization PDF Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const formatTime = (dateTime: string | false) => {
     if (!dateTime) return "-";
     const date = new Date(dateTime.replace(" ", "T"));
@@ -1257,10 +1349,10 @@ const AdminAttandanceKHR = () => {
                   <button
                     className="btn btn-primary d-flex align-items-center ms-2"
                     data-bs-toggle="modal"
-                    data-bs-target="#absent_present_report"
+                    data-bs-target="#attendance_reports_modal"
                   >
                     <i className="ti ti-file-analytics me-2" />
-                    Absent/Present Report
+                    Reports
                   </button>
                 </>
               }
@@ -1422,17 +1514,17 @@ const AdminAttandanceKHR = () => {
         </div>
       </div>
 
-      <div className="modal fade" id="absent_present_report" tabIndex={-1}>
+      <div className="modal fade" id="attendance_reports_modal" tabIndex={-1}>
         <div className="modal-dialog modal-dialog-centered modal-lg">
           <div className="modal-content border-0 shadow-lg">
             <div className="modal-header border-0 pb-0">
               <div>
                 <span className="badge badge-primary-transparent mb-2">
-                  Attendance Report
+                  Attendance Reports
                 </span>
-                <h4 className="modal-title mb-1">Absent/Present Report</h4>
+                <h4 className="modal-title mb-1">Export Attendance Reports</h4>
                 <p className="text-muted mb-0">
-                  Choose filters and download the attendance report.
+                  Choose filters and download the desired report.
                 </p>
               </div>
               <button
@@ -1542,32 +1634,138 @@ const AdminAttandanceKHR = () => {
                   </select>
                 </div>
               </div>
+
+              {/* Report Export Buttons */}
+              <hr className="my-4" />
+              <div className="row g-3">
+                {/* Absent/Present Report */}
+                <div className="col-md-6">
+                  <div className="border rounded p-3">
+                    <h6 className="fw-bold mb-2">
+                      <i className="ti ti-calendar-stats me-2 text-primary" />
+                      Absent/Present Report
+                    </h6>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={handleAbsentPresentExportPdf}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-pdf me-1" />
+                        {isExporting ? "..." : "PDF"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-success btn-sm"
+                        onClick={handleAbsentPresentExportExcel}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-xls me-1" />
+                        {isExporting ? "..." : "Excel"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Late Login Report */}
+                <div className="col-md-6">
+                  <div className="border rounded p-3">
+                    <h6 className="fw-bold mb-2">
+                      <i className="ti ti-clock-exclamation me-2 text-warning" />
+                      Late Login Report
+                    </h6>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={handleLateReportPdf}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-pdf me-1" />
+                        {isExporting ? "..." : "PDF"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-success btn-sm"
+                        onClick={handleLateReportExcel}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-xls me-1" />
+                        {isExporting ? "..." : "Excel"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Missed Punch Report */}
+                <div className="col-md-6">
+                  <div className="border rounded p-3">
+                    <h6 className="fw-bold mb-2">
+                      <i className="ti ti-fingerprint-off me-2 text-danger" />
+                      Missed Punch Report
+                    </h6>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={handleMissedPunchPdf}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-pdf me-1" />
+                        {isExporting ? "..." : "PDF"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-success btn-sm"
+                        onClick={handleMissedPunchExcel}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-xls me-1" />
+                        {isExporting ? "..." : "Excel"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attendance Regularization Report */}
+                <div className="col-md-6">
+                  <div className="border rounded p-3">
+                    <h6 className="fw-bold mb-2">
+                      <i className="ti ti-adjustments-check me-2 text-info" />
+                      Attendance Regularization
+                    </h6>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={handleRegularizationPdf}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-pdf me-1" />
+                        {isExporting ? "..." : "PDF"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-success btn-sm"
+                        onClick={handleRegularizationExcel}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-xls me-1" />
+                        {isExporting ? "..." : "Excel"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="modal-footer border-0 pt-0">
               <button
                 type="button"
-                className="btn btn-light me-2"
+                className="btn btn-light"
                 data-bs-dismiss="modal"
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-primary"
-                onClick={handleAbsentPresentExportPdf}
-                disabled={isExporting}
-              >
-                <i className="ti ti-file-type-pdf me-1" />
-                {isExporting ? "Exporting..." : "Download PDF"}
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={handleAbsentPresentExportExcel}
-                disabled={isExporting}
-              >
-                <i className="ti ti-file-type-xls me-1" />
-                {isExporting ? "Exporting..." : "Download Excel"}
+                Close
               </button>
             </div>
           </div>

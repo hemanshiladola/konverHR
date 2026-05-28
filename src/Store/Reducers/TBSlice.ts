@@ -1590,6 +1590,7 @@ export const TBSlice = createSlice({
         state.ApiAuthData = payload;
         state.isApiAuth = true;
         state.isApiAuthFetching = false;
+        // Do not show a success toast for the background auth-token API.
         state.isSuccess = false;
         state.successMessage = "";
         state.isError = false;
@@ -1971,7 +1972,7 @@ export const TBSlice = createSlice({
         state.isCheckinCheckout = true;
         state.isCheckinCheckoutFetching = false;
         state.isSuccess = true;
-        state.successMessage = payload?.message || "";
+        // state.successMessage = payload?.message || "";
         state.isError = false;
         state.errorMessage = "";
         return state;
