@@ -709,6 +709,8 @@ const Header = React.memo(() => {
                             e.preventDefault();
                             localStorage.clear();
                             sessionStorage.clear();
+                            // Dismiss all pending toasts before redirect to prevent stale error toasts
+                            import("react-toastify").then(({ toast }) => toast.dismiss());
                             window.location.href = routes.login;
                           }}
                         >
@@ -787,6 +789,7 @@ const Header = React.memo(() => {
                   e.preventDefault();
                   localStorage.clear();
                   sessionStorage.clear();
+                  import("react-toastify").then(({ toast }) => toast.dismiss());
                   window.location.href = routes.login;
                 }}
               >

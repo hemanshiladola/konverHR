@@ -8,10 +8,18 @@ import DatatableKHR from "@/CommonComponent/DataTableKHR/DatatableKHR";
 import CommonHeader from "@/CommonComponent/HeaderKHR/HeaderKHR";
 
 import {
+  AttendanceExportPayload,
+  exportAbsentPresentReportToExcel,
+  exportAbsentPresentReportToPdf,
   exportAttendanceToExcel,
   exportAttendanceToPdf,
 } from "./AdminAttandanceServices";
-import { getBranches, getDepartments } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
+import {
+  getBranches,
+  getDepartments,
+  getReportingManagers,
+  getWorkingSchedules,
+} from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
 // import { toast } from "react-toastify";
 import Link from "antd/es/typography/Link";
 import CommonAttendanceStatus from "@/CommonComponent/CommonAttendanceStatus/CommonAttendanceStatus";
@@ -25,7 +33,6 @@ import {
   updateState,
 } from "@/Store/Reducers/TBSlice";
 import { AppDispatch } from "@/Store";
-import CONFIG from "@/Config";
 
 // Define a type for attendance admin data
 interface AttendanceAdminData {
@@ -105,8 +112,12 @@ const AdminAttandanceKHR = () => {
   const exportDropdownRef = useRef<HTMLDivElement>(null);
   const [exportBranchId, setExportBranchId] = useState<number | null>(null);
   const [exportDepartmentId, setExportDepartmentId] = useState<number | null>(null);
+  const [exportScheduleId, setExportScheduleId] = useState<number | null>(null);
+  const [exportManagerId, setExportManagerId] = useState<number | null>(null);
   const [branches, setBranches] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
+  const [workingSchedules, setWorkingSchedules] = useState<any[]>([]);
+  const [reportingManagers, setReportingManagers] = useState<any[]>([]);
 
   // Group by functionality
   const groupByOptions = [
@@ -497,6 +508,23 @@ const AdminAttandanceKHR = () => {
     };
   };
 
+  const getExportPayload = (): AttendanceExportPayload => {
+    const { dateFrom, dateTo } = getDefaultDateRange();
+    const payload: AttendanceExportPayload = {
+      start_date: exportDateFrom
+        ? exportDateFrom.format("YYYY-MM-DD")
+        : dateFrom,
+      end_date: exportDateTo ? exportDateTo.format("YYYY-MM-DD") : dateTo,
+    };
+
+    if (exportBranchId) payload.branch_id = exportBranchId;
+    if (exportScheduleId) payload.resource_calendar_id = exportScheduleId;
+    if (exportManagerId) payload.reporting_manager_id = exportManagerId;
+    if (exportDepartmentId) payload.department_client_id = exportDepartmentId;
+
+    return payload;
+  };
+
   const handleExportExcel = async () => {
     setIsExporting(true);
     try {
@@ -507,7 +535,12 @@ const AdminAttandanceKHR = () => {
       const finalDateTo = exportDateTo
         ? exportDateTo.format("YYYY-MM-DD")
         : dateTo;
-      await exportAttendanceToExcel(finalDateFrom, finalDateTo, exportBranchId, exportDepartmentId);
+      await exportAttendanceToExcel(
+        finalDateFrom,
+        finalDateTo,
+        exportBranchId,
+        exportDepartmentId,
+      );
     } catch (error) {
       console.error("Excel Export failed:", error);
     } finally {
@@ -525,9 +558,36 @@ const AdminAttandanceKHR = () => {
       const finalDateTo = exportDateTo
         ? exportDateTo.format("YYYY-MM-DD")
         : dateTo;
-      await exportAttendanceToPdf(finalDateFrom, finalDateTo, exportBranchId, exportDepartmentId);
+      await exportAttendanceToPdf(
+        finalDateFrom,
+        finalDateTo,
+        exportBranchId,
+        exportDepartmentId,
+      );
     } catch (error) {
       console.error("PDF Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleAbsentPresentExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      await exportAbsentPresentReportToExcel(getExportPayload());
+    } catch (error) {
+      console.error("Absent/Present Excel Export failed:", error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleAbsentPresentExportPdf = async () => {
+    setIsExporting(true);
+    try {
+      await exportAbsentPresentReportToPdf(getExportPayload());
+    } catch (error) {
+      console.error("Absent/Present PDF Export failed:", error);
     } finally {
       setIsExporting(false);
     }
@@ -804,6 +864,8 @@ const AdminAttandanceKHR = () => {
     fetchEmployees();
     getBranches().then(setBranches).catch(() => {});
     getDepartments().then(setDepartments).catch(() => {});
+    getWorkingSchedules().then(setWorkingSchedules).catch(() => {});
+    getReportingManagers().then(setReportingManagers).catch(() => {});
   }, []);
 
   // Handle employee data loading
@@ -1095,7 +1157,7 @@ const AdminAttandanceKHR = () => {
                     {isExportOpen && (
                       <ul
                         className="dropdown-menu dropdown-menu-end p-2 mt-2 show"
-                        style={{ minWidth: "220px", right: 0, top: "100%" }}
+                        style={{ minWidth: "260px", right: 0, top: "100%" }}
                         onClick={(e) => e.stopPropagation()}
                       >
                         {/* Date Range inside dropdown */}
@@ -1192,14 +1254,14 @@ const AdminAttandanceKHR = () => {
                   </div>
 
                   {/* Report */}
-                  {/* <button
-                    className="btn btn-primary d-flex align-items-center"
+                  <button
+                    className="btn btn-primary d-flex align-items-center ms-2"
                     data-bs-toggle="modal"
-                    data-bs-target="#attendance_report"
+                    data-bs-target="#absent_present_report"
                   >
                     <i className="ti ti-file-analytics me-2" />
-                    Report
-                  </button> */}
+                    Absent/Present Report
+                  </button>
                 </>
               }
             />
@@ -1357,6 +1419,158 @@ const AdminAttandanceKHR = () => {
               <div className="">{renderGroupedTable()}</div>
             </>
           )}
+        </div>
+      </div>
+
+      <div className="modal fade" id="absent_present_report" tabIndex={-1}>
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content border-0 shadow-lg">
+            <div className="modal-header border-0 pb-0">
+              <div>
+                <span className="badge badge-primary-transparent mb-2">
+                  Attendance Report
+                </span>
+                <h4 className="modal-title mb-1">Absent/Present Report</h4>
+                <p className="text-muted mb-0">
+                  Choose filters and download the attendance report.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-close custom-btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              >
+                <i className="ti ti-x" />
+              </button>
+            </div>
+            <div className="modal-body">
+              <div className="row g-3">
+                <div className="col-md-6">
+                  <label className="form-label">Start Date</label>
+                  <DatePicker
+                    className="form-control"
+                    value={exportDateFrom}
+                    onChange={(val) => setExportDateFrom(val)}
+                    format="DD/MM/YYYY"
+                    placeholder="Select start date"
+                    getPopupContainer={() => document.body}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">End Date</label>
+                  <DatePicker
+                    className="form-control"
+                    value={exportDateTo}
+                    onChange={(val) => setExportDateTo(val)}
+                    format="DD/MM/YYYY"
+                    placeholder="Select end date"
+                    disabledDate={(current) =>
+                      exportDateFrom
+                        ? current.isBefore(exportDateFrom, "day")
+                        : false
+                    }
+                    getPopupContainer={() => document.body}
+                  />
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Branch</label>
+                  <select
+                    className="form-select"
+                    value={exportBranchId ?? ""}
+                    onChange={(e) =>
+                      setExportBranchId(e.target.value ? Number(e.target.value) : null)
+                    }
+                  >
+                    <option value="">All Branches</option>
+                    {branches.map((branch: any) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Department</label>
+                  <select
+                    className="form-select"
+                    value={exportDepartmentId ?? ""}
+                    onChange={(e) =>
+                      setExportDepartmentId(e.target.value ? Number(e.target.value) : null)
+                    }
+                  >
+                    <option value="">All Departments</option>
+                    {departments.map((department: any) => (
+                      <option key={department.id} value={department.id}>
+                        {department.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Working Schedule</label>
+                  <select
+                    className="form-select"
+                    value={exportScheduleId ?? ""}
+                    onChange={(e) =>
+                      setExportScheduleId(e.target.value ? Number(e.target.value) : null)
+                    }
+                  >
+                    <option value="">All Working Schedules</option>
+                    {workingSchedules.map((schedule: any) => (
+                      <option key={schedule.id} value={schedule.id}>
+                        {schedule.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Reporting Manager</label>
+                  <select
+                    className="form-select"
+                    value={exportManagerId ?? ""}
+                    onChange={(e) =>
+                      setExportManagerId(e.target.value ? Number(e.target.value) : null)
+                    }
+                  >
+                    <option value="">All Reporting Managers</option>
+                    {reportingManagers.map((manager: any) => (
+                      <option key={manager.id} value={manager.id}>
+                        {manager.name || manager.employee_name || manager.display_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer border-0 pt-0">
+              <button
+                type="button"
+                className="btn btn-light me-2"
+                data-bs-dismiss="modal"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-primary"
+                onClick={handleAbsentPresentExportPdf}
+                disabled={isExporting}
+              >
+                <i className="ti ti-file-type-pdf me-1" />
+                {isExporting ? "Exporting..." : "Download PDF"}
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleAbsentPresentExportExcel}
+                disabled={isExporting}
+              >
+                <i className="ti ti-file-type-xls me-1" />
+                {isExporting ? "Exporting..." : "Download Excel"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

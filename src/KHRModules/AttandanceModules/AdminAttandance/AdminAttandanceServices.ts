@@ -24,6 +24,15 @@ interface UpdateAttendancePayload {
   production_hours: number;
 }
 
+export interface AttendanceExportPayload {
+  start_date: string;
+  end_date: string;
+  branch_id?: number;
+  resource_calendar_id?: number;
+  reporting_manager_id?: number;
+  department_client_id?: number;
+}
+
 // Helper to get auth details
 const getAuthDetails = () => {
   const user_id = localStorage.getItem("user_id");
@@ -92,7 +101,24 @@ const downloadBase64File = (
   window.URL.revokeObjectURL(url);
 };
 
-// Export attendance to Excel
+const getDownloadUrl = (attachmentUrl: string) => {
+  if (/^https?:\/\//i.test(attachmentUrl)) return attachmentUrl;
+
+  const baseURL = Instance.defaults.baseURL || window.location.origin;
+  return new URL(attachmentUrl, baseURL).toString();
+};
+
+const openAttachmentDownload = (attachmentUrl: string) => {
+  const link = document.createElement("a");
+  link.href = getDownloadUrl(attachmentUrl);
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// Old attendance export to Excel: /api/export/attendance/excel
 export const exportAttendanceToExcel = async (
   dateFrom: string,
   dateTo: string,
@@ -125,7 +151,6 @@ export const exportAttendanceToExcel = async (
       const { file, filename } = result.data;
 
       if (file && filename) {
-        // Always use Base64 — works on both local and live
         downloadBase64File(
           file,
           filename,
@@ -141,7 +166,7 @@ export const exportAttendanceToExcel = async (
   }
 };
 
-// Export attendance to PDF
+// Old attendance export to PDF: /api/export/attendance/pdf
 export const exportAttendanceToPdf = async (
   dateFrom: string,
   dateTo: string,
@@ -170,7 +195,6 @@ export const exportAttendanceToPdf = async (
 
     const result = response.data;
 
-    // PDF response uses `success: true`, `file_base64`, and `file_name`
     if (
       (result.success === true || result.status === "success") &&
       result.data
@@ -187,6 +211,52 @@ export const exportAttendanceToPdf = async (
     return result;
   } catch (error) {
     console.error("Export PDF Error:", error);
+    throw error;
+  }
+};
+
+// New Absent/Present report export to Excel: /api/attendance/export
+export const exportAbsentPresentReportToExcel = async (
+  payload: AttendanceExportPayload,
+): Promise<any> => {
+  try {
+    const { user_id } = getAuthDetails();
+    const response = await Instance.post("/api/attendance/export", payload, {
+      params: { user_id },
+    });
+
+    const result = response.data;
+    const attachmentUrl = result?.data?.attachment_url;
+    if (result?.status === "success" && attachmentUrl) {
+      openAttachmentDownload(attachmentUrl);
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Absent/Present Excel Export Error:", error);
+    throw error;
+  }
+};
+
+// New Absent/Present report export to PDF: /api/attendance/export/pdf
+export const exportAbsentPresentReportToPdf = async (
+  payload: AttendanceExportPayload,
+): Promise<any> => {
+  try {
+    const { user_id } = getAuthDetails();
+    const response = await Instance.post("/api/attendance/export/pdf", payload, {
+      params: { user_id },
+    });
+
+    const result = response.data;
+    const attachmentUrl = result?.data?.attachment_url;
+    if (result?.status === "success" && attachmentUrl) {
+      openAttachmentDownload(attachmentUrl);
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Absent/Present PDF Export Error:", error);
     throw error;
   }
 };

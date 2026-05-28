@@ -22,8 +22,9 @@ export interface Contract {
   wage_type: string;
   schedule_pay: string;
   wage: number;
-  components?: { name?: string; structure_head_id?: number | null; amount: number; addition?: boolean; deduction?: boolean; base_component_id?: number; percentage?: number; is_pf_esic_base?: boolean }[];
-  leave_allocations?: LeaveAllocationEntry[]; // Add this to the interface
+  components?: { name?: string; structure_head_id?: number | null; amount: number; addition?: boolean; deduction?: boolean; base_component_id?: number; percentage?: number; is_pf_esic_base?: boolean; is_pf_base?: boolean; is_esic_base?: boolean; is_adding_in_pf?: boolean; is_adding_in_esic?: boolean }[];
+  leave_allocations?: LeaveAllocationEntry[];
+  leave_allocation_ids?: LeaveAllocationPayloadEntry[];
 }
 
 export interface LeaveAllocationEntry {
@@ -35,6 +36,19 @@ export interface LeaveAllocationEntry {
   date_to: string | false; // Use 'false' instead of 'boolean'
   number_of_days: number;
   description: string;
+}
+
+export interface LeaveAllocationPayloadEntry {
+  id?: number | null;
+  employee_id: number;
+  holiday_status_id: number;
+  date_start: string;
+  end_date: string | false;
+  number_of_days: number;
+  allocation_type: string;
+  accrual_plan_id?: number | false;
+  description?: string;
+  delete?: boolean;
 }
 
 export interface Employee {

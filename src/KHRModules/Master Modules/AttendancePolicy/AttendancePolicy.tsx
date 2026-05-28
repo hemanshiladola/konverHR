@@ -92,7 +92,6 @@ const AttendancePolicy = () => {
     { value: "type", label: "Group by Type" },
     { value: "absent_condition", label: "Group by Absent Condition" },
     { value: "grace_time", label: "Group by Grace Time" },
-    { value: "created_month", label: "Group by Created Month" },
   ];
 
   const getCreatedMonth = (date: string) => {

@@ -29,7 +29,7 @@ const initialContractState = {
   job_id: 0,
   date_start: "",
   date_end: "",
-  work_entry_source: "calendar",
+  work_entry_source: "attendance",
   resource_calendar_id: 0,
   structure_type_id: 0,
   department_id: 0,
@@ -113,7 +113,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     job_id: 0,
     date_start: "",
     date_end: "",
-    work_entry_source: "calendar",
+    work_entry_source: "attendance",
     resource_calendar_id: 0,
     structure_type_id: 0,
     department_id: 0,
@@ -324,10 +324,20 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                 amount: Number(f.value) || 0,
                 addition: isAdd,
                 deduction: isDed,
+                is_pf_base: Boolean(f.is_adding_in_pf ?? f.is_pf_base),
+                is_esic_base: Boolean(f.is_adding_in_esic ?? f.is_esic_base),
               };
             })
             : data.components && data.components.length > 0
-              ? data.components
+              ? data.components.map((component: any) => ({
+                ...component,
+                is_pf_base: Boolean(
+                  component.is_adding_in_pf ?? component.is_pf_base,
+                ),
+                is_esic_base: Boolean(
+                  component.is_adding_in_esic ?? component.is_esic_base,
+                ),
+              }))
               : initialContractState.components,
       });
 
@@ -341,8 +351,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
           // Map false/null to empty string for UI components
           accrual_plan_id:
             l.accrual_plan_id === false ? "" : String(l.accrual_plan_id),
-          from_date: l.date_from || "",
-          to_date: l.date_to === false ? "" : l.date_to,
+          from_date: l.date_start || l.date_from || "",
+          to_date:
+            l.end_date === false || l.date_to === false
+              ? ""
+              : l.end_date || l.date_to,
           allocation_days: l.number_of_days || 0,
           description: l.description || "",
         }));
@@ -440,8 +453,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
   };
 
   const tabFieldsMap: { [key: string]: string[] } = {
-    basic: ["employee_id", "date_start", "wage"],
-    salary: [], // Add required fields here if needed
+    basic: ["name", "employee_id", "date_start", "date_end", "wage"],
+    salary: ["components"],
+    leave_config: ["leave_allocation_ids"],
     leave: [
       "leave_type_id",
       "accrual_plan_id",
@@ -461,6 +475,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     let tempErrors: any = {};
     let isValid = true;
 
+    if (!String(formData.name || "").trim()) {
+      tempErrors.name = "Contract reference is required";
+      isValid = false;
+    }
     if (!formData.employee_id) {
       tempErrors.employee_id = "Employee is required";
       isValid = false;
@@ -469,13 +487,116 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       tempErrors.date_start = "Start Date is required";
       isValid = false;
     }
+    if (!formData.date_end) {
+      tempErrors.date_end = "End Date is required";
+      isValid = false;
+    }
+    if (
+      formData.date_start &&
+      formData.date_end &&
+      dayjs(formData.date_end).isBefore(dayjs(formData.date_start), "day")
+    ) {
+      tempErrors.date_end = "End Date cannot be before Start Date";
+      isValid = false;
+    }
     if (!formData.wage || Number(formData.wage) <= 0) {
       tempErrors.wage = "Valid wage amount is required";
       isValid = false;
     }
 
-    setErrors((prev: any) => ({ ...prev, ...tempErrors }));
+    setErrors((prev: any) => {
+      const newErrors = { ...prev };
+      ["name", "employee_id", "date_start", "date_end", "wage"].forEach(
+        (field) => delete newErrors[field],
+      );
+      return { ...newErrors, ...tempErrors };
+    });
     return isValid;
+  };
+
+  const validateSalaryTab = () => {
+    const selectedComponents = (formData.components || []).filter(
+      (c: any) => c.structure_head_id,
+    );
+
+    if (selectedComponents.length === 0) {
+      setErrors((prev: any) => ({
+        ...prev,
+        components: "Add at least one salary component.",
+      }));
+      return false;
+    }
+
+    const hasInvalidComponent = selectedComponents.some(
+      (c: any) =>
+        !Number(c.structure_head_id) ||
+        Number(c.amount) <= 0 ||
+        (!c.addition && !c.deduction),
+    );
+
+    if (hasInvalidComponent) {
+      setErrors((prev: any) => ({
+        ...prev,
+        components:
+          "Each selected salary component must have a type and amount greater than 0.",
+      }));
+      return false;
+    }
+
+    setErrors((prev: any) => {
+      const newErrors = { ...prev };
+      delete newErrors.components;
+      return newErrors;
+    });
+    return true;
+  };
+
+  const validateLeaveConfigTab = () => {
+    const hasManualLeaves = leaveAllocations.length > 0;
+    const hasPreviewLeaves = selectedLeaveConfig && leavePreview.length > 0;
+    const leavesToValidate = hasManualLeaves ? leaveAllocations : leavePreview;
+
+    if (!hasManualLeaves && !hasPreviewLeaves) {
+      setErrors((prev: any) => ({
+        ...prev,
+        leave_allocation_ids:
+          "Select a leave configuration that has allocation rows.",
+      }));
+      return false;
+    }
+
+    const hasInvalidLeave = leavesToValidate.some((l: any) => {
+      const holidayStatusId = Array.isArray(l.holiday_status_id)
+        ? l.holiday_status_id[0]
+        : l.holiday_status_id || l.leave_type_id;
+      const fromDate = l.from_date || l.date_start || l.date_from;
+      const toDate = l.to_date || l.end_date || l.date_to;
+      const numberOfDays = l.allocation_days || l.number_of_days;
+
+      return (
+        !Number(holidayStatusId) ||
+        !fromDate ||
+        !toDate ||
+        Number(numberOfDays) <= 0 ||
+        dayjs(toDate).isBefore(dayjs(fromDate), "day")
+      );
+    });
+
+    if (hasInvalidLeave) {
+      setErrors((prev: any) => ({
+        ...prev,
+        leave_allocation_ids:
+          "Leave allocation rows must have a leave type, valid dates, and days greater than 0.",
+      }));
+      return false;
+    }
+
+    setErrors((prev: any) => {
+      const newErrors = { ...prev };
+      delete newErrors.leave_allocation_ids;
+      return newErrors;
+    });
+    return true;
   };
 
   const handleLeaveConfigChange = async (configId: string) => {
@@ -840,12 +961,19 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     e.preventDefault();
     setIsSubmitted(true);
 
-    // 1. Validate Basic Contract Information
     const isBasicValid = validateBasicTab();
+    const isSalaryValid = validateSalaryTab();
+    const isLeaveConfigValid = validateLeaveConfigTab();
 
-    if (!isBasicValid) {
-      setActiveTab("basic");
-      toast.error("Please fill in all required contract fields.");
+    if (!isBasicValid || !isSalaryValid || !isLeaveConfigValid) {
+      if (!isBasicValid) {
+        setActiveTab("basic");
+      } else if (!isSalaryValid) {
+        setActiveTab("salary");
+      } else {
+        setActiveTab("leave_config");
+      }
+      toast.error("Please fix the highlighted fields before saving.");
       return;
     }
 
@@ -864,19 +992,32 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     setLoading(true);
     try {
       // 3. Construct Single Consolidated Payload
-      const activeLeaves = leaveAllocations.map((l) => ({
-        ...(l.id ? { id: l.id } : {}),
-        employee_id: Number(formData.employee_id),
-        holiday_status_id: Number(l.leave_type_id),
-        allocation_type: l.allocation_type,
-        accrual_plan_id: l.accrual_plan_id
-          ? Number(l.accrual_plan_id)
-          : (false as const),
-        date_from: l.from_date,
-        date_to: l.to_date ? l.to_date : (false as const),
-        number_of_days: Number(l.allocation_days),
-        description: l.description || "",
-      }));
+      const leavesForPayload =
+        leaveAllocations.length > 0 ? leaveAllocations : leavePreview;
+      const isExistingLeaveList = leaveAllocations.length > 0;
+
+      const activeLeaves = leavesForPayload.map((l) => {
+        const holidayStatusId = Array.isArray(l.holiday_status_id)
+          ? l.holiday_status_id[0]
+          : l.holiday_status_id || l.leave_type_id;
+        const fromDate = l.from_date || l.date_start || l.date_from;
+        const toDate = l.to_date || l.end_date || l.date_to;
+        const numberOfDays = l.allocation_days || l.number_of_days;
+
+        return {
+          ...(isExistingLeaveList && l.id ? { id: l.id } : {}),
+          employee_id: Number(formData.employee_id),
+          holiday_status_id: Number(holidayStatusId),
+          date_start: fromDate,
+          end_date: toDate ? toDate : (false as const),
+          number_of_days: Number(numberOfDays),
+          allocation_type: l.allocation_type || "regular",
+          ...(l.accrual_plan_id
+            ? { accrual_plan_id: Number(l.accrual_plan_id) }
+            : {}),
+          ...(l.description ? { description: l.description } : {}),
+        };
+      });
 
       const deletedLeaves = deletedLeaveIds.map((id) => ({
         id: id,
@@ -906,26 +1047,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
             amount: Number(c.amount),
             addition: c.addition ? true : undefined,
             deduction: c.deduction ? true : undefined,
+            is_adding_in_pf: !!(c.is_adding_in_pf ?? c.is_pf_base),
+            is_adding_in_esic: !!(c.is_adding_in_esic ?? c.is_esic_base),
           })),
-        // leave_allocation_ids: leaveAllocations.map((l) => ({
-        //   // 3. Conditional ID: Only include the key if l.id exists (for existing items)
-        //   ...(l.id ? { id: l.id } : {}),
-
-        //   employee_id: Number(formData.employee_id),
-        //   holiday_status_id: Number(l.leave_type_id),
-        //   allocation_type: l.allocation_type,
-
-        //   // Backend requirement: literal false for empty fields
-        //   accrual_plan_id: l.accrual_plan_id
-        //     ? Number(l.accrual_plan_id)
-        //     : (false as const),
-
-        //   date_from: l.from_date,
-        //   date_to: l.to_date ? l.to_date : (false as const),
-        //   number_of_days: Number(l.allocation_days),
-        //   description: l.description || "",
-        // })),
-        // leave_allocation_ids: [...activeLeaves, ...deletedLeaves],
+        leave_allocation_ids: [...activeLeaves, ...deletedLeaves],
       };
 
       // 4. Call Single API (Add or Edit)
@@ -1183,8 +1308,12 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                 }
                                 onChange={(opt) => {
                                   handleEmployeeChange(Number(opt?.value));
-                                  if (errors.employee_id) {
-                                    setErrors({ ...errors, employee_id: null });
+                                  if (errors.employee_id || errors.name) {
+                                    setErrors({
+                                      ...errors,
+                                      employee_id: null,
+                                      name: null,
+                                    });
                                   }
                                 }}
                               />
@@ -1198,11 +1327,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
 
                           <div className="col-md-4 px-1">
                             <label className="form-label fs-13 fw-bold">
-                              Contract Reference
+                              Contract Reference{" "}
+                              <span className="text-danger">*</span>
                             </label>
                             <input
                               type="text"
-                              className="form-control"
+                              name="name"
+                              className={`form-control ${isSubmitted ? (errors.name ? "is-invalid border-danger" : "is-valid border-success") : ""}`}
                               value={formData.name}
                               disabled={!!formData.employee_id} // 🔥 Disable after selection
                               // onChange={(e) =>
@@ -1214,6 +1345,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               onChange={(e) => handleTextChange(e, 100)} // 🔥 Max 100 chars
                               maxLength={100}
                             />
+                            {isSubmitted && errors.name && (
+                              <div className="text-danger fs-11 mt-1">
+                                {errors.name}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -1273,8 +1409,8 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     ? dateStr[0]
                                     : dateStr,
                                 });
-                                if (errors.date_start) {
-                                  setErrors({ ...errors, date_start: null });
+                                if (errors.date_end) {
+                                  setErrors({ ...errors, date_end: null });
                                 }
                               }}
                             />
@@ -1513,6 +1649,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
 
                     {activeTab === "salary" && (
                       <div className="animate__animated animate__fadeIn">
+                        {isSubmitted && errors.components && (
+                          <div className="alert alert-danger py-2 fs-12 mb-3">
+                            {errors.components}
+                          </div>
+                        )}
                         <div className="row g-4 mx-0">
                           {/* Left Column: Allowances */}
                           <div className="col-md-6 border-end pe-4">
@@ -2012,6 +2153,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
 
                     {activeTab === "leave_config" && (
                       <div className="animate__animated animate__fadeIn">
+                        {isSubmitted && errors.leave_allocation_ids && (
+                          <div className="alert alert-danger py-2 fs-12 mb-3">
+                            {errors.leave_allocation_ids}
+                          </div>
+                        )}
                         {/* CONFIGURATION SELECTION CARD */}
                         <div className="card border-0 shadow-sm mb-4 bg-light-subtle rounded-4">
                           <div className="card-body p-4">
@@ -2040,9 +2186,15 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     }
                                     : null
                                 }
-                                onChange={(opt) =>
-                                  handleLeaveConfigChange(opt?.value || "")
-                                }
+                                onChange={(opt) => {
+                                  handleLeaveConfigChange(opt?.value || "");
+                                  if (errors.leave_allocation_ids) {
+                                    setErrors({
+                                      ...errors,
+                                      leave_allocation_ids: null,
+                                    });
+                                  }
+                                }}
                               />
                             </div>
                           </div>

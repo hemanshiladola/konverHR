@@ -23,6 +23,7 @@ import {
   updateEmployee,
   getApprovalGroups,
   getGroupUsers,
+  getLocationByPincode,
 } from "./EmployeeServices";
 import { getBanks } from "@/KHRModules/Master Modules/BanksKHR/BanksServices";
 
@@ -1147,6 +1148,31 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
     setDistricts(
       data.map((d: any) => ({ value: d.id.toString(), label: d.name })),
     );
+  };
+
+  const handlePincodeChange = async (pincode: string) => {
+    const clean = pincode.replace(/\D/g, "").slice(0, 6);
+    updateFormData({ pin_code: clean });
+    if (clean.length === 6) {
+      const result = await getLocationByPincode(clean);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      const loc = result.data;
+      if (loc) {
+        const countryId = String(loc.country_id || "104");
+        const stateId = String(loc.state_id || "");
+        const districtId = String(loc.district_id || "");
+        await loadStates(countryId);
+        if (stateId) await loadDistricts(countryId, stateId);
+        updateFormData({
+          country_id: countryId,
+          state_id: stateId,
+          district_id: districtId,
+        });
+      }
+    }
   };
 
   const loadFilteredDesignations = async (deptId: string) => {
@@ -3060,10 +3086,26 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                 </div>
                                 <div className="col-md-3">
                                   <label className="form-label fs-13">
+                                    Pin Code
+                                  </label>
+                                  <input
+                                    disabled={isViewOnly || isSubmitting}
+                                    readOnly={isViewOnly}
+                                    type="text"
+                                    className="form-control"
+                                    maxLength={6}
+                                    placeholder="6-Digits"
+                                    value={formData.pin_code}
+                                    onChange={(e) => handlePincodeChange(e.target.value)}
+                                  />
+                                  <small className="text-muted fs-11">Enter 6-digit pincode to auto-fill location</small>
+                                </div>
+                                <div className="col-md-3">
+                                  <label className="form-label fs-13">
                                     Country
                                   </label>
                                   <CommonSelect
-                                    disabled={isViewOnly}
+                                    disabled={true}
                                     options={countries}
                                     placeholder="Select Country"
                                     defaultValue={countries.find(
@@ -3085,14 +3127,14 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     State
                                   </label>
                                   <CommonSelect
-                                    disabled={isViewOnly}
-                                    key={`state-${formData.country_id}`}
+                                    disabled={true}
+                                    key={`state-${formData.country_id}-${formData.state_id}`}
                                     options={states}
                                     placeholder="Select State"
-                                    defaultValue={states.find(
+                                    value={states.find(
                                       (s) =>
                                         s.value === String(formData.state_id),
-                                    )}
+                                    ) || null}
                                     onChange={(opt) => {
                                       const stateId = opt?.value || "";
                                       updateFormData({
@@ -3111,40 +3153,18 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                                     District
                                   </label>
                                   <CommonSelect
-                                    disabled={isViewOnly}
-                                    key={`city-${formData.state_id}`}
+                                    disabled={true}
+                                    key={`city-${formData.state_id}-${formData.district_id}`}
                                     options={districts}
                                     placeholder="Select District"
-                                    defaultValue={districts.find(
+                                    value={districts.find(
                                       (d) =>
                                         d.value ===
                                         String(formData.district_id),
-                                    )}
+                                    ) || null}
                                     onChange={(opt) =>
                                       updateFormData({
                                         district_id: opt?.value || "",
-                                      })
-                                    }
-                                  />
-                                </div>
-                                <div className="col-md-3">
-                                  <label className="form-label fs-13">
-                                    Pin Code
-                                  </label>
-                                  <input
-                                    disabled={isViewOnly || isSubmitting}
-                                    readOnly={isViewOnly}
-                                    type="text"
-                                    className="form-control"
-                                    maxLength={6}
-                                    placeholder="6-Digits"
-                                    value={formData.pin_code}
-                                    onChange={(e) =>
-                                      updateFormData({
-                                        pin_code: e.target.value.replace(
-                                          /\D/g,
-                                          "",
-                                        ),
                                       })
                                     }
                                   />

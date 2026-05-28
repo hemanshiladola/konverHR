@@ -359,10 +359,21 @@ export const importEmployees = async (base64File: string) => {
   );
 };
 
+export const getLocationByPincode = async (pincode: string) => {
+  try {
+    const response = await Instance.get("/api/get_location_by_pincode", {
+      params: { pincode, user_id: getUserId() },
+    });
+    return { data: response.data?.data || null, error: null };
+  } catch (error: any) {
+    const message = error?.response?.data?.message || "Pincode not found";
+    return { data: null, error: message };
+  }
+};
+
 export const getDepartureReasons = async () => {
   const userId = localStorage.getItem("user_id");
   const res = await Instance.get(`/api/departure_reason?user_id=${userId}`);
-  // Based on your previous patterns, we assume it's in res.data.data
   return res.data?.data || res.data || [];
 };
 

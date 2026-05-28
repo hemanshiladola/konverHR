@@ -92,6 +92,8 @@ export const generateBulkUploadTemplate = async (masters: any) => {
     { h: "Designation *", c: "FF0F4C81" },
     { h: "Branch *", c: "FF0F4C81" },
     { h: "Attendance Policy *", c: "FF0F4C81" },
+    { h: "Employee Category (staff/contract/intern)", c: "FF0F4C81" },
+    { h: "Employee Code", c: "FF0F4C81" },
     // 2. TIMING & TRACKING (Orange)
     { h: "Working Schedule (Resource Calendar)", c: "FFED7D31" },
     { h: "Shift Roster", c: "FFED7D31" },
@@ -101,7 +103,7 @@ export const generateBulkUploadTemplate = async (masters: any) => {
     { h: "Aadhaar Number", c: "FF7030A0" },
     { h: "PAN Number", c: "FF7030A0" },
     { h: "Voter ID", c: "FF7030A0" },
-    { h: "Passport No", c: "FF7030A0" },
+    { h: "Passport ID", c: "FF7030A0" },
     { h: "Probation Period (Months)", c: "FF7030A0" },
     { h: "In Probation (Yes/No)", c: "FF7030A0" },
     { h: "UAN Number Applicable (Yes/No)", c: "FF7030A0" },
@@ -123,29 +125,26 @@ export const generateBulkUploadTemplate = async (masters: any) => {
     { h: "District", c: "FF548235" },
     { h: "Religion", c: "FF548235" },
     // 5. CONTACT (Teal)
-    { h: "Work Phone", c: "FF00B0F0" },
-    { h: "Mobile Phone *", c: "FF00B0F0" },
+    { h: "Work Phone *", c: "FF00B0F0" },
+    { h: "Mobile Phone", c: "FF00B0F0" },
     { h: "Private Email *", c: "FF00B0F0" },
-    { h: "Present Address", c: "FF00B0F0" },
-    { h: "Permanent Address", c: "FF00B0F0" },
+    { h: "Present Address *", c: "FF00B0F0" },
+    { h: "Permanent Address *", c: "FF00B0F0" },
     { h: "Pin Code", c: "FF00B0F0" },
     { h: "Joining Date (YYYY-MM-DD) *", c: "FF00B0F0" },
-    { h: "Emergency Contact Name", c: "FF00B0F0" },
-    { h: "Emergency Contact Relation", c: "FF00B0F0" },
-    { h: "Emergency Contact Mobile", c: "FF00B0F0" },
-    { h: "Emergency Contact Address", c: "FF00B0F0" },
+    { h: "Emergency Contact Name *", c: "FF00B0F0" },
+    { h: "Emergency Contact Relation *", c: "FF00B0F0" },
+    { h: "Emergency Contact Mobile *", c: "FF00B0F0" },
+    { h: "Emergency Contact Address *", c: "FF00B0F0" },
     // 6. BANKING (Dark Red)
-    { h: "Bank Name", c: "FFC00000" },
-    { h: "Account Number", c: "FFC00000" },
-    { h: "Bank IFSC Code", c: "FFC00000" },
+    { h: "Bank Name *", c: "FFC00000" },
+    { h: "Account Number *", c: "FFC00000" },
+    { h: "Bank IFSC Code *", c: "FFC00000" },
     { h: "Bank SWIFT Code", c: "FFC00000" },
     { h: "Currency (Default: INR)", c: "FFC00000" },
     // 7. ORG DETAILS (Dark Grey)
-    {
-      h: "Employment Type (permanent/contract/intern/probation)",
-      c: "FF404040",
-    },
-    { h: "Employee Password", c: "FF404040" },
+    { h: "Employment Type (permanent/contract/intern/probation)", c: "FF404040" },
+    { h: "Employee Password *", c: "FF404040" },
     { h: "Status (active/inactive)", c: "FF404040" },
     { h: "Reporting Manager", c: "FF404040" },
     { h: "Head Of Department", c: "FF404040" },
@@ -234,60 +233,62 @@ export const generateBulkUploadTemplate = async (masters: any) => {
 
   // 1. Add sample data FIRST so it sits on Row 2
   const sampleDataRow = worksheet.addRow([
-    "John Doe",
-    "Richard Doe",
-    getFirst(masters.departments) || "IT",
-    getFirst(masters.designations) || "Software Engineer",
-    getFirst(masters.branches) || "HQ",
-    getFirst(masters.attendancePolicies) || "Standard",
-    getFirst(masters.workingSchedules) || "Standard 40 Hours",
-    getFirst(masters.shiftRosters) || "Morning Shift",
-    "Asia/Kolkata",
-    "No",
-    "123456789012",
-    "ABCDE1234F",
-    "ABC1234567",
-    "Z9876543",
-    "6",
-    "Yes",
-    "No",
-    "",
-    "",
-    "general",
-    "Male",
-    "single",
-    "Jane Doe",
-    "",
-    "1995-05-15",
-    "O+",
-    "MCA",
-    "BCA",
-    "3 Years",
-    getFirst(masters.countries) || "India",
-    getFirst(masters.states) || "Maharashtra",
-    "Mumbai",
-    "Hindu",
-    "0221234567",
-    "9876543210",
-    "johndoe@example.com",
-    "123 Main St, Tech Park",
-    "123 Main St, Tech Park",
-    "400001",
-    "2024-01-15",
-    "Jane Doe",
-    "Sister",
-    "9876543211",
-    "Same as above",
-    getFirst(masters.banks) || "HDFC Bank",
-    "000111222333",
-    "HDFC0001234",
-    "",
-    "INR",
-    "permanent",
-    "password123",
-    "active",
-    getFirst(masters.managers) || "Boss Man",
-    getFirst(masters.managers) || "Director Man",
+    "John Doe",                                          // Employee Name *
+    "Richard Doe",                                       // Father's Name *
+    getFirst(masters.departments) || "IT",               // Department *
+    getFirst(masters.designations) || "Software Engineer", // Designation *
+    getFirst(masters.branches) || "HQ",                  // Branch *
+    getFirst(masters.attendancePolicies) || "Standard",  // Attendance Policy *
+    "staff",                                             // Employee Category
+    "EMP001",                                            // Employee Code
+    getFirst(masters.workingSchedules) || "Standard 40 Hours", // Working Schedule
+    getFirst(masters.shiftRosters) || "Morning Shift",   // Shift Roster
+    "Asia/Kolkata",                                      // Timezone
+    "No",                                                // Geo Tracking
+    "123456789012",                                      // Aadhaar Number
+    "ABCDE1234F",                                        // PAN Number
+    "ABC1234567",                                        // Voter ID
+    "Z9876543",                                          // Passport ID
+    "6",                                                 // Probation Period
+    "Yes",                                               // In Probation
+    "No",                                                // UAN Applicable
+    "",                                                  // UAN Number
+    "",                                                  // ESI Number
+    "general",                                           // Category
+    "Male",                                              // Gender
+    "single",                                            // Marital Status
+    "",                                                  // Spouse Name
+    "",                                                  // Date of Marriage
+    "1995-05-15",                                        // Birthday *
+    "O+",                                                // Blood Group
+    "MCA",                                               // Post Graduation
+    "BCA",                                               // Other Education
+    "3 Years",                                           // Total Experience
+    getFirst(masters.countries) || "India",              // Country
+    getFirst(masters.states) || "Maharashtra",           // State
+    "Mumbai",                                            // District
+    "Hindu",                                             // Religion
+    "9876543210",                                        // Work Phone *
+    "9876543211",                                        // Mobile Phone
+    "johndoe@example.com",                               // Private Email *
+    "123 Main St, Tech Park",                            // Present Address *
+    "123 Main St, Tech Park",                            // Permanent Address *
+    "400001",                                            // Pin Code
+    "2024-01-15",                                        // Joining Date *
+    "Jane Doe",                                          // Emergency Contact Name *
+    "Sister",                                            // Emergency Contact Relation *
+    "9876543212",                                        // Emergency Contact Mobile *
+    "Same as above",                                     // Emergency Contact Address *
+    getFirst(masters.banks) || "HDFC Bank",              // Bank Name *
+    "000111222333",                                      // Account Number *
+    "HDFC0001234",                                       // Bank IFSC Code *
+    "",                                                  // Bank SWIFT Code
+    "INR",                                               // Currency
+    "permanent",                                         // Employment Type
+    "Password@123",                                      // Employee Password *
+    "active",                                            // Status
+    getFirst(masters.managers) || "",                    // Reporting Manager
+    getFirst(masters.managers) || "",                    // Head Of Department
   ]);
 
   // Make sample row text italic and gray to look like "Sample"
