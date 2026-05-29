@@ -1,0 +1,1 @@
+import{j as s}from"./ui-vendor-Cu1MhdpG.js";import{u as e,a}from"./react-vendor-mLIif802.js";const o=()=>{e();const[o,r]=a.useState({password:!1});return s.jsx("div",{className:"container-fuild",children:s.jsx("div",{className:"w-100 overflow-hidden position-relative flex-wrap d-block vh-100"})})};export{o as default};

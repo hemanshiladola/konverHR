@@ -1,0 +1,1 @@
+import{j as e}from"./ui-vendor-Cu1MhdpG.js";import{a as t}from"./react-vendor-mLIif802.js";const a=()=>{const[a,s]=t.useState(0),[r,u]=t.useState(0),[o,S]=t.useState(0),[d,p]=t.useState(0),[c,m]=t.useState(0),[n,i]=t.useState(0),[j,f]=t.useState(!1);return e.jsx("div",{className:"page-wrapper cardhead"})};export{a as default};

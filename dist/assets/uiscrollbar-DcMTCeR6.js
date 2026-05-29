@@ -1,0 +1,1 @@
+import{j as r}from"./ui-vendor-Cu1MhdpG.js";import"./application-Bcy2SqtK.js";import"./react-vendor-mLIif802.js";import"./auth-Q7mK7J6n.js";import"./dashboard-TywNCwwa.js";import"./redux-vendor-JoTbaKw9.js";import"./hrm-nZOXwhTN.js";import"./crm-5eIR71QW.js";const o=()=>r.jsx("div",{className:"page-wrapper cardhead"});export{o as default};

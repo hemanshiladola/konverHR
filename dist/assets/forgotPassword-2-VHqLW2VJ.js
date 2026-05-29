@@ -1,0 +1,1 @@
+import{j as e}from"./ui-vendor-Cu1MhdpG.js";import{u as o}from"./react-vendor-mLIif802.js";const r=()=>(o(),e.jsx("div",{className:"container-fuild",children:e.jsx("div",{className:"w-100 overflow-hidden position-relative flex-wrap d-block vh-100"})}));export{r as default};

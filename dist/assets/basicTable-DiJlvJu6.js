@@ -1,0 +1,1 @@
+import{j as a}from"./ui-vendor-Cu1MhdpG.js";import"./react-vendor-mLIif802.js";const e=()=>a.jsx("div",{className:"page-wrapper cardhead",children:a.jsx("div",{className:"content container-fluid"})});export{e as default};

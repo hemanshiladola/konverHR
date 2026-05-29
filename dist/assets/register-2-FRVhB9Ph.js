@@ -1,0 +1,1 @@
+import{j as s}from"./ui-vendor-Cu1MhdpG.js";import{u as r,a}from"./react-vendor-mLIif802.js";const o=()=>{r();const[o,t]=a.useState({password:!1,confirmPassword:!1});return s.jsx("div",{className:"container-fuild"})};export{o as default};

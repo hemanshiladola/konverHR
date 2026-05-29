@@ -1,0 +1,1 @@
+import{j as e}from"./ui-vendor-Cu1MhdpG.js";import"./react-vendor-mLIif802.js";const a=()=>e.jsx("div",{className:"page-wrapper",children:e.jsx("div",{className:"content container-fluid"})});export{a as default};
