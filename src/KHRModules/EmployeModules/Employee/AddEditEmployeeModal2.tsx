@@ -613,6 +613,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
       setFormData({
         ...initialFormData,
         ...data,
+        gender: data.gender || "male",
         work_phone: data.work_phone ? String(data.work_phone) : "",
         attendance_policy_id: getVal(data.attendance_policy_id),
         name_of_client: getVal(data.name_of_site || data.name_of_client),

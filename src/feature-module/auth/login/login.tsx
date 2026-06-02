@@ -6,12 +6,16 @@ import { all_routes } from "../../../router/all_routes";
 import Instance from "../../../api/axiosInstance";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useDispatch } from "react-redux";
+import { getCurrentAttendanceStatus } from "@/Store/Reducers/TBSlice";
+import { AppDispatch } from "@/Store";
 
 type PasswordField = "password";
 
 const Login = () => {
   const routes = all_routes;
   const navigation = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   // State
   const [email, setEmail] = useState(() => {
@@ -142,7 +146,10 @@ const Login = () => {
 
         toast.success(data.message || "Login Successful!");
 
-        // 6. Navigation
+        // 6. Fetch attendance status immediately after login
+        dispatch(getCurrentAttendanceStatus());
+
+        // 7. Navigation
         setTimeout(() => {
           if (role === "REGISTER_ADMIN" || role === "ADMIN") {
             navigation(routes.adminDashboard);

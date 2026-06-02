@@ -700,6 +700,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     const finalESICBase =
       esicBaseOverride !== null ? esicBaseOverride : autoESICBase;
 
+    // Calculate Gross for PT slab calculation
+    const grossTotal = comps
+      .filter((c) => c.addition)
+      .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+
     comps.forEach((c) => {
       if (c.structure_head_id === 18) {
         const pct = c.percentage !== undefined ? c.percentage : 12; // Employee PF 12%
@@ -710,6 +715,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         const pct = c.percentage !== undefined ? c.percentage : 0.75; // Employee ESIC 0.75%
         c.percentage = pct;
         c.amount = parseFloat(((finalESICBase * pct) / 100).toFixed(2));
+      }
+      // Professional Tax - Gujarat State Slabs
+      if (c.structure_head_id === 20) {
+        let ptAmount = 0;
+        if (grossTotal >= 12000) ptAmount = 200;
+        else ptAmount = 0;
+        c.amount = ptAmount;
       }
     });
     return comps;
@@ -1051,6 +1063,14 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
             is_adding_in_esic: !!(c.is_adding_in_esic ?? c.is_esic_base),
           })),
         leave_allocation_ids: [...activeLeaves, ...deletedLeaves],
+        net_salary: parseFloat((
+          (formData.components || [])
+            .filter((c: any) => c.addition)
+            .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0) -
+          (formData.components || [])
+            .filter((c: any) => c.deduction)
+            .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+        ).toFixed(2)),
       };
 
       // 4. Call Single API (Add or Edit)
@@ -2107,7 +2127,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                             className="form-control border-danger"
                                             placeholder="0"
                                             value={comp.amount}
-                                            readOnly={comp.structure_head_id === 18 || comp.structure_head_id === 19}
+                                            readOnly={comp.structure_head_id === 18 || comp.structure_head_id === 19 || comp.structure_head_id === 20}
                                             onChange={(e) =>
                                               handleComponentAmountChange(
                                                 index,
@@ -2145,6 +2165,32 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                     No deductions added.
                                   </div>
                                 )}
+
+                              <hr className="my-2 border-danger-subtle" />
+
+                              <div className="d-flex justify-content-between mb-1">
+                                <span className="fw-bold fs-14 text-dark">Total Deductions :</span>
+                                <span className="fw-bold fs-14 text-danger">
+                                  ₹{(formData.components || [])
+                                    .filter((c: any) => c.deduction)
+                                    .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+                                    .toFixed(2)}
+                                </span>
+                              </div>
+
+                              <div className="d-flex justify-content-between">
+                                <span className="fw-bold fs-14 text-dark">Net Salary :</span>
+                                <span className="fw-bold fs-14 text-primary">
+                                  ₹{(
+                                    (formData.components || [])
+                                      .filter((c: any) => c.addition)
+                                      .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0) -
+                                    (formData.components || [])
+                                      .filter((c: any) => c.deduction)
+                                      .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
+                                  ).toFixed(2)}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>

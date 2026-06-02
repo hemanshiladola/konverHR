@@ -292,7 +292,7 @@ const AdminDashboard = () => {
           // Based on your JSON, result.data contains the "today", "this_week", etc. keys
           setClockLogs(result.data);
         } else {
-          toast.error("Failed to load attendance logs");
+          toast.error(result.message ||"Failed to load attendance logs");
         }
       } catch (error) {
         console.error("Error fetching clock logs:", error);

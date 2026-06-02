@@ -227,7 +227,7 @@ const rawSidebarData = [
         base: "dashboard",
         materialicons: "start",
         dot: false,
-        roles: [ROLES.ADMIN, ROLES.EMPLOYEE], // 🔥 Admin Only
+        roles: [ROLES.ADMIN, ROLES.EMPLOYEE, ROLES.MANAGER],
         submenuItems: [
           {
             label: "Attendance Master",

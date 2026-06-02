@@ -52,8 +52,9 @@ export const getCheckInData = async (userId: string) => {
     );
 
     return response.data;
-  } catch (error) {
-    console.error("Er ror fetching attendance percentage:", error);
-    return null;
+  } catch (error: any) {
+    console.error("Error fetching attendance logs:", error);
+    // Return the error response data if available (e.g. { status: "error", message: "..." })
+    return error?.response?.data || { status: "error", message: error?.message || "Failed to load attendance logs" };
   }
 };

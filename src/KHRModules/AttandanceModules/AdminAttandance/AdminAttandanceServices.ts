@@ -109,13 +109,37 @@ const getDownloadUrl = (attachmentUrl: string) => {
 };
 
 const openAttachmentDownload = (attachmentUrl: string) => {
-  const link = document.createElement("a");
-  link.href = getDownloadUrl(attachmentUrl);
-  link.target = "_blank";
-  link.rel = "noopener noreferrer";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  const url = getDownloadUrl(attachmentUrl);
+  // Use fetch + blob to force download instead of opening in new tab
+  const token = localStorage.getItem("authToken");
+  fetch(url, {
+    headers: token ? { Authorization: token } : {},
+  })
+    .then((res) => res.blob())
+    .then((blob) => {
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      // Extract filename from URL or use default
+      const urlPath = url.split("?")[0];
+      const filename = urlPath.split("/").pop() || "download";
+      link.download = filename;
+      link.style.display = "none";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    })
+    .catch(() => {
+      // Fallback: open in new tab
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    });
 };
 
 // Old attendance export to Excel: /api/export/attendance/excel
@@ -226,9 +250,11 @@ export const exportAbsentPresentReportToExcel = async (
     });
 
     const result = response.data;
-    const attachmentUrl = result?.data?.attachment_url;
-    if (result?.status === "success" && attachmentUrl) {
-      openAttachmentDownload(attachmentUrl);
+    if (result?.status === "success" && result?.data) {
+      const downloadUrl = result.data.excel_content || result.data.attachment_url;
+      if (downloadUrl) {
+        openAttachmentDownload(downloadUrl);
+      }
     }
 
     return result;
@@ -249,9 +275,11 @@ export const exportAbsentPresentReportToPdf = async (
     });
 
     const result = response.data;
-    const attachmentUrl = result?.data?.attachment_url;
-    if (result?.status === "success" && attachmentUrl) {
-      openAttachmentDownload(attachmentUrl);
+    if (result?.status === "success" && result?.data) {
+      const downloadUrl = result.data.pdf_content || result.data.attachment_url;
+      if (downloadUrl) {
+        openAttachmentDownload(downloadUrl);
+      }
     }
 
     return result;
@@ -294,10 +322,36 @@ const exportReport = async (endpoint: string, payload: ReportExportPayload, file
 
   const result = response.data;
   if ((result.status === "success" || result.success === true) && result.data) {
-    const fileBase64 = result.data.file_base64 || result.data.file;
-    const fName = result.data.file_name || result.data.filename || fileName;
-    if (fileBase64 && fName) {
-      downloadBase64File(fileBase64, fName, mimeType);
+    // Handle direct download URL (pdf_content or excel_content)
+    const contentUrl = result.data.pdf_content || result.data.excel_content || result.data.attachment_url;
+    if (contentUrl) {
+      try {
+        // Fetch file as blob to force download (handles cross-origin URLs)
+        const fileResponse = await axios.get(contentUrl, {
+          responseType: "blob",
+          headers: { Authorization: token || "" },
+        });
+        const blob = new Blob([fileResponse.data], { type: mimeType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } catch {
+        // Fallback: open in new tab if blob download fails
+        window.open(contentUrl, "_blank");
+      }
+    } else {
+      // Handle base64 file response
+      const fileBase64 = result.data.file_base64 || result.data.file;
+      const fName = result.data.file_name || result.data.filename || fileName;
+      if (fileBase64 && fName) {
+        downloadBase64File(fileBase64, fName, mimeType);
+      }
     }
   }
   return result;
