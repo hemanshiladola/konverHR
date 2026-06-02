@@ -28,7 +28,7 @@ import {
   getReportingManagers,
   getWorkingSchedules,
 } from "@/KHRModules/EmployeModules/Employee/EmployeeServices";
-// import { toast } from "react-toastify";
+import { toast } from "react-toastify";
 import Link from "antd/es/typography/Link";
 import CommonAttendanceStatus from "@/CommonComponent/CommonAttendanceStatus/CommonAttendanceStatus";
 import EditAttendanceModal from "./EditAdminAttendance";
@@ -531,13 +531,14 @@ const AdminAttandanceKHR = () => {
     };
   };
 
-  const getExportPayload = (): AttendanceExportPayload => {
-    const { dateFrom, dateTo } = getDefaultDateRange();
+  const getExportPayload = (): AttendanceExportPayload | null => {
+    if (!exportDateFrom || !exportDateTo) {
+      toast.error("Please select both Start Date and End Date.");
+      return null;
+    }
     const payload: AttendanceExportPayload = {
-      start_date: exportDateFrom
-        ? exportDateFrom.format("YYYY-MM-DD")
-        : dateFrom,
-      end_date: exportDateTo ? exportDateTo.format("YYYY-MM-DD") : dateTo,
+      start_date: exportDateFrom.format("YYYY-MM-DD"),
+      end_date: exportDateTo.format("YYYY-MM-DD"),
     };
 
     if (exportBranchId) payload.branch_id = exportBranchId;
@@ -549,18 +550,15 @@ const AdminAttandanceKHR = () => {
   };
 
   const handleExportExcel = async () => {
+    if (!exportDateFrom || !exportDateTo) {
+      toast.error("Please select both Start Date and End Date.");
+      return;
+    }
     setIsExporting(true);
     try {
-      const { dateFrom, dateTo } = getDefaultDateRange();
-      const finalDateFrom = exportDateFrom
-        ? exportDateFrom.format("YYYY-MM-DD")
-        : dateFrom;
-      const finalDateTo = exportDateTo
-        ? exportDateTo.format("YYYY-MM-DD")
-        : dateTo;
       await exportAttendanceToExcel(
-        finalDateFrom,
-        finalDateTo,
+        exportDateFrom.format("YYYY-MM-DD"),
+        exportDateTo.format("YYYY-MM-DD"),
         exportBranchId,
         exportDepartmentId,
       );
@@ -572,18 +570,15 @@ const AdminAttandanceKHR = () => {
   };
 
   const handleExportPdf = async () => {
+    if (!exportDateFrom || !exportDateTo) {
+      toast.error("Please select both Start Date and End Date.");
+      return;
+    }
     setIsExporting(true);
     try {
-      const { dateFrom, dateTo } = getDefaultDateRange();
-      const finalDateFrom = exportDateFrom
-        ? exportDateFrom.format("YYYY-MM-DD")
-        : dateFrom;
-      const finalDateTo = exportDateTo
-        ? exportDateTo.format("YYYY-MM-DD")
-        : dateTo;
       await exportAttendanceToPdf(
-        finalDateFrom,
-        finalDateTo,
+        exportDateFrom.format("YYYY-MM-DD"),
+        exportDateTo.format("YYYY-MM-DD"),
         exportBranchId,
         exportDepartmentId,
       );
@@ -595,9 +590,11 @@ const AdminAttandanceKHR = () => {
   };
 
   const handleAbsentPresentExportExcel = async () => {
+    const payload = getExportPayload();
+    if (!payload) return;
     setIsExporting(true);
     try {
-      await exportAbsentPresentReportToExcel(getExportPayload());
+      await exportAbsentPresentReportToExcel(payload);
     } catch (error) {
       console.error("Absent/Present Excel Export failed:", error);
     } finally {
@@ -606,9 +603,11 @@ const AdminAttandanceKHR = () => {
   };
 
   const handleAbsentPresentExportPdf = async () => {
+    const payload = getExportPayload();
+    if (!payload) return;
     setIsExporting(true);
     try {
-      await exportAbsentPresentReportToPdf(getExportPayload());
+      await exportAbsentPresentReportToPdf(payload);
     } catch (error) {
       console.error("Absent/Present PDF Export failed:", error);
     } finally {
@@ -617,11 +616,14 @@ const AdminAttandanceKHR = () => {
   };
 
   // Helper to build ReportExportPayload from shared filter state
-  const getReportExportPayload = (): ReportExportPayload => {
-    const { dateFrom, dateTo } = getDefaultDateRange();
+  const getReportExportPayload = (): ReportExportPayload | null => {
+    if (!exportDateFrom || !exportDateTo) {
+      toast.error("Please select both Start Date and End Date.");
+      return null;
+    }
     const payload: ReportExportPayload = {
-      date_from: exportDateFrom ? exportDateFrom.format("YYYY-MM-DD") : dateFrom,
-      date_to: exportDateTo ? exportDateTo.format("YYYY-MM-DD") : dateTo,
+      date_from: exportDateFrom.format("YYYY-MM-DD"),
+      date_to: exportDateTo.format("YYYY-MM-DD"),
     };
     if (exportBranchId) payload.branch_id = exportBranchId;
     if (exportDepartmentId) payload.department_id = exportDepartmentId;
@@ -632,9 +634,11 @@ const AdminAttandanceKHR = () => {
 
   // Late Login Report
   const handleLateReportExcel = async () => {
+    const payload = getReportExportPayload();
+    if (!payload) return;
     setIsExporting(true);
     try {
-      await exportLateReportExcel(getReportExportPayload());
+      await exportLateReportExcel(payload);
     } catch (error) {
       console.error("Late Report Excel Export failed:", error);
     } finally {
@@ -643,9 +647,11 @@ const AdminAttandanceKHR = () => {
   };
 
   const handleLateReportPdf = async () => {
+    const payload = getReportExportPayload();
+    if (!payload) return;
     setIsExporting(true);
     try {
-      await exportLateReportPdf(getReportExportPayload());
+      await exportLateReportPdf(payload);
     } catch (error) {
       console.error("Late Report PDF Export failed:", error);
     } finally {
@@ -655,9 +661,11 @@ const AdminAttandanceKHR = () => {
 
   // Missed Punch Report
   const handleMissedPunchExcel = async () => {
+    const payload = getReportExportPayload();
+    if (!payload) return;
     setIsExporting(true);
     try {
-      await exportMissedPunchExcel(getReportExportPayload());
+      await exportMissedPunchExcel(payload);
     } catch (error) {
       console.error("Missed Punch Excel Export failed:", error);
     } finally {
@@ -666,9 +674,11 @@ const AdminAttandanceKHR = () => {
   };
 
   const handleMissedPunchPdf = async () => {
+    const payload = getReportExportPayload();
+    if (!payload) return;
     setIsExporting(true);
     try {
-      await exportMissedPunchPdf(getReportExportPayload());
+      await exportMissedPunchPdf(payload);
     } catch (error) {
       console.error("Missed Punch PDF Export failed:", error);
     } finally {
@@ -678,9 +688,11 @@ const AdminAttandanceKHR = () => {
 
   // Attendance Regularization Report
   const handleRegularizationExcel = async () => {
+    const payload = getReportExportPayload();
+    if (!payload) return;
     setIsExporting(true);
     try {
-      await exportRegularizationExcel(getReportExportPayload());
+      await exportRegularizationExcel(payload);
     } catch (error) {
       console.error("Regularization Excel Export failed:", error);
     } finally {
@@ -689,9 +701,11 @@ const AdminAttandanceKHR = () => {
   };
 
   const handleRegularizationPdf = async () => {
+    const payload = getReportExportPayload();
+    if (!payload) return;
     setIsExporting(true);
     try {
-      await exportRegularizationPdf(getReportExportPayload());
+      await exportRegularizationPdf(payload);
     } catch (error) {
       console.error("Regularization PDF Export failed:", error);
     } finally {
