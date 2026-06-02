@@ -55,6 +55,9 @@ interface AttendanceAdminData {
   Break: string;
   Late: string;
   ProductionHours: string;
+  ReportingManager: string;
+  WorkingSchedule: string;
+  Branch: string;
 }
 
 // Define a type for AttendanceCard
@@ -133,6 +136,9 @@ const AdminAttandanceKHR = () => {
     { value: "status", label: "Group by Status" },
     { value: "role", label: "Group by Role" },
     { value: "department", label: "Group by Department" },
+    { value: "branch", label: "Group by Branch" },
+    { value: "reporting_manager", label: "Group by Reporting Manager" },
+    { value: "working_schedule", label: "Group by Working Schedule" },
     { value: "date", label: "Group by Date" },
     { value: "late", label: "Group by Late Status" },
     { value: "production_hours", label: "Group by Production Hours" },
@@ -259,6 +265,15 @@ const AdminAttandanceKHR = () => {
           break;
         case "department":
           groupKey = item.Role; // Using Role as department for now
+          break;
+        case "reporting_manager":
+          groupKey = item.ReportingManager || "No Manager Assigned";
+          break;
+        case "working_schedule":
+          groupKey = item.WorkingSchedule || "No Schedule Assigned";
+          break;
+        case "branch":
+          groupKey = item.Branch || "No Branch Assigned";
           break;
         case "date":
           groupKey = item.Date;
@@ -877,6 +892,10 @@ const AdminAttandanceKHR = () => {
                   ? String(item.worked_hours)
                   : "0"
               : "0",
+
+            ReportingManager: item.reporting_manager_name || "",
+            WorkingSchedule: item.working_schedule_name || "",
+            Branch: item.branch_name || "",
           };
         });
       console.log(mappedData, "mappeee");
