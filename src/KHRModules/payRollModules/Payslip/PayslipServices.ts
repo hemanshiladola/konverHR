@@ -61,7 +61,10 @@ export const generateBulkPayroll = async (payload: any) => {
 
 export const downloadPayslip = async (id: number) => {
   return await Instance.get(
-    `api/download_payslip/${id}?user_id=${getUserId()}`,
+    // `api/download_payslip/${id}?user_id=${getUserId()}`,
+    // { responseType: "blob" }
+    `/api/payslip/print?payslip_id=${id}&user_id=${getUserId()}`,
     { responseType: "blob" }
+
   );
 };

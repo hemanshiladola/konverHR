@@ -476,6 +476,11 @@ export const EmployeeAttandanceKHR = createLazyComponent(
     import("../KHRModules/AttandanceModules/EmployeeAttandance/EmployeeAttandanceKHR"),
 );
 
+export const AttendanceReportsKHR = createLazyComponent(
+  () =>
+    import("../KHRModules/AttandanceModules/AttendanceReports/AttendanceReportsKHR"),
+);
+
 export const SalaryStructureType = createLazyComponent(
   () =>
     import("../KHRModules/payRollModules/SalaryStructureType/SalaryStructureType"),

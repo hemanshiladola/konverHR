@@ -154,6 +154,7 @@ const EmployeeContractKHR = () => {
   // Group by functionality
   const groupByOptions = [
     { value: "none", label: "No Grouping" },
+    { value: "employee_name", label: "Group by Employee Name" },
     { value: "department", label: "Group by Department" },
     { value: "wage_range", label: "Group by Wage Range" },
     { value: "contract_type", label: "Group by Contract Type" },
@@ -215,6 +216,9 @@ const EmployeeContractKHR = () => {
       let groupKey = "";
 
       switch (field) {
+        case "employee_name":
+          groupKey = (item as any).employee_name || "Unknown Employee";
+          break;
         case "department":
           groupKey = (item as any).department_name || "No Department";
           break;

@@ -1270,123 +1270,6 @@ const AdminAttandanceKHR = () => {
                     </Link>
                   </div> */}
 
-                  {/* Export */}
-                  <div className="position-relative" ref={exportDropdownRef}>
-                    <button
-                      className="btn btn-white dropdown-toggle d-flex align-items-center"
-                      onClick={() => setIsExportOpen((prev) => !prev)}
-                    >
-                      <i className="ti ti-file-export me-1" />
-                      Export
-                    </button>
-                    {isExportOpen && (
-                      <ul
-                        className="dropdown-menu dropdown-menu-end p-2 mt-2 show"
-                        style={{ minWidth: "260px", right: 0, top: "100%" }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {/* Date Range inside dropdown */}
-                        <li className="mb-1 px-1">
-                          <p className="fs-11 text-muted text-uppercase fw-bold mb-1">
-                            Date Range
-                          </p>
-                          <div className="d-flex align-items-center gap-1">
-                            <DatePicker
-                              size="small"
-                              style={{ width: "90px", fontSize: "11px" }}
-                              value={exportDateFrom}
-                              onChange={(val) => setExportDateFrom(val)}
-                              placeholder="From"
-                              format="DD/MM/YY"
-                              getPopupContainer={() =>
-                                exportDropdownRef.current || document.body
-                              }
-                            />
-                            <span className="text-muted fs-12">–</span>
-                            <DatePicker
-                              size="small"
-                              style={{ width: "90px", fontSize: "11px" }}
-                              value={exportDateTo}
-                              onChange={(val) => setExportDateTo(val)}
-                              placeholder="To"
-                              format="DD/MM/YY"
-                              disabledDate={(current) =>
-                                exportDateFrom
-                                  ? current.isBefore(exportDateFrom, "day")
-                                  : false
-                              }
-                              getPopupContainer={() =>
-                                exportDropdownRef.current || document.body
-                              }
-                            />
-                          </div>
-                        </li>
-                        {/* Branch & Department filters */}
-                        <li className="mb-1 px-1 mt-2">
-                          <p className="fs-11 text-muted text-uppercase fw-bold mb-1">Filters</p>
-                          <select
-                            className="form-select form-select-sm mb-1"
-                            value={exportBranchId ?? ""}
-                            onChange={(e) => setExportBranchId(e.target.value ? Number(e.target.value) : null)}
-                          >
-                            <option value="">All Branches</option>
-                            {branches.map((b: any) => (
-                              <option key={b.id} value={b.id}>{b.name}</option>
-                            ))}
-                          </select>
-                          <select
-                            className="form-select form-select-sm"
-                            value={exportDepartmentId ?? ""}
-                            onChange={(e) => setExportDepartmentId(e.target.value ? Number(e.target.value) : null)}
-                          >
-                            <option value="">All Departments</option>
-                            {departments.map((d: any) => (
-                              <option key={d.id} value={d.id}>{d.name}</option>
-                            ))}
-                          </select>
-                        </li>
-                        <li>
-                          <hr className="dropdown-divider my-1" />
-                        </li>
-                        <li>
-                          <button
-                            className="dropdown-item"
-                            onClick={() => {
-                              setIsExportOpen(false);
-                              handleExportPdf();
-                            }}
-                            disabled={isExporting}
-                          >
-                            <i className="ti ti-file-type-pdf me-1" />
-                            {isExporting ? "Exporting..." : "PDF"}
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            className="dropdown-item"
-                            onClick={() => {
-                              setIsExportOpen(false);
-                              handleExportExcel();
-                            }}
-                            disabled={isExporting}
-                          >
-                            <i className="ti ti-file-type-xls me-1" />
-                            {isExporting ? "Exporting..." : "Excel"}
-                          </button>
-                        </li>
-                      </ul>
-                    )}
-                  </div>
-
-                  {/* Report */}
-                  <button
-                    className="btn btn-primary d-flex align-items-center ms-2"
-                    data-bs-toggle="modal"
-                    data-bs-target="#attendance_reports_modal"
-                  >
-                    <i className="ti ti-file-analytics me-2" />
-                    Reports
-                  </button>
                 </>
               }
             />
@@ -1782,6 +1665,36 @@ const AdminAttandanceKHR = () => {
                         type="button"
                         className="btn btn-outline-success btn-sm"
                         onClick={handleRegularizationExcel}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-xls me-1" />
+                        {isExporting ? "..." : "Excel"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Check-in/Checkout Report */}
+                <div className="col-md-6">
+                  <div className="border rounded p-3">
+                    <h6 className="fw-bold mb-2">
+                      <i className="ti ti-login me-2 text-success" />
+                      Check-in/Checkout Report
+                    </h6>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-outline-danger btn-sm"
+                        onClick={handleExportPdf}
+                        disabled={isExporting}
+                      >
+                        <i className="ti ti-file-type-pdf me-1" />
+                        {isExporting ? "..." : "PDF"}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline-success btn-sm"
+                        onClick={handleExportExcel}
                         disabled={isExporting}
                       >
                         <i className="ti ti-file-type-xls me-1" />

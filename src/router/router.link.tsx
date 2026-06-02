@@ -297,6 +297,7 @@ import {
   EmployeeKHR,
   AdminAttandanceKHR,
   EmployeeAttandanceKHR,
+  AttendanceReportsKHR,
   ShiftModulesKHR,
   LeaveSettingsKHR,
   LeaveAdminKHR,
@@ -1719,6 +1720,11 @@ export const publicRoutes = [
   {
     path: routes.attendaceEmployeeKHR,
     element: <EmployeeAttandanceKHR />,
+    route: Route,
+  },
+  {
+    path: routes.attendanceReportsKHR,
+    element: <AttendanceReportsKHR />,
     route: Route,
   },
   {

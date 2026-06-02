@@ -60,6 +60,7 @@ export const all_routes = {
   //Attendance Modules
   attendanceAdminKHR: "/KHR-attendance-admin",
   attendaceEmployeeKHR: "/KHR-attendance-employee",
+  attendanceReportsKHR: "/KHR-attendance-reports",
   shiftModulesKHR: "/KHR-shift-modules",
   // dashboard routes
   adminDashboard: "/index",
