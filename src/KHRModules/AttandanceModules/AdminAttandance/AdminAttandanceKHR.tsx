@@ -246,6 +246,10 @@ const AdminAttandanceKHR = () => {
     }
   };
 
+
+ 
+  
+
   // Group data by field
   const groupDataByField = (
     data: AttendanceAdminData[],
@@ -711,6 +715,119 @@ const AdminAttandanceKHR = () => {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  // Export visible/filtered data to Excel
+  const handleExportVisibleExcel = async () => {
+    const visibleData = getVisibleExportData();
+    if (visibleData.length === 0) {
+      toast.error("No data available to export.");
+      return;
+    }
+
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const { saveAs } = await import("file-saver");
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Attendance");
+
+      worksheet.columns = [
+        { header: "Employee", key: "Employee", width: 25 },
+        { header: "Role", key: "Role", width: 20 },
+        { header: "Date", key: "Date", width: 15 },
+        { header: "Status", key: "Status", width: 12 },
+        { header: "Check In", key: "CheckIn", width: 12 },
+        { header: "Check Out", key: "CheckOut", width: 12 },
+        { header: "Late", key: "Late", width: 12 },
+        { header: "Production Hours", key: "ProductionHours", width: 18 },
+        { header: "Reporting Manager", key: "ReportingManager", width: 22 },
+        { header: "Working Schedule", key: "WorkingSchedule", width: 22 },
+        { header: "Branch", key: "Branch", width: 30 },
+      ];
+
+      // Style header row
+      const headerRow = worksheet.getRow(1);
+      headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      headerRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4472C4" } };
+      headerRow.alignment = { horizontal: "center" };
+
+      visibleData.forEach((item) => {
+        worksheet.addRow(item);
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      saveAs(blob, `Attendance_Export_${new Date().toISOString().split("T")[0]}.xlsx`);
+      toast.success("Excel exported successfully!");
+    } catch (error) {
+      console.error("Excel export error:", error);
+      toast.error("Failed to export Excel.");
+    }
+  };
+
+  // Export visible/filtered data to PDF (direct download, no print)
+  const handleExportVisiblePdf = async () => {
+    const visibleData = getVisibleExportData();
+    if (visibleData.length === 0) {
+      toast.error("No data available to export.");
+      return;
+    }
+
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+
+      const doc = new jsPDF({ orientation: "landscape" });
+
+      // Title
+      doc.setFontSize(16);
+      doc.setTextColor(51, 51, 51);
+      doc.text("Attendance Report", 14, 15);
+
+      // Subtitle
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      const subtitle = `Generated: ${new Date().toLocaleString()} | Records: ${visibleData.length}${groupBy !== "none" ? ` | Grouped by: ${groupByOptions.find(o => o.value === groupBy)?.label}` : ""}`;
+      doc.text(subtitle, 14, 22);
+
+      // Table
+      const headers = [["Employee", "Role", "Date", "Status", "Check In", "Check Out", "Late", "Prod. Hours"]];
+      const rows = visibleData.map((item) => [
+        item.Employee,
+        item.Role,
+        item.Date,
+        item.Status,
+        item.CheckIn,
+        item.CheckOut,
+        item.Late,
+        item.ProductionHours,
+      ]);
+
+      autoTable(doc, {
+        head: headers,
+        body: rows,
+        startY: 28,
+        styles: { fontSize: 9, cellPadding: 3 },
+        headStyles: { fillColor: [68, 114, 196], textColor: 255, fontStyle: "bold" },
+        alternateRowStyles: { fillColor: [245, 245, 245] },
+      });
+
+      doc.save(`Attendance_Export_${new Date().toISOString().split("T")[0]}.pdf`);
+      toast.success("PDF exported successfully!");
+    } catch (error) {
+      console.error("PDF export error:", error);
+      toast.error("Failed to export PDF.");
+    }
+  };
+
+  // Get the currently visible data (respects grouping and employee filter)
+  const getVisibleExportData = (): AttendanceAdminData[] => {
+    if (groupBy !== "none" && groupedData.length > 0) {
+      // Return all items from all groups (flattened)
+      return groupedData.flatMap((group) => group.items);
+    }
+    return data;
   };
 
   const formatTime = (dateTime: string | false) => {
@@ -1269,6 +1386,31 @@ const AdminAttandanceKHR = () => {
                       <i className="ti ti-calendar-event" />
                     </Link>
                   </div> */}
+
+                  {/* Export Visible Data */}
+                  <div className="dropdown me-2">
+                    <button
+                      className="btn btn-outline-dark dropdown-toggle d-flex align-items-center"
+                      data-bs-toggle="dropdown"
+                    >
+                      <i className="ti ti-file-export me-1" />
+                      Export
+                    </button>
+                    <ul className="dropdown-menu dropdown-menu-end">
+                      <li>
+                        <button className="dropdown-item" onClick={handleExportVisibleExcel}>
+                          <i className="ti ti-file-type-xls me-2 text-success" />
+                          Download Excel
+                        </button>
+                      </li>
+                      <li>
+                        <button className="dropdown-item" onClick={handleExportVisiblePdf}>
+                          <i className="ti ti-file-type-pdf me-2 text-danger" />
+                          Download PDF
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
 
                 </>
               }

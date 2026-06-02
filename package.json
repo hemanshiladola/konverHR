@@ -1,7 +1,7 @@
 {
   "name": "template-new",
   "private": true,
-  "version": "1.5.54",
+  "version": "1.5.55",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -29,6 +29,8 @@
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.38.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.555.0",
     "react": "^19.1.1",
     "react-apexcharts": "^1.7.0",
