@@ -233,9 +233,9 @@ const AdminAttandanceKHR = () => {
     employeeId?: string,
   ) => {
     try {
-      console.log(
-        `Fetching attendance data from ${date_from} to ${date_to}${employeeId ? ` for employee ${employeeId}` : ""}`,
-      );
+      // console.log(
+      //   `Fetching attendance data from ${date_from} to ${date_to}${employeeId ? ` for employee ${employeeId}` : ""}`,
+      // );
       const params: any = { date_from, date_to };
       if (employeeId) {
         params.employee_id = employeeId;
@@ -1029,7 +1029,7 @@ const AdminAttandanceKHR = () => {
             Branch: item.branch_name || "",
           };
         });
-      console.log(mappedData, "mappeee");
+      // console.log(mappedData, "mappeee");
 
       setData(mappedData);
 
@@ -1113,7 +1113,7 @@ const AdminAttandanceKHR = () => {
   // Handle employee data loading
   useEffect(() => {
     if (isGetEmployeesBasicInfo) {
-      console.log("Employees loaded:", getEmployeesBasicInfoData);
+      // console.log("Employees loaded:", getEmployeesBasicInfoData);
       dispatch(updateState({ isGetEmployeesBasicInfo: false }));
     }
   }, [isGetEmployeesBasicInfo, getEmployeesBasicInfoData, dispatch]);

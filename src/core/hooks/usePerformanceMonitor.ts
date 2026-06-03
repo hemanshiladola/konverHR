@@ -30,7 +30,6 @@ export const usePerformanceMonitor = ({
     };
 
     // Log performance metrics
-    console.log(`🚀 ${componentName} loaded in ${loadTime.toFixed(2)}ms`);
 
     // Store metrics in localStorage for analysis
     const existingMetrics = JSON.parse(

@@ -11,7 +11,6 @@ const Instance = axios.create({
 console.log(import.meta.env.VITE_BASE_URL);
 const getFreshToken = async () => {
   try {
-    console.log("🔄 Fetching fresh token...");
     const baseURL = import.meta.env.VITE_BASE_URL;
     const response = await axios.post(
       // "https://odooapi.konverthr.com//api/auth",
@@ -27,7 +26,6 @@ const getFreshToken = async () => {
     if (newToken) {
       localStorage.removeItem("authToken");
       localStorage.setItem("authToken", newToken);
-      console.log("✅ New token saved.");
       return newToken;
     }
   } catch (err) {

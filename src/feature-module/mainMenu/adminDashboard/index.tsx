@@ -107,11 +107,11 @@ const AdminDashboard = () => {
       const userRole = localStorage.getItem("user_role");
       const loggedInUserId = String(localStorage.getItem("user_id"));
 
-      console.log("Checking Profile Enforcement:", {
-        isProfileIncomplete,
-        userRole,
-        loggedInUserId,
-      });
+      // console.log("Checking Profile Enforcement:", {
+      //   isProfileIncomplete,
+      //   userRole,
+      //   loggedInUserId,
+      // });
 
       if (userRole === "REGISTER_ADMIN" && isProfileIncomplete) {
         try {
@@ -651,7 +651,7 @@ const AdminDashboard = () => {
     // fetchData();
     dispatch(ApiAuth() as any);
   }, [dispatch]);
-  console.log(getDashboadrdCountData, "getDashboadrdCountData");
+  // console.log(getDashboadrdCountData, "getDashboadrdCountData");
 
   return (
     <>

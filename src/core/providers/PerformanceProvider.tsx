@@ -166,9 +166,9 @@ export const PerformanceProvider = React.memo(
     const trackInteraction = useCallback(
       (componentName: string, interactionType: string) => {
         if (isProfilingEnabled) {
-          console.log(
-            `Interaction tracked: ${componentName} - ${interactionType}`
-          );
+          // console.log(
+          //   `Interaction tracked: ${componentName} - ${interactionType}`
+          // );
         }
       },
       [isProfilingEnabled]

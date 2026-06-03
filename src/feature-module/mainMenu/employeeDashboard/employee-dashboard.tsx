@@ -170,7 +170,7 @@ const EmployeeDashboard = () => {
   // useEffect(() => {
   //   dispatch(getDashboadrdCount() as any);
   // }, [dispatch]);
-  console.log(getDashboadrdCountData, "getDashboadrdCountData");
+  // console.log(getDashboadrdCountData, "getDashboadrdCountData");
 
   return (
     <>

@@ -333,7 +333,7 @@ export default function MultiStepForm({ onCloseModal }: MultiStepFormProps) {
 
   const handleSubmit = () => {
     if (validateStep()) {
-      console.log("✅ Form submitted successfully:", formData);
+      // console.log("✅ Form submitted successfully:", formData);
       alert("✅ Form submitted successfully!");
       if (onCloseModal) onCloseModal(); 
     }

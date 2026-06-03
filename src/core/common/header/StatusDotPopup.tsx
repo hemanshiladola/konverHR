@@ -23,20 +23,13 @@ const StatusCheckInPopup: React.FC = () => {
   const [isUserAction, setIsUserAction] = useState(false);
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
 
-  console.log(
-    getCurrentAttendanceStatusData.status,
-    "getCurrentAttendanceStatusData",
-  );
 
   /* =====================
      DERIVED STATE
   ===================== */
   const isCheckedIn = getCurrentAttendanceStatusData?.status === "CheckedIn";
-  console.log(isCheckedIn, "isCheckedIn");
 
-  console.log(getCurrentAttendanceStatusData, "getCurrentAttendanceStatusData");
 
-  console.log(isCheckinCheckoutFetching, "isCheckinCheckoutFetching");
 
   /* =====================
      LOAD CURRENT STATUS ON MOUNT
@@ -67,7 +60,6 @@ const StatusCheckInPopup: React.FC = () => {
     if (!CheckinCheckoutData) return;
 
     const { status, data } = CheckinCheckoutData;
-    console.log(data, "..44");
 
     if (status === "CheckedIn") {
       setCheckInTime(new Date(data?.check_in_time));
@@ -100,7 +92,7 @@ const StatusCheckInPopup: React.FC = () => {
     const interval = setInterval(() => {
       const now = new Date();
       const diff = Math.floor((now.getTime() - checkInTime.getTime()) / 60000);
-      console.log(diff, "dddiiff");
+   
 
       setTotalMinutes(diff);
     }, 60000);

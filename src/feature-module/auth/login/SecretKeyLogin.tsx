@@ -41,7 +41,7 @@ const SecretKeyLogin = () => {
         secret_key: secretKey,
       });
 
-      console.log("Activation Response:", response.data);
+      // console.log("Activation Response:", response.data);
 
       // Check for token in standard places
       const token =
