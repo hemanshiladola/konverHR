@@ -151,8 +151,8 @@ const AttendanceQueryModal: React.FC<Props> = ({
 
     const payload: RegularizationPayload = {
       employee_id: employeeId,
-      from_date: `${formData.from_date} ${formData.check_in}`,
-      to_date: `${formData.to_date} ${formData.check_out}`,
+      from_date: `${formData.from_date} ${formData.check_in ? dayjs(formData.check_in, ["HH:mm", "hh:mm A", "h:mm A"]).format("HH:mm") : "00:00"}`,
+      to_date: `${formData.to_date} ${formData.check_out ? dayjs(formData.check_out, ["HH:mm", "hh:mm A", "h:mm A"]).format("HH:mm") : "00:00"}`,
       reg_category: formData.reg_category,
       reg_reason: formData.reg_reason,
     };
