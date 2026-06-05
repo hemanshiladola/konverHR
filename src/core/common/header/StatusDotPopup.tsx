@@ -146,10 +146,28 @@ const StatusCheckInPopup: React.FC = () => {
       (error) => {
         console.error(error);
         setIsWaitingForLocation(false);
-        toast.error("Unable to get your location");
         setIsUserAction(false);
+
+        if (error.code === 1) {
+          // PERMISSION_DENIED — could be browser block or permissions policy
+          toast.warning(
+            "Location access was denied. Proceeding with default location.",
+            { autoClose: 3000 }
+          );
+          // Fallback: proceed with 0,0 or a default coordinate
+          dispatch(
+            CheckinCheckout({
+              Latitude: 0,
+              Longitude: 0,
+            }) as any,
+          );
+        } else if (error.code === 2) {
+          toast.error("Unable to determine your location. Please try again.");
+        } else {
+          toast.error("Location request timed out. Please try again.");
+        }
       },
-      { enableHighAccuracy: true },
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   };
 

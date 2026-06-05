@@ -90,7 +90,7 @@ const rawSidebarData = [
             submenuItems: [
               { label: "Department", link: routes.departmentsKHR },
               { label: "Designation", link: routes.jobPositionsKHR },
-              { label: "Document", link: routes.documentTamplateKHR },
+              // { label: "Document", link: routes.documentTamplateKHR },
               { label: "Branch", link: routes.branchKHR },
               // { label: "Work Location", link: routes.workLocationKHR },
             ],
