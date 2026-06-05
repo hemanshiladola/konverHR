@@ -147,6 +147,7 @@ export const getLeavePreview = async (payload: {
   employee_id: number;
   leave_configuration_id: number;
   contract_start: string;
+  contract_end?: string | null;
 }) => {
   try {
     const response = await axios({

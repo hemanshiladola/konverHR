@@ -261,16 +261,16 @@ const rawSidebarData = [
             link: routes.leaveAdminKHR,
             roles: [ROLES.ADMIN], // 🔥 Admin Only
           },
-          {
-            label: "My Leaves",
-            link: routes.leaveEmployeeKHR,
-            roles: [ROLES.EMPLOYEE, ROLES.MANAGER],
-          },
           // {
-          //   label: "Leave Allocation",
-          //   link: routes.leaveAllocationKHR,
-          //   roles: [ROLES.ADMIN, ROLES.EMPLOYEE],
+          //   label: "My Leaves",
+          //   link: routes.leaveEmployeeKHR,
+          //   roles: [ROLES.EMPLOYEE, ROLES.MANAGER],
           // },
+          {
+            label: "My Leave Allocation",
+            link: routes.leaveAllocationKHR,
+            roles: [ROLES.EMPLOYEE],
+          },
           {
             label: "Leave Request",
             link: routes.leaveRequestKHR,

@@ -517,10 +517,12 @@ const EmployeeContractKHR = () => {
       render: (record: any) => {
         if (!record.date_start) return "-";
         const start = dayjs(record.date_start);
-        const end = record.date_end ? dayjs(record.date_end) : dayjs();
+        // Add 1 day to end so the range is inclusive on both ends (e.g. Jul 1 to Jul 31 = 31 days)
+        const end = record.date_end ? dayjs(record.date_end).add(1, "day") : dayjs();
 
         const months = end.diff(start, "month");
-        const days = end.diff(start, "day") % 30;
+        // Get the remaining days after subtracting full months
+        const days = end.diff(start.add(months, "month"), "day");
 
         return (
           <div className="fs-12">

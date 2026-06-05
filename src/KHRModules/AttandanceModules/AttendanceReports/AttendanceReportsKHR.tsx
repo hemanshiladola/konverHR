@@ -27,7 +27,7 @@ import {
 
 const AttendanceReportsKHR = () => {
   const routes = all_routes;
-  const [isExporting, setIsExporting] = useState(false);
+  const [exportingKey, setExportingKey] = useState<string | null>(null);
   const [exportDateFrom, setExportDateFrom] = useState<Dayjs | null>(null);
   const [exportDateTo, setExportDateTo] = useState<Dayjs | null>(null);
   const [exportBranchId, setExportBranchId] = useState<number | null>(null);
@@ -80,22 +80,22 @@ const AttendanceReportsKHR = () => {
     return payload;
   };
 
-  const handleExport = async (exportFn: (payload: any) => Promise<any>, payloadFn: () => any) => {
+  const handleExport = async (exportFn: (payload: any) => Promise<any>, payloadFn: () => any, key: string) => {
     const payload = payloadFn();
     if (!payload) return;
-    setIsExporting(true);
+    setExportingKey(key);
     try {
       await exportFn(payload);
     } catch (error) {
       console.error("Export failed:", error);
     } finally {
-      setIsExporting(false);
+      setExportingKey(null);
     }
   };
 
   const handleCheckinExportPdf = async () => {
     if (!validateDates()) return;
-    setIsExporting(true);
+    setExportingKey("checkin-pdf");
     try {
       await exportAttendanceToPdf(
         exportDateFrom!.format("YYYY-MM-DD"),
@@ -106,13 +106,13 @@ const AttendanceReportsKHR = () => {
     } catch (error) {
       console.error("Export failed:", error);
     } finally {
-      setIsExporting(false);
+      setExportingKey(null);
     }
   };
 
   const handleCheckinExportExcel = async () => {
     if (!validateDates()) return;
-    setIsExporting(true);
+    setExportingKey("checkin-excel");
     try {
       await exportAttendanceToExcel(
         exportDateFrom!.format("YYYY-MM-DD"),
@@ -123,48 +123,61 @@ const AttendanceReportsKHR = () => {
     } catch (error) {
       console.error("Export failed:", error);
     } finally {
-      setIsExporting(false);
+      setExportingKey(null);
     }
   };
 
   const reportCards = [
     {
+      key: "absent-present",
       title: "Absent/Present Report",
       description: "Download attendance status report for all employees",
       icon: "ti-calendar-stats",
       color: "#3b82f6",
       bg: "rgba(59, 130, 246, 0.08)",
-      onPdf: () => handleExport(exportAbsentPresentReportToPdf, getAttendancePayload),
-      onExcel: () => handleExport(exportAbsentPresentReportToExcel, getAttendancePayload),
+      onPdf: () => handleExport(exportAbsentPresentReportToPdf, getAttendancePayload, "absent-present-pdf"),
+      onExcel: () => handleExport(exportAbsentPresentReportToExcel, getAttendancePayload, "absent-present-excel"),
+      pdfKey: "absent-present-pdf",
+      excelKey: "absent-present-excel",
     },
     {
+      key: "late-login",
       title: "Late Login Report",
       description: "Track employees who logged in late",
       icon: "ti-clock-exclamation",
       color: "#f59e0b",
       bg: "rgba(245, 158, 11, 0.08)",
-      onPdf: () => handleExport(exportLateReportPdf, getReportPayload),
-      onExcel: () => handleExport(exportLateReportExcel, getReportPayload),
+      onPdf: () => handleExport(exportLateReportPdf, getReportPayload, "late-pdf"),
+      onExcel: () => handleExport(exportLateReportExcel, getReportPayload, "late-excel"),
+      pdfKey: "late-pdf",
+      excelKey: "late-excel",
     },
     {
+      key: "missed-punch",
       title: "Missed Punch Report",
       description: "Employees who missed check-in or check-out",
       icon: "ti-fingerprint-off",
       color: "#ef4444",
       bg: "rgba(239, 68, 68, 0.08)",
-      onPdf: () => handleExport(exportMissedPunchPdf, getReportPayload),
-      onExcel: () => handleExport(exportMissedPunchExcel, getReportPayload),
+      onPdf: () => handleExport(exportMissedPunchPdf, getReportPayload, "missed-pdf"),
+      onExcel: () => handleExport(exportMissedPunchExcel, getReportPayload, "missed-excel"),
+      pdfKey: "missed-pdf",
+      excelKey: "missed-excel",
     },
     {
+      key: "regularization",
       title: "Attendance Regularization",
       description: "Regularization requests and approvals",
       icon: "ti-adjustments-check",
       color: "#06b6d4",
       bg: "rgba(6, 182, 212, 0.08)",
-      onPdf: () => handleExport(exportRegularizationPdf, getReportPayload),
-      onExcel: () => handleExport(exportRegularizationExcel, getReportPayload),
+      onPdf: () => handleExport(exportRegularizationPdf, getReportPayload, "reg-pdf"),
+      onExcel: () => handleExport(exportRegularizationExcel, getReportPayload, "reg-excel"),
+      pdfKey: "reg-pdf",
+      excelKey: "reg-excel",
     },
     {
+      key: "checkin",
       title: "Check-in/Checkout Report",
       description: "Daily check-in and check-out time logs",
       icon: "ti-login",
@@ -172,6 +185,8 @@ const AttendanceReportsKHR = () => {
       bg: "rgba(16, 185, 129, 0.08)",
       onPdf: handleCheckinExportPdf,
       onExcel: handleCheckinExportExcel,
+      pdfKey: "checkin-pdf",
+      excelKey: "checkin-excel",
     },
   ];
 
@@ -307,20 +322,24 @@ const AttendanceReportsKHR = () => {
                       className="btn btn-sm flex-fill d-flex align-items-center justify-content-center gap-2 py-2"
                       style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca", borderRadius: "8px" }}
                       onClick={report.onPdf}
-                      disabled={isExporting}
+                      disabled={exportingKey !== null}
                     >
-                      <i className="ti ti-file-type-pdf fs-16" />
-                      <span className="fw-bold fs-12">{isExporting ? "..." : "PDF"}</span>
+                      {exportingKey === report.pdfKey
+                        ? <span className="spinner-border spinner-border-sm" />
+                        : <i className="ti ti-file-type-pdf fs-16" />}
+                      <span className="fw-bold fs-12">{exportingKey === report.pdfKey ? "..." : "PDF"}</span>
                     </button>
                     <button
                       type="button"
                       className="btn btn-sm flex-fill d-flex align-items-center justify-content-center gap-2 py-2"
                       style={{ background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0", borderRadius: "8px" }}
                       onClick={report.onExcel}
-                      disabled={isExporting}
+                      disabled={exportingKey !== null}
                     >
-                      <i className="ti ti-file-type-xls fs-16" />
-                      <span className="fw-bold fs-12">{isExporting ? "..." : "Excel"}</span>
+                      {exportingKey === report.excelKey
+                        ? <span className="spinner-border spinner-border-sm" />
+                        : <i className="ti ti-file-type-xls fs-16" />}
+                      <span className="fw-bold fs-12">{exportingKey === report.excelKey ? "..." : "Excel"}</span>
                     </button>
                   </div>
                 </div>

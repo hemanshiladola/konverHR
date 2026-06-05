@@ -58,6 +58,7 @@ interface AttendanceAdminData {
   ReportingManager: string;
   WorkingSchedule: string;
   Branch: string;
+  Department: string;
 }
 
 // Define a type for AttendanceCard
@@ -129,11 +130,15 @@ const AdminAttandanceKHR = () => {
   const [departments, setDepartments] = useState<any[]>([]);
   const [workingSchedules, setWorkingSchedules] = useState<any[]>([]);
   const [reportingManagers, setReportingManagers] = useState<any[]>([]);
+  const [filterDateFrom, setFilterDateFrom] = useState<Dayjs | null>(dayjs().startOf("month"));
+  const [filterDateTo, setFilterDateTo] = useState<Dayjs | null>(dayjs());
 
   // Group by functionality
   const groupByOptions = [
     { value: "none", label: "No Grouping" },
     { value: "status", label: "Group by Status" },
+    { value: "absent_date", label: "Absent — Date Wise" },  // ← ADD THIS
+
     { value: "role", label: "Group by Role" },
     { value: "department", label: "Group by Department" },
     { value: "branch", label: "Group by Branch" },
@@ -161,6 +166,18 @@ const AdminAttandanceKHR = () => {
         year: "numeric",
       }),
     };
+  };
+
+  const fetchWithFilters = (
+    dateFrom?: Dayjs | null,
+    dateTo?: Dayjs | null,
+    employeeId?: string,
+  ) => {
+    const params: any = {};
+    if (dateFrom) params.date_from = dateFrom.format("YYYY-MM-DD");
+    if (dateTo) params.date_to = dateTo.format("YYYY-MM-DD");
+    if (employeeId) params.employee_id = employeeId;
+    dispatch(AttendancesGetApi(params) as any);
   };
 
   const getLastNMonthsDateRange = (n: number) => {
@@ -247,17 +264,97 @@ const AdminAttandanceKHR = () => {
   };
 
 
- 
-  
+
+
 
   // Group data by field
+  // const groupDataByField = (
+  //   data: AttendanceAdminData[],
+  //   field: string,
+  // ): GroupedData[] => {
+  //   if (field === "none") return [];
+
+  //   const grouped = data.reduce((acc: any, item) => {
+  //     let groupKey = "";
+
+  //     switch (field) {
+  //       case "status":
+  //         groupKey = item.Status;
+  //         break;
+  //       case "role":
+  //         groupKey = item.Role;
+  //         break;
+  //       case "department":
+  //         groupKey = item.Role; // Using Role as department for now
+  //         break;
+  //       case "reporting_manager":
+  //         groupKey = item.ReportingManager || "No Manager Assigned";
+  //         break;
+  //       case "working_schedule":
+  //         groupKey = item.WorkingSchedule || "No Schedule Assigned";
+  //         break;
+  //       case "branch":
+  //         groupKey = item.Branch || "No Branch Assigned";
+  //         break;
+  //       case "date":
+  //         groupKey = item.Date;
+  //         break;
+  //         case "department":
+  // groupKey = item.Department || item.Role || "No Department";  // ← FIX THIS
+  // break;
+  // case "absent_date":
+  // // Only include absent records, grouped by date
+  // if (item.Status !== "Absent") return acc;  // skip non-absent
+  // groupKey = item.Date !== "-" ? item.Date : "Unknown Date";
+  // break;
+  //       case "late":
+  //         groupKey = item.Late === "Yes" ? "Late Arrivals" : "On Time";
+  //         break;
+  //       case "production_hours":
+  //         const hours = parseFloat(item.ProductionHours);
+  //         if (hours < 4) groupKey = "Under 4 Hours";
+  //         else if (hours < 8) groupKey = "4-8 Hours";
+  //         else if (hours <= 9) groupKey = "8-9 Hours";
+  //         else groupKey = "Over 9 Hours";
+  //         break;
+  //       case "last_month":
+  //       case "last_3_months":
+  //       case "last_6_months":
+  //         groupKey = item.Status; // Group by status for time-based filters
+  //         break;
+  //       default:
+  //         groupKey = "All Records";
+  //     }
+
+  //     if (!acc[groupKey]) {
+  //       acc[groupKey] = [];
+  //     }
+  //     acc[groupKey].push(item);
+  //     return acc;
+  //   }, {});
+
+  //   return Object.entries(grouped).map(
+  //     ([groupName, items]: [string, any]): GroupedData => ({
+  //       groupName,
+  //       items,
+  //       count: items.length,
+  //       isGroup: true,
+  //     }),
+  //   );
+  // };
+
   const groupDataByField = (
     data: AttendanceAdminData[],
     field: string,
   ): GroupedData[] => {
     if (field === "none") return [];
 
-    const grouped = data.reduce((acc: any, item) => {
+    const workingData =
+      field === "absent_date"
+        ? data.filter((item) => item.Status === "Absent")
+        : data;
+
+    const grouped = workingData.reduce((acc: any, item) => {
       let groupKey = "";
 
       switch (field) {
@@ -265,10 +362,10 @@ const AdminAttandanceKHR = () => {
           groupKey = item.Status;
           break;
         case "role":
-          groupKey = item.Role;
+          groupKey = item.Role || "No Role";
           break;
         case "department":
-          groupKey = item.Role; // Using Role as department for now
+          groupKey = item.Department || item.Role || "No Department";
           break;
         case "reporting_manager":
           groupKey = item.ReportingManager || "No Manager Assigned";
@@ -280,42 +377,48 @@ const AdminAttandanceKHR = () => {
           groupKey = item.Branch || "No Branch Assigned";
           break;
         case "date":
-          groupKey = item.Date;
+        case "absent_date":
+          groupKey = item.Date !== "-" ? item.Date : "Unknown Date";
           break;
         case "late":
-          groupKey = item.Late === "Yes" ? "Late Arrivals" : "On Time";
+          groupKey = item.Late !== "-" && item.Late ? "Late Arrivals" : "On Time";
           break;
-        case "production_hours":
+        case "production_hours": {
           const hours = parseFloat(item.ProductionHours);
-          if (hours < 4) groupKey = "Under 4 Hours";
-          else if (hours < 8) groupKey = "4-8 Hours";
-          else if (hours <= 9) groupKey = "8-9 Hours";
+          if (hours === 0) groupKey = "No Hours (Absent)";
+          else if (hours < 4) groupKey = "Under 4 Hours";
+          else if (hours < 8) groupKey = "4–8 Hours";
+          else if (hours <= 9) groupKey = "8–9 Hours";
           else groupKey = "Over 9 Hours";
           break;
+        }
         case "last_month":
         case "last_3_months":
         case "last_6_months":
-          groupKey = item.Status; // Group by status for time-based filters
+          groupKey = item.Status;
           break;
         default:
           groupKey = "All Records";
       }
 
-      if (!acc[groupKey]) {
-        acc[groupKey] = [];
-      }
+      if (!acc[groupKey]) acc[groupKey] = [];
       acc[groupKey].push(item);
       return acc;
     }, {});
 
-    return Object.entries(grouped).map(
-      ([groupName, items]: [string, any]): GroupedData => ({
-        groupName,
-        items,
-        count: items.length,
-        isGroup: true,
-      }),
-    );
+    const entries = Object.entries(grouped) as [string, AttendanceAdminData[]][];
+
+    // Sort date-based groups newest first
+    if (field === "absent_date" || field === "date") {
+      entries.sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime());
+    }
+
+    return entries.map(([groupName, items]): GroupedData => ({
+      groupName,
+      items,
+      count: items.length,
+      isGroup: true,
+    }));
   };
 
   // Toggle group expansion
@@ -356,30 +459,33 @@ const AdminAttandanceKHR = () => {
         switch (value) {
           case "last_month":
             const lastMonthRange = getLastMonthDateRange();
-            console.log("Fetching last month data:", lastMonthRange.label);
-            await fetchAttendanceForDateRange(
-              lastMonthRange.date_from,
-              lastMonthRange.date_to,
+            setFilterDateFrom(dayjs(lastMonthRange.date_from));
+            setFilterDateTo(dayjs(lastMonthRange.date_to));
+            fetchWithFilters(
+              dayjs(lastMonthRange.date_from),
+              dayjs(lastMonthRange.date_to),
               selectedEmployeeId,
             );
             break;
 
           case "last_3_months":
             const last3MonthsRange = getLastNMonthsDateRange(3);
-            console.log(`Fetching last 3 months: ${last3MonthsRange.label}`);
-            await fetchAttendanceForDateRange(
-              last3MonthsRange.date_from,
-              last3MonthsRange.date_to,
+            setFilterDateFrom(dayjs(last3MonthsRange.date_from));
+            setFilterDateTo(dayjs(last3MonthsRange.date_to));
+            fetchWithFilters(
+              dayjs(last3MonthsRange.date_from),
+              dayjs(last3MonthsRange.date_to),
               selectedEmployeeId,
             );
             break;
 
           case "last_6_months":
             const last6MonthsRange = getLastNMonthsDateRange(6);
-            console.log(`Fetching last 6 months: ${last6MonthsRange.label}`);
-            await fetchAttendanceForDateRange(
-              last6MonthsRange.date_from,
-              last6MonthsRange.date_to,
+            setFilterDateFrom(dayjs(last6MonthsRange.date_from));
+            setFilterDateTo(dayjs(last6MonthsRange.date_to));
+            fetchWithFilters(
+              dayjs(last6MonthsRange.date_from),
+              dayjs(last6MonthsRange.date_to),
               selectedEmployeeId,
             );
             break;
@@ -401,18 +507,29 @@ const AdminAttandanceKHR = () => {
   };
 
   // Handle employee selection
+  // const handleEmployeeChange = (employeeId: string) => {
+  //   setSelectedEmployeeId(employeeId);
+
+  //   // Reset grouping when employee changes
+  //   if (groupBy !== "none") {
+  //     setGroupBy("none");
+  //     setGroupedData([]);
+  //     setExpandedGroups(new Set());
+  //   }
+
+  //   // Fetch attendance for selected employee
+  //   fetchAttendanceWithEmployee(employeeId);
+  // };
+
   const handleEmployeeChange = (employeeId: string) => {
     setSelectedEmployeeId(employeeId);
-
-    // Reset grouping when employee changes
     if (groupBy !== "none") {
       setGroupBy("none");
       setGroupedData([]);
       setExpandedGroups(new Set());
     }
-
-    // Fetch attendance for selected employee
-    fetchAttendanceWithEmployee(employeeId);
+    // Pass current date filters when switching employee
+    fetchWithFilters(filterDateFrom, filterDateTo, employeeId);
   };
 
   // Render grouped table
@@ -984,101 +1101,277 @@ const AdminAttandanceKHR = () => {
   //   }
   // };
 
+  // useEffect(() => {
+  //   if (isAttendancesGetApi) {
+  //     const mappedData: AttendanceAdminData[] =
+  //       AttendancesGetApiData?.data?.map((item: any) => {
+  //         const isPresent = !!item.check_in;
+
+  //         return {
+  //           id: item.id,
+  //           Employee: Array.isArray(item.employee_id)
+  //             ? item.employee_id[1]
+  //             : "Employee",
+
+  //           // Image: item.employee?.avatar || "avatar-1.jpg",
+
+  //           Role: item.job_name || "Employee",
+
+  //           Status: isPresent ? "Present" : "Absent",
+
+  //           Date: formatDate(item.check_in),
+
+  //           CheckIn: isPresent ? formatTime(item.check_in) : "-",
+
+  //           CheckOut: isPresent ? formatTime(item.check_out) : "-",
+
+  //           Break: isPresent ? item.break_time_display || "-" : "-",
+
+  //           Late: isPresent
+  //             ? item.late_time_display
+  //               ? item.late_time_display
+  //               : "-"
+  //             : "-",
+
+  //           ProductionHours: isPresent
+  //             ? typeof item.worked_hours === "number"
+  //               ? item.worked_hours.toFixed(2)
+  //               : item.worked_hours
+  //                 ? String(item.worked_hours)
+  //                 : "0"
+  //             : "0",
+
+  //           ReportingManager: item.reporting_manager_name || "",
+  //           WorkingSchedule: item.working_schedule_name || "",
+  //           Branch: item.branch_name || "",
+  //         };
+  //       });
+  //     // console.log(mappedData, "mappeee");
+
+  //     setData(mappedData);
+
+  //     const meta = AttendancesGetApiData?.meta;
+
+  //     if (meta) {
+  //       const cards: AttendanceCard[] = [
+  //         {
+  //           id: 1,
+  //           title: "Total Employees",
+  //           count: meta.TotalEmployee ?? 0,
+  //           badgeType: "info",
+  //           icon: "ti-users",
+  //           percentage: "",
+  //         },
+  //         {
+  //           id: 2,
+  //           title: "Present Today",
+  //           count: meta.Presentemployee ?? 0,
+  //           badgeType: "success",
+  //           icon: "ti-arrow-wave-right-down",
+  //           percentage: "",
+  //         },
+  //         {
+  //           id: 3,
+  //           title: "Absent Today",
+  //           count: meta.TodayAbsetEmployee ?? 0,
+  //           badgeType: "danger",
+  //           icon: "ti-arrow-wave-right-down",
+  //           percentage: "",
+  //         },
+  //         {
+  //           id: 4,
+  //           title: "Late Login",
+  //           count: meta.TotalLateemployee ?? 0,
+  //           badgeType: "danger",
+  //           icon: "ti-arrow-wave-right-down",
+  //           percentage: "",
+  //         },
+  //         {
+  //           id: 5,
+  //           title: "Uninformed",
+  //           count: meta.Ununiformendemployee ?? 0,
+  //           badgeType: "danger",
+  //           icon: "ti-arrow-wave-right-down",
+  //           percentage: "",
+  //         },
+  //       ];
+
+  //       setAttendanceCards(cards);
+  //     }
+
+  //     dispatch(updateState({ isAttendancesGetApi: false }));
+  //   }
+  // }, [isAttendancesGetApi, isAttendancesGetApiFetching]);
+
+  // useEffect(() => {
+  //   if (isAttendancesGetApi) {
+  //     const rawArray = AttendancesGetApiData?.data ?? [];
+  //     const absentEmployees: any[] = AttendancesGetApiData?.meta?.absent_employees ?? [];
+
+  //     // Map today's attendance records (present + no check-in)
+  //     const mappedPresent: AttendanceAdminData[] = rawArray.map((item: any) => {
+  //       const isPresent = !!item.check_in;
+  //       return {
+  //         id: item.id,
+  //         Employee: Array.isArray(item.employee_id) ? item.employee_id[1] : "Employee",
+  //         Role: item.job_name || "Employee",
+  //         Status: isPresent ? "Present" : "Absent",
+  //         Date: isPresent ? formatDate(item.check_in) : "-",
+  //         CheckIn: isPresent ? formatTime(item.check_in) : "-",
+  //         CheckOut: isPresent ? formatTime(item.check_out) : "-",
+  //         Break: isPresent ? item.break_time_display || "-" : "-",
+  //         Late: isPresent ? (item.late_time_display ? item.late_time_display : "-") : "-",
+  //         ProductionHours: isPresent
+  //           ? typeof item.worked_hours === "number"
+  //             ? item.worked_hours.toFixed(2)
+  //             : item.worked_hours ? String(item.worked_hours) : "0"
+  //           : "0",
+  //         ReportingManager: item.reporting_manager_name || "",
+  //         WorkingSchedule: item.working_schedule_name || "",
+  //         Branch: item.branch_name || "",
+  //         Department: item.department_name || "",
+  //       };
+  //     });
+
+  //     // Map absent records from meta — these are historical absent entries
+  //     const mappedAbsent: AttendanceAdminData[] = absentEmployees.map((item: any) => ({
+  //       id: null,
+  //       Employee: item.name || "Unknown",
+  //       Role: item.job_name || "Employee",
+  //       Status: "Absent",
+  //       Date: item.date ? new Date(item.date).toLocaleDateString([], {
+  //         year: "numeric", month: "short", day: "2-digit",
+  //       }) : "-",
+  //       CheckIn: "-",
+  //       CheckOut: "-",
+  //       Break: "-",
+  //       Late: "-",
+  //       ProductionHours: "0",
+  //       ReportingManager: "",
+  //       WorkingSchedule: "",
+  //       Branch: "",
+  //       Department: item.department_name || "",
+  //     }));
+
+  //     // Merge: avoid duplicating today's absent (already in rawArray as id:null rows)
+  //     // Keep mappedPresent as source of truth for today; add historical absents only
+  //     const todayStr = new Date().toISOString().split("T")[0];
+  //     const filteredAbsent = mappedAbsent.filter((a) => {
+  //       // Convert back from "Jun 03, 2026" → "2026-06-03" for comparison
+  //       const parsed = new Date(a.Date);
+  //       const dateStr = isNaN(parsed.getTime()) ? "" : parsed.toISOString().split("T")[0];
+  //       return dateStr !== todayStr;
+  //     });
+
+  //     setData([...mappedPresent, ...filteredAbsent]);
+
+  //     // ... rest of your cards code (unchanged)
+  //     const meta = AttendancesGetApiData?.meta;
+  //     if (meta) {
+  //       const cards: AttendanceCard[] = [
+  //         { id: 1, title: "Total Employees", count: meta.TotalEmployee ?? 0, badgeType: "info", icon: "ti-users", percentage: "" },
+  //         { id: 2, title: "Present Today", count: meta.Presentemployee ?? 0, badgeType: "success", icon: "ti-arrow-wave-right-down", percentage: "" },
+  //         { id: 3, title: "Absent Today", count: meta.TodayAbsetEmployee ?? 0, badgeType: "danger", icon: "ti-arrow-wave-right-down", percentage: "" },
+  //         { id: 4, title: "Late Login", count: meta.TotalLateemployee ?? 0, badgeType: "danger", icon: "ti-arrow-wave-right-down", percentage: "" },
+  //         { id: 5, title: "Uninformed", count: meta.Ununiformendemployee ?? 0, badgeType: "danger", icon: "ti-arrow-wave-right-down", percentage: "" },
+  //       ];
+  //       setAttendanceCards(cards);
+  //     }
+
+  //     dispatch(updateState({ isAttendancesGetApi: false }));
+  //   }
+  // }, [isAttendancesGetApi, isAttendancesGetApiFetching]);
+
+
   useEffect(() => {
     if (isAttendancesGetApi) {
-      const mappedData: AttendanceAdminData[] =
-        AttendancesGetApiData?.data?.map((item: any) => {
-          const isPresent = !!item.check_in;
+      const rawArray = AttendancesGetApiData?.data ?? [];
+      const absentEmployees: any[] = AttendancesGetApiData?.meta?.absent_employees ?? [];
 
-          return {
-            id: item.id,
-            Employee: Array.isArray(item.employee_id)
-              ? item.employee_id[1]
-              : "Employee",
+      // Map today's attendance records (present + today's absent)
+      const mappedPresent: AttendanceAdminData[] = rawArray.map((item: any) => {
+        const isPresent = !!item.check_in;
+        return {
+          id: item.id,
+          Image: "",
+          Employee: Array.isArray(item.employee_id) ? item.employee_id[1] : "Employee",
+          Role: item.job_name || "Employee",
+          Status: isPresent ? "Present" : "Absent",
+          Date: isPresent
+            ? formatDate(item.check_in)
+            : new Date().toLocaleDateString([], { year: "numeric", month: "short", day: "2-digit" }),
+          CheckIn: isPresent ? formatTime(item.check_in) : "-",
+          CheckOut: isPresent ? formatTime(item.check_out) : "-",
+          Break: isPresent ? item.break_time_display || "-" : "-",
+          Late: isPresent ? (item.late_time_display ? item.late_time_display : "-") : "-",
+          ProductionHours: isPresent
+            ? typeof item.worked_hours === "number"
+              ? item.worked_hours.toFixed(2)
+              : item.worked_hours ? String(item.worked_hours) : "0"
+            : "0",
+          ReportingManager: item.reporting_manager_name || "",
+          WorkingSchedule: item.working_schedule_name || "",
+          Branch: item.branch_name || "",
+          Department: item.department_name || "",
+        };
+      });
 
-            // Image: item.employee?.avatar || "avatar-1.jpg",
+      // Build a Set of "employeeId_date" keys already covered by rawArray
+      // rawArray always represents today's records, so use today's date for all
+      const todayStr = new Date().toISOString().split("T")[0];
+      const coveredKeys = new Set<string>(
+        rawArray.map((item: any) => {
+          const empId = Array.isArray(item.employee_id)
+            ? item.employee_id[0]
+            : item.employee_id;
+          return `${empId}_${todayStr}`;
+        })
+      );
 
-            Role: item.job_name || "Employee",
+      // Map absent records from meta (historical absent entries)
+      const mappedAbsent: AttendanceAdminData[] = absentEmployees
+        .filter((absentRaw: any) => {
+          // Skip if this employee+date combo is already in rawArray (today's data)
+          const key = `${absentRaw.id}_${absentRaw.date}`;
+          return !coveredKeys.has(key);
+        })
+        .map((item: any) => ({
+          id: null,
+          Image: "",
+          Employee: item.name || "Unknown",
+          Role: item.job_name || "Employee",
+          Status: "Absent",
+          Date: item.date
+            ? new Date(item.date).toLocaleDateString([], {
+              year: "numeric",
+              month: "short",
+              day: "2-digit",
+            })
+            : "-",
+          CheckIn: "-",
+          CheckOut: "-",
+          Break: "-",
+          Late: "-",
+          ProductionHours: "0",
+          ReportingManager: "",
+          WorkingSchedule: "",
+          Branch: "",
+          Department: item.department_name || "",
+        }));
 
-            Status: isPresent ? "Present" : "Absent",
+      // Merge: today's records first, then historical absents
+      setData([...mappedPresent, ...mappedAbsent]);
 
-            Date: formatDate(item.check_in),
-
-            CheckIn: isPresent ? formatTime(item.check_in) : "-",
-
-            CheckOut: isPresent ? formatTime(item.check_out) : "-",
-
-            Break: isPresent ? item.break_time_display || "-" : "-",
-
-            Late: isPresent
-              ? item.late_time_display
-                ? item.late_time_display
-                : "-"
-              : "-",
-
-            ProductionHours: isPresent
-              ? typeof item.worked_hours === "number"
-                ? item.worked_hours.toFixed(2)
-                : item.worked_hours
-                  ? String(item.worked_hours)
-                  : "0"
-              : "0",
-
-            ReportingManager: item.reporting_manager_name || "",
-            WorkingSchedule: item.working_schedule_name || "",
-            Branch: item.branch_name || "",
-          };
-        });
-      // console.log(mappedData, "mappeee");
-
-      setData(mappedData);
-
+      // Update attendance summary cards
       const meta = AttendancesGetApiData?.meta;
-
       if (meta) {
         const cards: AttendanceCard[] = [
-          {
-            id: 1,
-            title: "Total Employees",
-            count: meta.TotalEmployee ?? 0,
-            badgeType: "info",
-            icon: "ti-users",
-            percentage: "",
-          },
-          {
-            id: 2,
-            title: "Present Today",
-            count: meta.Presentemployee ?? 0,
-            badgeType: "success",
-            icon: "ti-arrow-wave-right-down",
-            percentage: "",
-          },
-          {
-            id: 3,
-            title: "Absent Today",
-            count: meta.TodayAbsetEmployee ?? 0,
-            badgeType: "danger",
-            icon: "ti-arrow-wave-right-down",
-            percentage: "",
-          },
-          {
-            id: 4,
-            title: "Late Login",
-            count: meta.TotalLateemployee ?? 0,
-            badgeType: "danger",
-            icon: "ti-arrow-wave-right-down",
-            percentage: "",
-          },
-          {
-            id: 5,
-            title: "Uninformed",
-            count: meta.Ununiformendemployee ?? 0,
-            badgeType: "danger",
-            icon: "ti-arrow-wave-right-down",
-            percentage: "",
-          },
+          { id: 1, title: "Total Employees", count: meta.TotalEmployee ?? 0, badgeType: "info", icon: "ti-users", percentage: "" },
+          { id: 2, title: "Present Today", count: meta.Presentemployee ?? 0, badgeType: "success", icon: "ti-arrow-wave-right-down", percentage: "" },
+          { id: 3, title: "Absent Today", count: meta.TodayAbsetEmployee ?? 0, badgeType: "danger", icon: "ti-arrow-wave-right-down", percentage: "" },
+          { id: 4, title: "Late Login", count: meta.TotalLateemployee ?? 0, badgeType: "danger", icon: "ti-arrow-wave-right-down", percentage: "" },
+          { id: 5, title: "Uninformed", count: meta.Ununiformendemployee ?? 0, badgeType: "danger", icon: "ti-arrow-wave-right-down", percentage: "" },
         ];
-
         setAttendanceCards(cards);
       }
 
@@ -1086,7 +1379,10 @@ const AdminAttandanceKHR = () => {
     }
   }, [isAttendancesGetApi, isAttendancesGetApiFetching]);
 
-  useEffect(() => { }, []);
+  useEffect(() => {
+    setExportDateFrom(filterDateFrom);
+    setExportDateTo(filterDateTo);
+  }, [filterDateFrom, filterDateTo]);
 
   // Update grouped data when main data changes
   useEffect(() => {
@@ -1104,10 +1400,10 @@ const AdminAttandanceKHR = () => {
   // Fetch employees on component mount
   useEffect(() => {
     fetchEmployees();
-    getBranches().then(setBranches).catch(() => {});
-    getDepartments().then(setDepartments).catch(() => {});
-    getWorkingSchedules().then(setWorkingSchedules).catch(() => {});
-    getReportingManagers().then(setReportingManagers).catch(() => {});
+    getBranches().then(setBranches).catch(() => { });
+    getDepartments().then(setDepartments).catch(() => { });
+    getWorkingSchedules().then(setWorkingSchedules).catch(() => { });
+    getReportingManagers().then(setReportingManagers).catch(() => { });
   }, []);
 
   // Handle employee data loading
@@ -1121,8 +1417,10 @@ const AdminAttandanceKHR = () => {
   useEffect(() => {
     // fetchData();
     if (isApiAuth) {
-      dispatch(AttendancesGetApi({}) as any);
+      fetchWithFilters(filterDateFrom, filterDateTo);
       dispatch(updateState({ isApiAuth: false }));
+      // dispatch(AttendancesGetApi({}) as any);
+      // dispatch(updateState({ isApiAuth: false }));
     }
   }, [dispatch, isApiAuth]);
 
@@ -1162,12 +1460,12 @@ const AdminAttandanceKHR = () => {
     {
       title: "Date",
       dataIndex: "Date",
-       defaultSortOrder: "descend",
+      defaultSortOrder: "descend",
       render: (text: string) => (
         <span className="fw-medium text-dark">{text}</span>
       ),
       sorter: (a: AttendanceAdminData, b: AttendanceAdminData) =>
-       dayjs(a.Date).unix() - dayjs(b.Date).unix(),
+        dayjs(a.Date).unix() - dayjs(b.Date).unix(),
     },
     {
       title: "Status",
@@ -1295,7 +1593,7 @@ const AdminAttandanceKHR = () => {
                         <button
                           className={`dropdown-item ${selectedEmployeeId === "" ? "active" : ""}`}
                           onClick={() => handleEmployeeChange("")}
-                          // style={{ display: "flex", alignItems: "center" }}
+                        // style={{ display: "flex", alignItems: "center" }}
                         >
                           <i className="ti ti-users me-2" />
                           All Employees
@@ -1415,6 +1713,83 @@ const AdminAttandanceKHR = () => {
                 </>
               }
             />
+            {/* Date Filter Bar */}
+            <div className="card border-0 mb-0">
+              <div className="card-body py-2">
+                <div className="d-flex align-items-center gap-3 flex-wrap">
+                  <span className="fw-semibold text-muted d-flex align-items-center">
+                    <i className="ti ti-filter me-1" />
+                    Filter by Date:
+                  </span>
+
+                  <div className="d-flex align-items-center gap-2">
+                    <label className="text-muted mb-0 small">From</label>
+                    <DatePicker
+                      value={filterDateFrom}
+                      onChange={(val) => setFilterDateFrom(val)}
+                      format="DD/MM/YYYY"
+                      placeholder="Start date"
+                      allowClear
+                      style={{ width: 140 }}
+                      getPopupContainer={() => document.body}
+                    />
+                  </div>
+
+                  <div className="d-flex align-items-center gap-2">
+                    <label className="text-muted mb-0 small">To</label>
+                    <DatePicker
+                      value={filterDateTo}
+                      onChange={(val) => setFilterDateTo(val)}
+                      format="DD/MM/YYYY"
+                      placeholder="End date"
+                      allowClear
+                      disabledDate={(current) =>
+                        filterDateFrom ? current.isBefore(filterDateFrom, "day") : false
+                      }
+                      style={{ width: 140 }}
+                      getPopupContainer={() => document.body}
+                    />
+                  </div>
+
+                  <button
+                    className="btn btn-primary btn-sm d-flex align-items-center"
+                    onClick={() => fetchWithFilters(filterDateFrom, filterDateTo, selectedEmployeeId)}
+                    disabled={isAttendancesGetApiFetching}
+                  >
+                    <i className="ti ti-search me-1" />
+                    Apply
+                  </button>
+
+                  <button
+                    className="btn btn-outline-secondary btn-sm d-flex align-items-center"
+                    onClick={() => {
+                      const defaultFrom = dayjs().startOf("month");
+                      const defaultTo = dayjs();
+                      setFilterDateFrom(defaultFrom);
+                      setFilterDateTo(defaultTo);
+                      fetchWithFilters(defaultFrom, defaultTo, selectedEmployeeId);
+                    }}
+                  >
+                    <i className="ti ti-refresh me-1" />
+                    Reset
+                  </button>
+
+                  {/* Active filter badge */}
+                  {(filterDateFrom || filterDateTo) && (
+                    <span className="badge badge-info-transparent d-flex align-items-center gap-1">
+                      <i className="ti ti-calendar me-1" />
+                      {filterDateFrom?.format("DD MMM YYYY")} →{" "}
+                      {filterDateTo?.format("DD MMM YYYY")}
+                      {selectedEmployeeId && (
+                        <span className="ms-1">
+                          · {employees.find((e) => e.id.toString() === selectedEmployeeId)?.name}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
           <div className="card border-0">
             <div className="card-body">

@@ -26,32 +26,11 @@ interface LeaveRecord {
 
 // --- FIXED: Single definition with all properties ---
 const getCardStyles = (type: string) => {
-  switch (type) {
-    case "Annual Leave":
-      return {
-        cls: "bg-black-le",
-        icon: "ti ti-calendar-event",
-        fallbackColor: "#1B1B1B", // Deep Black/Grey
-      };
-    case "Medical Leave":
-      return {
-        cls: "bg-blue-le",
-        icon: "ti ti-vaccine",
-        fallbackColor: "#007BFF", // Vibrant Blue
-      };
-    case "Casual Leave":
-      return {
-        cls: "bg-purple-le",
-        icon: "ti ti-hexagon-letter-c",
-        fallbackColor: "#6F42C1", // Deep Purple
-      };
-    default:
-      return {
-        cls: "bg-pink-le",
-        icon: "ti ti-hexagonal-prism-plus",
-        fallbackColor: "#E83E8C", // Pink/Crimson
-      };
-  }
+  const t = type?.toLowerCase() || "";
+  if (t.includes("annual")) return { cls: "bg-black-le", icon: "ti ti-calendar-event", fallbackColor: "#1B1B1B" };
+  if (t.includes("medical")) return { cls: "bg-blue-le", icon: "ti ti-vaccine", fallbackColor: "#007BFF" };
+  if (t.includes("casual")) return { cls: "bg-purple-le", icon: "ti ti-hexagon-letter-c", fallbackColor: "#6F42C1" };
+  return { cls: "bg-pink-le", icon: "ti ti-hexagonal-prism-plus", fallbackColor: "#E83E8C" };
 };
 
 const LeaveEmployeeKHR = () => {

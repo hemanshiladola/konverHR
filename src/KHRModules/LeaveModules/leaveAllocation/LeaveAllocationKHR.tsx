@@ -281,49 +281,49 @@ const LeaveAllocationKHR = () => {
         );
       },
     },
-    {
-      title: "Actions",
-      dataIndex: "id",
-      render: (_: any, record: any) => (
-        <div className="action-icon d-inline-flex align-items-center">
-          {/* Show Approve/Refuse only for 'confirm' state (which is our mapped false) */}
-          {record.state === "confirm" && (
-            <>
-              <Link
-                to="#"
-                className="me-2 text-success"
-                onClick={() => handleStatusUpdate(record.id, "approve")}
-              >
-                <i className="ti ti-check fs-18" />
-              </Link>
-              <Link
-                to="#"
-                className="me-2 text-danger"
-                onClick={() => handleStatusUpdate(record.id, "refuse")}
-              >
-                <i className="ti ti-x fs-18" />
-              </Link>
-            </>
-          )}
-          <Link
-            to="#"
-            className="me-2"
-            data-bs-toggle="modal"
-            data-bs-target="#add_leave_allocation_modal"
-            onClick={() => setSelectedAllocation({ ...record })} // Create new reference for Modal useEffect
-          >
-            <i className="ti ti-edit text-blue" />
-          </Link>
-          <Link
-            to="#"
-            className="text-danger"
-            onClick={() => handleDelete(record.id)}
-          >
-            <i className="ti ti-trash" />
-          </Link>
-        </div>
-      ),
-    },
+    // {
+    //   title: "Actions",
+    //   dataIndex: "id",
+    //   render: (_: any, record: any) => (
+    //     <div className="action-icon d-inline-flex align-items-center">
+    //       {/* Show Approve/Refuse only for 'confirm' state (which is our mapped false) */}
+    //       {record.state === "confirm" && (
+    //         <>
+    //           <Link
+    //             to="#"
+    //             className="me-2 text-success"
+    //             onClick={() => handleStatusUpdate(record.id, "approve")}
+    //           >
+    //             <i className="ti ti-check fs-18" />
+    //           </Link>
+    //           <Link
+    //             to="#"
+    //             className="me-2 text-danger"
+    //             onClick={() => handleStatusUpdate(record.id, "refuse")}
+    //           >
+    //             <i className="ti ti-x fs-18" />
+    //           </Link>
+    //         </>
+    //       )}
+    //       <Link
+    //         to="#"
+    //         className="me-2"
+    //         data-bs-toggle="modal"
+    //         data-bs-target="#add_leave_allocation_modal"
+    //         onClick={() => setSelectedAllocation({ ...record })} // Create new reference for Modal useEffect
+    //       >
+    //         <i className="ti ti-edit text-blue" />
+    //       </Link>
+    //       <Link
+    //         to="#"
+    //         className="text-danger"
+    //         onClick={() => handleDelete(record.id)}
+    //       >
+    //         <i className="ti ti-trash" />
+    //       </Link>
+    //     </div>
+    //   ),
+    // },
   ];
 
   return (

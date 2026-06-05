@@ -527,18 +527,15 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       return false;
     }
 
-    const hasInvalidComponent = selectedComponents.some(
-      (c: any) =>
-        !Number(c.structure_head_id) ||
-        Number(c.amount) <= 0 ||
-        (!c.addition && !c.deduction),
+    // Only validate that every row has a type selected (no empty dropdowns)
+    const hasEmptyDropdown = (formData.components || []).some(
+      (c: any) => !c.structure_head_id
     );
 
-    if (hasInvalidComponent) {
+    if (hasEmptyDropdown) {
       setErrors((prev: any) => ({
         ...prev,
-        components:
-          "Each selected salary component must have a type and amount greater than 0.",
+        components: "Please select a type for all components or remove empty rows.",
       }));
       return false;
     }
@@ -618,7 +615,8 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       const payload = {
         employee_id: Number(formData.employee_id),
         leave_configuration_id: Number(configId),
-        contract_start: formData.date_start, // Uses the value from Tab 1
+        contract_start: formData.date_start,
+        contract_end: formData.date_end || null,
       };
 
       const res = await getLeavePreview(payload);
@@ -700,10 +698,20 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     const finalESICBase =
       esicBaseOverride !== null ? esicBaseOverride : autoESICBase;
 
-    // Calculate Gross for PT slab calculation
+    // Calculate Gross for PT slab and ESIC eligibility
     const grossTotal = comps
       .filter((c) => c.addition)
       .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+
+    // If gross >= 21000, clear ESI base from all allowances and remove ESIC deduction
+    if (grossTotal >= 21000) {
+      comps.forEach((c) => {
+        if (c.addition) c.is_esic_base = false;
+      });
+      // Remove ESIC employee deduction component
+      const esicIndex = comps.findIndex((c) => c.deduction && c.structure_head_id === 19);
+      if (esicIndex !== -1) comps.splice(esicIndex, 1);
+    }
 
     comps.forEach((c) => {
       if (c.structure_head_id === 18) {
@@ -714,7 +722,9 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       if (c.structure_head_id === 19) {
         const pct = c.percentage !== undefined ? c.percentage : 0.75; // Employee ESIC 0.75%
         c.percentage = pct;
-        c.amount = parseFloat(((finalESICBase * pct) / 100).toFixed(2));
+        c.amount = grossTotal < 21000
+          ? parseFloat(((finalESICBase * pct) / 100).toFixed(2))
+          : 0;
       }
       // Professional Tax - Gujarat State Slabs
       if (c.structure_head_id === 20) {
@@ -775,6 +785,29 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
   ) => {
     let newComps = [...(formData.components || [])];
     newComps[index] = { ...newComps[index], [field]: checked };
+
+    // Auto-add deduction component when checkbox is checked
+    if (checked) {
+      const deductionHeadId = field === "is_pf_base" ? 18 : 19; // 18 = PF Employee, 19 = ESIC Employee
+      const alreadyExists = newComps.some((c) => c.deduction && c.structure_head_id === deductionHeadId);
+      if (!alreadyExists) {
+        newComps.push({
+          structure_head_id: deductionHeadId,
+          amount: 0,
+          deduction: true,
+          percentage: deductionHeadId === 18 ? 12 : 0.75,
+        });
+      }
+    } else {
+      // When unchecked, check if any other component still has this base checked
+      const otherStillChecked = newComps.some((c, i) => i !== index && c.addition && c[field]);
+      if (!otherStillChecked) {
+        // Remove the deduction component if no other allowance uses this base
+        const deductionHeadId = field === "is_pf_base" ? 18 : 19;
+        newComps = newComps.filter((c) => !(c.deduction && c.structure_head_id === deductionHeadId));
+      }
+    }
+
     newComps = recalculatePFESIC(newComps);
     setFormData({ ...formData, components: newComps });
   };
@@ -1052,6 +1085,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       const finalPayload: any = {
         ...contractData,
         employee_id: Number(formData.employee_id),
+        contract_end: formData.date_end || null,
         components: (contractData.components || [])
           .filter((c: any) => c.structure_head_id)
           .map((c: any) => ({
@@ -1707,6 +1741,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                               {(formData.components || []).map(
                                 (comp: any, index: number) => {
                                   if (!comp.addition) return null;
+
+                                  // Calculate gross total to determine ESI eligibility
+                                  const grossTotal = (formData.components || [])
+                                    .filter((c: any) => c.addition)
+                                    .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+                                  const esicEligible = grossTotal < 21000;
+
                                   return (
                                     <div className="col-12" key={index}>
                                       <div className="d-flex gap-2 mb-2 align-items-center">
@@ -1715,10 +1756,16 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                             <input className="form-check-input mt-0" style={{ width: '14px', height: '14px', cursor: 'pointer' }} type="checkbox" checked={comp.is_pf_base || false} onChange={(e) => handleBaseCheckboxChange(index, 'is_pf_base', e.target.checked)} />
                                             <label className="form-check-label fs-10 fw-bold text-muted mb-0" style={{ cursor: 'pointer' }}>PF</label>
                                           </div>
-                                          <div className="form-check form-check-sm mb-0 d-flex align-items-center gap-1" title="Include in ESIC Base">
-                                            <input className="form-check-input mt-0" style={{ width: '14px', height: '14px', cursor: 'pointer' }} type="checkbox" checked={comp.is_esic_base || false} onChange={(e) => handleBaseCheckboxChange(index, 'is_esic_base', e.target.checked)} />
-                                            <label className="form-check-label fs-10 fw-bold text-muted mb-0" style={{ cursor: 'pointer' }}>ESI</label>
-                                          </div>
+                                          {esicEligible ? (
+                                            <div className="form-check form-check-sm mb-0 d-flex align-items-center gap-1" title="Include in ESIC Base">
+                                              <input className="form-check-input mt-0" style={{ width: '14px', height: '14px', cursor: 'pointer' }} type="checkbox" checked={comp.is_esic_base || false} onChange={(e) => handleBaseCheckboxChange(index, 'is_esic_base', e.target.checked)} />
+                                              <label className="form-check-label fs-10 fw-bold text-muted mb-0" style={{ cursor: 'pointer' }}>ESI</label>
+                                            </div>
+                                          ) : (
+                                            <div title="ESI not applicable (Gross ≥ ₹21,000)" style={{ height: '18px' }}>
+                                              <span className="fs-10 text-danger fw-bold" style={{ lineHeight: '18px' }}>ESI✕</span>
+                                            </div>
+                                          )}
                                         </div>
                                         <select
                                           className="form-select form-select-sm w-50"
