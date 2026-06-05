@@ -222,9 +222,6 @@ export const exportAbsentPresentReportToExcel = async (
     });
 
     const result = response.data;
-    if (result?.status === "error" || result?.status === false) {
-      throw new Error(result.message || "Export failed.");
-    }
     if (result?.status === "success" && result?.data) {
       const downloadUrl = result.data.excel_content || result.data.attachment_url;
       if (downloadUrl) {
@@ -233,10 +230,9 @@ export const exportAbsentPresentReportToExcel = async (
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error) {
     console.error("Absent/Present Excel Export Error:", error);
-    const msg = error?.response?.data?.message || error?.message || "Export failed.";
-    throw new Error(msg);
+    throw error;
   }
 };
 
@@ -251,9 +247,6 @@ export const exportAbsentPresentReportToPdf = async (
     });
 
     const result = response.data;
-    if (result?.status === "error" || result?.status === false) {
-      throw new Error(result.message || "Export failed.");
-    }
     if (result?.status === "success" && result?.data) {
       const downloadUrl = result.data.pdf_content || result.data.attachment_url;
       if (downloadUrl) {
@@ -262,10 +255,9 @@ export const exportAbsentPresentReportToPdf = async (
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error) {
     console.error("Absent/Present PDF Export Error:", error);
-    const msg = error?.response?.data?.message || error?.message || "Export failed.";
-    throw new Error(msg);
+    throw error;
   }
 };
 
@@ -282,8 +274,6 @@ export interface ReportExportPayload {
 }
 
 const exportReport = async (endpoint: string, payload: ReportExportPayload, fileName: string, mimeType: string) => {
-const exportReport = async (endpoint: string, payload: ReportExportPayload, fileName: string, mimeType: string) => {
-  try {
   const { user_id } = getAuthDetails();
   const token = localStorage.getItem("authToken");
 
@@ -303,9 +293,6 @@ const exportReport = async (endpoint: string, payload: ReportExportPayload, file
   });
 
   const result = response.data;
-  if (result?.status === "error" || result?.status === false) {
-    throw new Error(result.message || "Export failed.");
-  }
   if ((result.status === "success" || result.success === true) && result.data) {
     // Handle direct download URL (pdf_content or excel_content)
     const contentUrl = result.data.pdf_content || result.data.excel_content || result.data.attachment_url;
@@ -322,10 +309,6 @@ const exportReport = async (endpoint: string, payload: ReportExportPayload, file
     }
   }
   return result;
-  } catch (error: any) {
-    const msg = error?.response?.data?.message || error?.message || "Export failed.";
-    throw new Error(msg);
-  }
 };
 
 // Late Report
