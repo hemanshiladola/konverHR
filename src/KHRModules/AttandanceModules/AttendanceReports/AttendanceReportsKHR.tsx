@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { DatePicker } from "antd";
 import { Dayjs } from "dayjs";
 import { toast } from "react-toastify";
@@ -86,8 +86,8 @@ const AttendanceReportsKHR = () => {
     setExportingKey(key);
     try {
       await exportFn(payload);
-    } catch (error) {
-      console.error("Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setExportingKey(null);
     }
@@ -103,8 +103,8 @@ const AttendanceReportsKHR = () => {
         exportBranchId,
         exportDepartmentId,
       );
-    } catch (error) {
-      console.error("Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setExportingKey(null);
     }
@@ -120,8 +120,8 @@ const AttendanceReportsKHR = () => {
         exportBranchId,
         exportDepartmentId,
       );
-    } catch (error) {
-      console.error("Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setExportingKey(null);
     }
@@ -353,3 +353,4 @@ const AttendanceReportsKHR = () => {
 };
 
 export default AttendanceReportsKHR;
+

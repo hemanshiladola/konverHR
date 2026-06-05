@@ -1,4 +1,4 @@
-import { all_routes } from "@/router/all_routes";
+﻿import { all_routes } from "@/router/all_routes";
 // import ImageWithBasePath from "@/core/common/imageWithBasePath";
 
 import { useEffect, useRef, useState } from "react";
@@ -137,7 +137,7 @@ const AdminAttandanceKHR = () => {
   const groupByOptions = [
     { value: "none", label: "No Grouping" },
     { value: "status", label: "Group by Status" },
-    { value: "absent_date", label: "Absent — Date Wise" },  // ← ADD THIS
+    { value: "absent_date", label: "Absent â€” Date Wise" },  // â† ADD THIS
 
     { value: "role", label: "Group by Role" },
     { value: "department", label: "Group by Department" },
@@ -300,7 +300,7 @@ const AdminAttandanceKHR = () => {
   //         groupKey = item.Date;
   //         break;
   //         case "department":
-  // groupKey = item.Department || item.Role || "No Department";  // ← FIX THIS
+  // groupKey = item.Department || item.Role || "No Department";  // â† FIX THIS
   // break;
   // case "absent_date":
   // // Only include absent records, grouped by date
@@ -387,8 +387,8 @@ const AdminAttandanceKHR = () => {
           const hours = parseFloat(item.ProductionHours);
           if (hours === 0) groupKey = "No Hours (Absent)";
           else if (hours < 4) groupKey = "Under 4 Hours";
-          else if (hours < 8) groupKey = "4–8 Hours";
-          else if (hours <= 9) groupKey = "8–9 Hours";
+          else if (hours < 8) groupKey = "4â€“8 Hours";
+          else if (hours <= 9) groupKey = "8â€“9 Hours";
           else groupKey = "Over 9 Hours";
           break;
         }
@@ -683,8 +683,8 @@ const AdminAttandanceKHR = () => {
         exportBranchId,
         exportDepartmentId,
       );
-    } catch (error) {
-      console.error("Excel Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -703,8 +703,8 @@ const AdminAttandanceKHR = () => {
         exportBranchId,
         exportDepartmentId,
       );
-    } catch (error) {
-      console.error("PDF Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -716,8 +716,8 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       await exportAbsentPresentReportToExcel(payload);
-    } catch (error) {
-      console.error("Absent/Present Excel Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -729,8 +729,8 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       await exportAbsentPresentReportToPdf(payload);
-    } catch (error) {
-      console.error("Absent/Present PDF Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -760,8 +760,8 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       await exportLateReportExcel(payload);
-    } catch (error) {
-      console.error("Late Report Excel Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -773,8 +773,8 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       await exportLateReportPdf(payload);
-    } catch (error) {
-      console.error("Late Report PDF Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -787,8 +787,8 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       await exportMissedPunchExcel(payload);
-    } catch (error) {
-      console.error("Missed Punch Excel Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -800,8 +800,8 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       await exportMissedPunchPdf(payload);
-    } catch (error) {
-      console.error("Missed Punch PDF Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -814,8 +814,8 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       await exportRegularizationExcel(payload);
-    } catch (error) {
-      console.error("Regularization Excel Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -827,8 +827,8 @@ const AdminAttandanceKHR = () => {
     setIsExporting(true);
     try {
       await exportRegularizationPdf(payload);
-    } catch (error) {
-      console.error("Regularization PDF Export failed:", error);
+    } catch (error: any) {
+      toast.error(error?.message || "Export failed. Please try again.");
     } finally {
       setIsExporting(false);
     }
@@ -1233,7 +1233,7 @@ const AdminAttandanceKHR = () => {
   //       };
   //     });
 
-  //     // Map absent records from meta — these are historical absent entries
+  //     // Map absent records from meta â€” these are historical absent entries
   //     const mappedAbsent: AttendanceAdminData[] = absentEmployees.map((item: any) => ({
   //       id: null,
   //       Employee: item.name || "Unknown",
@@ -1257,7 +1257,7 @@ const AdminAttandanceKHR = () => {
   //     // Keep mappedPresent as source of truth for today; add historical absents only
   //     const todayStr = new Date().toISOString().split("T")[0];
   //     const filteredAbsent = mappedAbsent.filter((a) => {
-  //       // Convert back from "Jun 03, 2026" → "2026-06-03" for comparison
+  //       // Convert back from "Jun 03, 2026" â†’ "2026-06-03" for comparison
   //       const parsed = new Date(a.Date);
   //       const dateStr = isNaN(parsed.getTime()) ? "" : parsed.toISOString().split("T")[0];
   //       return dateStr !== todayStr;
@@ -1778,11 +1778,11 @@ const AdminAttandanceKHR = () => {
                   {(filterDateFrom || filterDateTo) && (
                     <span className="badge badge-info-transparent d-flex align-items-center gap-1">
                       <i className="ti ti-calendar me-1" />
-                      {filterDateFrom?.format("DD MMM YYYY")} →{" "}
+                      {filterDateFrom?.format("DD MMM YYYY")} â†’{" "}
                       {filterDateTo?.format("DD MMM YYYY")}
                       {selectedEmployeeId && (
                         <span className="ms-1">
-                          · {employees.find((e) => e.id.toString() === selectedEmployeeId)?.name}
+                          Â· {employees.find((e) => e.id.toString() === selectedEmployeeId)?.name}
                         </span>
                       )}
                     </span>
@@ -2253,3 +2253,4 @@ const AdminAttandanceKHR = () => {
 };
 
 export default AdminAttandanceKHR;
+
