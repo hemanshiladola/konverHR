@@ -476,7 +476,7 @@ const AddEditPayslipModal: React.FC<Props> = ({
                               <tr key={i}> */}
                         <tbody>
                           {computedData.salary_lines
-                            .filter((l: any) => l.code !== "Net")
+                            .filter((l: any) => l.code !== "Net" && Number(l.total) !== 0)
                             .sort((a: any, b: any) => {
                               const order: any = {
                                 Allowance: 1,
@@ -519,14 +519,8 @@ const AddEditPayslipModal: React.FC<Props> = ({
                           Final Net Payable
                         </p>
                         <h2 className="mb-0 fw-bolder">
-                          {
-                            computedData.salary_lines.find(
-                              (l: any) => l.code === "Net",
-                            )?.currency
-                          }{" "}
-                          {computedData.salary_lines
-                            .find((l: any) => l.code === "Net")
-                            ?.total?.toLocaleString()}
+                          {computedData.salary_lines.find((l: any) => l.code === "Net")?.currency || "INR"}{" "}
+                          {(computedData.salary_lines.find((l: any) => l.code === "Net")?.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </h2>
                       </div>
                       <div className="bg-white bg-opacity-25 p-3 rounded-circle">
