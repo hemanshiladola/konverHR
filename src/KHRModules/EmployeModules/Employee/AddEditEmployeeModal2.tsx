@@ -4460,7 +4460,7 @@ const AddEditEmployeeModal2: React.FC<Props> = ({
                       <div>
                         <button
                           type="button"
-                          className="btn btn-outline-secondary px-4 fw-medium rounded-pill"
+                          className="btn btn-outline-secondary px-4 fw-medium rounded-pill "
                           onClick={handlePrevStep}
                           disabled={isFirstTab}
                         >

@@ -290,7 +290,7 @@ const ViewPayslipModal: React.FC<Props> = ({ data, onClose }) => {
             </div>
 
             <div className="modal-footer border-top-0 bg-light py-3">
-              <button type="button" className="btn btn-outline-secondary px-4 fw-medium" data-bs-dismiss="modal">
+              <button type="button" className="btn btn-outline-secondary px-4 fw-medium mx-3" data-bs-dismiss="modal">
                 Close View
               </button>
               <button type="button" className="btn btn-primary px-4 shadow-sm fw-medium d-flex align-items-center gap-2" onClick={handlePrint}>

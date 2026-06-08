@@ -137,7 +137,7 @@ const AdminAttandanceKHR = () => {
   const groupByOptions = [
     { value: "none", label: "No Grouping" },
     { value: "status", label: "Group by Status" },
-    { value: "absent_date", label: "Absent â€” Date Wise" },  // â† ADD THIS
+    { value: "absent_date", label: "Absent Date Wise" },  // â† ADD THIS
 
     { value: "role", label: "Group by Role" },
     { value: "department", label: "Group by Department" },
@@ -1715,7 +1715,7 @@ const AdminAttandanceKHR = () => {
             />
             {/* Date Filter Bar */}
             <div className="card border-0 mb-0">
-              <div className="card-body py-2">
+              {/* <div className="card-body py-2">
                 <div className="d-flex align-items-center gap-3 flex-wrap">
                   <span className="fw-semibold text-muted d-flex align-items-center">
                     <i className="ti ti-filter me-1" />
@@ -1774,11 +1774,10 @@ const AdminAttandanceKHR = () => {
                     Reset
                   </button>
 
-                  {/* Active filter badge */}
                   {(filterDateFrom || filterDateTo) && (
                     <span className="badge badge-info-transparent d-flex align-items-center gap-1">
                       <i className="ti ti-calendar me-1" />
-                      {filterDateFrom?.format("DD MMM YYYY")} â†’{" "}
+                      {filterDateFrom?.format("DD MMM YYYY")} to {" "}
                       {filterDateTo?.format("DD MMM YYYY")}
                       {selectedEmployeeId && (
                         <span className="ms-1">
@@ -1788,7 +1787,7 @@ const AdminAttandanceKHR = () => {
                     </span>
                   )}
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
           <div className="card border-0">
