@@ -168,15 +168,44 @@ const AdminAttandanceKHR = () => {
     };
   };
 
+  // const fetchWithFilters = (
+  //   dateFrom?: Dayjs | null,
+  //   dateTo?: Dayjs | null,
+  //   employeeId?: string,
+  // ) => {
+  //   const params: any = {};
+  //   if (dateFrom) params.date_from = dateFrom.format("YYYY-MM-DD");
+  //   if (dateTo) params.date_to = dateTo.format("YYYY-MM-DD");
+  //   if (employeeId) params.employee_id = employeeId;
+  //   dispatch(AttendancesGetApi(params) as any);
+  // };
+
   const fetchWithFilters = (
     dateFrom?: Dayjs | null,
     dateTo?: Dayjs | null,
     employeeId?: string,
   ) => {
     const params: any = {};
-    if (dateFrom) params.date_from = dateFrom.format("YYYY-MM-DD");
-    if (dateTo) params.date_to = dateTo.format("YYYY-MM-DD");
-    if (employeeId) params.employee_id = employeeId;
+
+    if (dateFrom) {
+      params.date_from = dateFrom.format("YYYY-MM-DD");
+    }
+
+    if (dateTo) {
+      let finalDateTo = dateTo;
+
+      // If selected date is today, add 1 day
+      if (dateTo.isSame(dayjs(), "day")) {
+        finalDateTo = dateTo.add(1, "day");
+      }
+
+      params.date_to = finalDateTo.format("YYYY-MM-DD");
+    }
+
+    if (employeeId) {
+      params.employee_id = employeeId;
+    }
+
     dispatch(AttendancesGetApi(params) as any);
   };
 
