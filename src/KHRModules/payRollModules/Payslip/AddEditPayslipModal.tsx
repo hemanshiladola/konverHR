@@ -57,9 +57,9 @@ const AddEditPayslipModal: React.FC<Props> = ({
             : [],
           contracts: Array.isArray(c)
             ? c.map((i: any) => ({
-                value: i.contract_id || i.id,
-                label: i.name,
-              }))
+              value: i.contract_id || i.id,
+              label: i.name,
+            }))
             : [],
         });
       } catch (error) {
@@ -154,7 +154,9 @@ const AddEditPayslipModal: React.FC<Props> = ({
     setFormData((prev: any) => ({
       ...prev,
       employee_id: opt?.value || "",
-      contract_id: contractIdToSet,
+      contract_id: Number.isInteger(Number(contractIdToSet))
+        ? Number(contractIdToSet)
+        : null,
       name: opt ? `Salary Slip of ${employeeName} for ${month}` : "",
     }));
     // Clear errors when user selects an employee
@@ -467,9 +469,23 @@ const AddEditPayslipModal: React.FC<Props> = ({
                             <th className="text-end pe-3">Total Amount</th>
                           </tr>
                         </thead>
+                        {/* <tbody>
+                          {computedData.salary_lines
+                            .filter((l: any) => l.code !== "Net")
+                            .map((line: any, i: number) => (
+                              <tr key={i}> */}
                         <tbody>
                           {computedData.salary_lines
                             .filter((l: any) => l.code !== "Net")
+                            .sort((a: any, b: any) => {
+                              const order: any = {
+                                Allowance: 1,
+                                Deduction: 2,
+                                Net: 3,
+                              };
+
+                              return (order[a.category] || 999) - (order[b.category] || 999);
+                            })
                             .map((line: any, i: number) => (
                               <tr key={i}>
                                 <td className="ps-3">

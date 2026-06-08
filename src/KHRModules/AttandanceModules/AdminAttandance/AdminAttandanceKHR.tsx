@@ -137,7 +137,7 @@ const AdminAttandanceKHR = () => {
   const groupByOptions = [
     { value: "none", label: "No Grouping" },
     { value: "status", label: "Group by Status" },
-    { value: "absent_date", label: "Absent Date Wise" },  // â† ADD THIS
+    { value: "absent_date", label: "Absent Date Wise" },  // ADD THIS
 
     { value: "role", label: "Group by Role" },
     { value: "department", label: "Group by Department" },
