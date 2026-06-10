@@ -703,8 +703,11 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       .filter((c) => c.addition)
       .reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
 
+
+    const basicAmount =
+      comps.find((c) => c.structure_head_id === 1)?.amount || 0;
     // If gross >= 21000, clear ESI base from all allowances and remove ESIC deduction
-    if (grossTotal >= 21000) {
+    if (basicAmount >= 21000) {
       comps.forEach((c) => {
         if (c.addition) c.is_esic_base = false;
       });
@@ -722,9 +725,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       if (c.structure_head_id === 19) {
         const pct = c.percentage !== undefined ? c.percentage : 0.75; // Employee ESIC 0.75%
         c.percentage = pct;
-        c.amount = grossTotal < 21000
-          ? parseFloat(((finalESICBase * pct) / 100).toFixed(2))
-          : 0;
+        // c.amount = grossTotal < 21000
+        //   ? parseFloat(((finalESICBase * pct) / 100).toFixed(2))
+        //   : 0;
+
+        c.amount = basicAmount <= 21000
+  ? parseFloat(((finalESICBase * pct) / 100).toFixed(2))
+  : 0;
       }
       // Professional Tax - Gujarat State Slabs
       if (c.structure_head_id === 20) {
@@ -1743,10 +1750,16 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                                   if (!comp.addition) return null;
 
                                   // Calculate gross total to determine ESI eligibility
-                                  const grossTotal = (formData.components || [])
-                                    .filter((c: any) => c.addition)
-                                    .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
-                                  const esicEligible = grossTotal < 21000;
+                                  // const grossTotal = (formData.components || [])
+                                  //   .filter((c: any) => c.addition)
+                                  //   .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+                                  // const esicEligible = grossTotal < 21000;
+                                  const basicAmount =
+                                    (formData.components || []).find(
+                                      (c: any) => c.structure_head_id === 1
+                                    )?.amount || 0;
+
+                                  const esicEligible = basicAmount <= 21000;
 
                                   return (
                                     <div className="col-12" key={index}>
