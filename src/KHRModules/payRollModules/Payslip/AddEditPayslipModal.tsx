@@ -419,7 +419,7 @@ const AddEditPayslipModal: React.FC<Props> = ({
                           <th className="ps-3">Work Description</th>
                           <th className="text-center">Days</th>
                           <th className="text-center">Hours</th>
-                          <th className="text-end pe-3">Draft Amount</th>
+                          {/* <th className="text-end pe-3">Draft Amount</th> */}
                         </tr>
                       </thead>
                       <tbody>
@@ -438,9 +438,9 @@ const AddEditPayslipModal: React.FC<Props> = ({
                                 {Number(item.number_of_hours || 0).toFixed(2)}
                                 h{" "}
                               </td>
-                              <td className="text-end pe-3 fw-bold">
+                              {/* <td className="text-end pe-3 fw-bold">
                                 {item.currency} {item.amount?.toLocaleString()}
-                              </td>
+                              </td> */}
                             </tr>
                           ),
                         )}
@@ -518,9 +518,16 @@ const AddEditPayslipModal: React.FC<Props> = ({
                         <p className="mb-0 opacity-75 fs-11 fw-bold text-uppercase tracking-wider">
                           Final Net Payable
                         </p>
-                        <h2 className="mb-0 fw-bolder">
+                        {/* <h2 className="mb-0 fw-bolder">
                           {computedData.salary_lines.find((l: any) => l.code === "Net")?.currency || "INR"}{" "}
                           {(computedData.salary_lines.find((l: any) => l.code === "Net")?.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </h2> */}
+                        <h2 className="mb-0 fw-bolder">
+                          {computedData.salary_lines.find((l: any) => l.code === "NET")?.currency || "INR"}{" "}
+                          {(computedData.salary_lines.find((l: any) => l.code === "NET")?.amount || 0).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </h2>
                       </div>
                       <div className="bg-white bg-opacity-25 p-3 rounded-circle">
