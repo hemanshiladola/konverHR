@@ -1136,10 +1136,29 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         ...contractData
       } = formData as any;
 
+      const finalPFBase =
+  manualPFBase !== null
+    ? manualPFBase
+    : (formData.components || [])
+        .filter((c: any) => c.addition && c.is_pf_base)
+        .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+
+const finalESICBase =
+  manualESICBase !== null
+    ? manualESICBase
+    : (formData.components || [])
+        .filter((c: any) => c.addition && c.is_esic_base)
+        .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+
       const finalPayload: any = {
         ...contractData,
         employee_id: Number(formData.employee_id),
         contract_end: formData.date_end || null,
+          // New fields
+  pf_base_amount: finalPFBase,
+  esic_base_amount: finalESICBase,
+  pf_percentage: employerPFPct,
+  esic_percentage: employerESICPct,
         components: (contractData.components || [])
           .filter((c: any) => c.structure_head_id)
           .map((c: any) => ({
@@ -1160,6 +1179,10 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
             .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0)
         ).toFixed(2)),
       };
+
+
+      console.log(finalPayload,"finalPayload");
+      
 
       // 4. Call Single API (Add or Edit)
       // Note: Use contract_id from the JSON response if available
