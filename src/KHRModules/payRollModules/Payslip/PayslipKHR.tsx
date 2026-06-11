@@ -13,6 +13,8 @@ import { all_routes } from "@/router/all_routes";
 import DatatableKHR from "@/CommonComponent/DataTableKHR/DatatableKHR";
 import ViewPayslipModal from "./ViewPayslipModal";
 import BulkPayrollModal from "./BulkPayrollModal";
+import WageSheetModal from "./WageSheetModal";
+
 
 const PayslipKHR = () => {
   const [payslips, setPayslips] = useState([]);
@@ -20,6 +22,10 @@ const PayslipKHR = () => {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [viewData, setViewData] = useState<any | null>(null);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [showWageSheet, setShowWageSheet] = useState(false);
+
+
 
   const fetchPayslips = async () => {
     setLoading(true);
@@ -44,6 +50,15 @@ const PayslipKHR = () => {
     }
   };
 
+  // Inside component, add this helper
+  // const openWageSheetModal = () => {
+  //   const modalElement = document.getElementById("wage_sheet_modal");
+  //   if (modalElement) {
+  //     const modal = new (window as any).bootstrap.Modal(modalElement);
+  //     modal.show();
+  //   }
+  // };
+
   useEffect(() => {
     fetchPayslips();
   }, []);
@@ -61,6 +76,7 @@ const PayslipKHR = () => {
   };
 
   const handleDownload = async (id: number) => {
+    setDownloadingId(id);
     try {
       const response = await downloadPayslip(id);
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -70,8 +86,11 @@ const PayslipKHR = () => {
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
+      toast.success("Payslip downloaded successfully");
     } catch (err) {
       toast.error("Failed to download payslip");
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -226,15 +245,16 @@ const PayslipKHR = () => {
           >
             <i className="ti ti-eye"></i>
           </button>
-          
+
           <button
             className="btn btn-sm btn-outline-primary"
             onClick={() => handleDownload(record.id)}
             title="Download PDF"
+            disabled={downloadingId === record.id}
           >
             <i className="ti ti-download"></i>
           </button>
-          
+
           {/* Only show Confirm for Draft/Verify */}
           {record.state === "draft" && (
             <button
@@ -271,15 +291,25 @@ const PayslipKHR = () => {
           modalTarget="#add_payslip_modal"
           routes={all_routes}
           rightActions={
-            <button
-              type="button"
-              className="btn btn-outline-primary d-flex align-items-center"
-              data-bs-toggle="modal"
-              data-bs-target="#bulk_payroll_modal"
-            >
-              <i className="ti ti-calculator fs-5 me-2"></i>
-              Bulk Payroll Wizard
-            </button>
+            <div className="d-flex gap-2">
+              <button
+                type="button"
+                className="btn btn-outline-success d-flex align-items-center"
+                onClick={() => setShowWageSheet(true)}
+              >
+                <i className="ti ti-table-export fs-5 me-2"></i>
+                Wage Sheet
+              </button>
+              <button
+                type="button"
+                className="btn btn-outline-primary d-flex align-items-center"
+                data-bs-toggle="modal"
+                data-bs-target="#bulk_payroll_modal"
+              >
+                <i className="ti ti-calculator fs-5 me-2"></i>
+                Bulk Payroll Wizard
+              </button>
+            </div>
           }
         />
 
@@ -296,6 +326,10 @@ const PayslipKHR = () => {
         />
         <ViewPayslipModal data={viewData} onClose={() => setViewData(null)} />
         <BulkPayrollModal onSuccess={fetchPayslips} />
+        <WageSheetModal
+          show={showWageSheet}
+          onClose={() => setShowWageSheet(false)}
+        />
       </div>
     </div>
   );

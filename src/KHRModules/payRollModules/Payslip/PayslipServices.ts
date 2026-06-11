@@ -33,6 +33,21 @@ export const createPayslip = async (payload: any) => {
     payload,
   );
 };
+export const downloadWageSheet = async (payload: {
+  start_date: string;
+  end_date: string;
+}) => {
+  return await Instance.post(
+    `/api/payroll/download_wage_sheet`,
+    {
+      ...payload,
+      user_id: getUserId(),
+    },
+    {
+      responseType: "blob",
+    }
+  );
+};
 
 export const computePayslip = async (id: number) => {
   return await Instance.post(

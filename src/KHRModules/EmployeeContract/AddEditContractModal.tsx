@@ -471,6 +471,50 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
     return currentTabFields.some((field) => errors[field]);
   };
 
+  // const validateBasicTab = () => {
+  //   let tempErrors: any = {};
+  //   let isValid = true;
+
+  //   if (!String(formData.name || "").trim()) {
+  //     tempErrors.name = "Contract reference is required";
+  //     isValid = false;
+  //   }
+  //   if (!formData.employee_id) {
+  //     tempErrors.employee_id = "Employee is required";
+  //     isValid = false;
+  //   }
+  //   if (!formData.date_start) {
+  //     tempErrors.date_start = "Start Date is required";
+  //     isValid = false;
+  //   }
+  //   if (!formData.date_end) {
+  //     tempErrors.date_end = "End Date is required";
+  //     isValid = false;
+  //   }
+  //   if (
+  //     formData.date_start &&
+  //     formData.date_end &&
+  //     dayjs(formData.date_end).isBefore(dayjs(formData.date_start), "day")
+  //   ) {
+  //     tempErrors.date_end = "End Date cannot be before Start Date";
+  //     isValid = false;
+  //   }
+  //   if (!formData.wage || Number(formData.wage) <= 0) {
+  //     tempErrors.wage = "Valid wage amount is required";
+  //     isValid = false;
+  //   }
+
+  //   setErrors((prev: any) => {
+  //     const newErrors = { ...prev };
+  //     ["name", "employee_id", "date_start", "date_end", "wage"].forEach(
+  //       (field) => delete newErrors[field],
+  //     );
+  //     return { ...newErrors, ...tempErrors };
+  //   });
+  //   return isValid;
+  // };
+
+
   const validateBasicTab = () => {
     let tempErrors: any = {};
     let isValid = true;
@@ -499,21 +543,17 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       tempErrors.date_end = "End Date cannot be before Start Date";
       isValid = false;
     }
-    if (!formData.wage || Number(formData.wage) <= 0) {
-      tempErrors.wage = "Valid wage amount is required";
-      isValid = false;
-    }
+    // ❌ REMOVED wage check here — wage is auto-calculated from salary tab
 
     setErrors((prev: any) => {
       const newErrors = { ...prev };
-      ["name", "employee_id", "date_start", "date_end", "wage"].forEach(
+      ["name", "employee_id", "date_start", "date_end"].forEach(
         (field) => delete newErrors[field],
       );
       return { ...newErrors, ...tempErrors };
     });
     return isValid;
   };
-
   const validateSalaryTab = () => {
     const selectedComponents = (formData.components || []).filter(
       (c: any) => c.structure_head_id,
@@ -730,8 +770,8 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
         //   : 0;
 
         c.amount = basicAmount <= 21000
-  ? parseFloat(((finalESICBase * pct) / 100).toFixed(2))
-  : 0;
+          ? parseFloat(((finalESICBase * pct) / 100).toFixed(2))
+          : 0;
       }
       // Professional Tax - Gujarat State Slabs
       if (c.structure_head_id === 20) {
@@ -1029,6 +1069,13 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       return;
     }
 
+    if (!formData.wage || Number(formData.wage) <= 0) {
+      setErrors((prev: any) => ({ ...prev, wage: "Please add salary components first" }));
+      setActiveTab("salary");
+      toast.error("Please add salary components to calculate CTC.");
+      return;
+    }
+
     // 2. Optional: Check if user forgot to click "Add to List"
     // If the leave form has data but hasn't been added to the table
     const hasUnsavedLeave =
@@ -1134,7 +1181,25 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
 
       onSuccess();
       resetForm();
+
+      // Programmatically trigger Bootstrap modal close
+      const modalElement = document.getElementById("add_contract");
+      if (modalElement) {
+        const modal = (window as any).bootstrap?.Modal?.getInstance(modalElement);
+        if (modal) {
+          modal.hide();
+        } else {
+          // Fallback: manually trigger the hidden event
+          modalElement.classList.remove("show");
+          modalElement.style.display = "none";
+          document.body.classList.remove("modal-open");
+          const backdrop = document.querySelector(".modal-backdrop");
+          backdrop?.remove();
+        }
+      }
       onClose();
+
+      // onClose();
     } catch (error: any) {
       toast.error(error.message || "Failed to save contract data");
     } finally {
@@ -2816,7 +2881,7 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                 </>
               )}
             </div>
-
+            {/* 
             <div className="modal-footer border-0 bg-white px-4">
               <button
                 type="button"
@@ -2836,6 +2901,138 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
                 )}
                 {data ? "Update Contract" : "Save Contract"}
               </button>
+            </div> */}
+
+            {/* <div className="modal-footer border-0 bg-white px-4">
+              <button
+                type="button"
+                className="btn btn-light px-4"
+                data-bs-dismiss="modal"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+
+              {activeTab === "basic" && (
+                <button
+                  type="button"
+                  className="btn btn-primary px-5"
+                  onClick={() => {
+                    if (validateBasicTab()) setActiveTab("salary");
+                  }}
+                >
+                  Next <i className="ti ti-arrow-right ms-1"></i>
+                </button>
+              )}
+
+              {activeTab === "salary" && (
+                <button
+                  type="button"
+                  className="btn btn-primary px-5"
+                  onClick={() => {
+                    if (validateSalaryTab()) setActiveTab("leave_config");
+                  }}
+                >
+                  Next <i className="ti ti-arrow-right ms-1"></i>
+                </button>
+              )}
+
+              {activeTab === "leave_config" && (
+                <button
+                  type="submit"
+                  className="btn btn-primary px-5 shadow-sm"
+                  disabled={loading}
+                >
+                  {loading && (
+                    <span className="spinner-border spinner-border-sm me-2" />
+                  )}
+                  {data ? "Update Contract" : "Save Contract"}
+                </button>
+              )}
+            </div> */}
+
+            <div className="modal-footer border-0 bg-white px-4">
+              <button
+                type="button"
+                className="btn btn-light px-4"
+                data-bs-dismiss="modal"
+                onClick={onClose}
+              >
+                Cancel
+              </button>
+
+              {activeTab === "basic" && (
+                <button
+                  type="button"
+                  className="btn btn-primary px-5"
+                  onClick={() => {
+                    // Validate basic fields BUT skip wage (it's auto-calculated in salary tab)
+                    let tempErrors: any = {};
+                    let isValid = true;
+
+                    if (!String(formData.name || "").trim()) {
+                      tempErrors.name = "Contract reference is required";
+                      isValid = false;
+                    }
+                    if (!formData.employee_id) {
+                      tempErrors.employee_id = "Employee is required";
+                      isValid = false;
+                    }
+                    if (!formData.date_start) {
+                      tempErrors.date_start = "Start Date is required";
+                      isValid = false;
+                    }
+                    if (!formData.date_end) {
+                      tempErrors.date_end = "End Date is required";
+                      isValid = false;
+                    }
+                    if (
+                      formData.date_start &&
+                      formData.date_end &&
+                      dayjs(formData.date_end).isBefore(dayjs(formData.date_start), "day")
+                    ) {
+                      tempErrors.date_end = "End Date cannot be before Start Date";
+                      isValid = false;
+                    }
+
+                    setIsSubmitted(true);
+                    setErrors((prev: any) => ({ ...prev, ...tempErrors }));
+
+                    if (isValid) {
+                      setActiveTab("salary");
+                    }
+                  }}
+                >
+                  Next <i className="ti ti-arrow-right ms-1"></i>
+                </button>
+              )}
+
+              {activeTab === "salary" && (
+                <button
+                  type="button"
+                  className="btn btn-primary px-5"
+                  onClick={() => {
+                    if (validateSalaryTab()) {
+                      setActiveTab("leave_config");
+                    }
+                  }}
+                >
+                  Next <i className="ti ti-arrow-right ms-1"></i>
+                </button>
+              )}
+
+              {activeTab === "leave_config" && (
+                <button
+                  type="submit"
+                  className="btn btn-primary px-5 shadow-sm"
+                  disabled={loading}
+                >
+                  {loading && (
+                    <span className="spinner-border spinner-border-sm me-2" />
+                  )}
+                  {data ? "Update Contract" : "Save Contract"}
+                </button>
+              )}
             </div>
           </form>
         </div>
