@@ -42,8 +42,13 @@ const ViewPayslipModal: React.FC<Props> = ({ data, onClose }) => {
       l.category === "Deduction" && Number(l.total) !== 0,
     ) || [];
 
-  const totalEarnings = earnings.reduce((sum: number, item: any) => sum + item.total, 0);
-  const totalDeductions = deductions.reduce((sum: number, item: any) => sum + Math.abs(item.total), 0);
+  // const totalEarnings = earnings.reduce((sum: number, item: any) => sum + item.total, 0);
+
+  const totalEarnings = earnings.reduce((sum: number, item: any) => sum + Number(item.total), 0);
+
+  // const totalDeductions = deductions.reduce((sum: number, item: any) => sum + Math.abs(item.total), 0);
+
+  const totalDeductions = deductions.reduce((sum: number, item: any) => sum + Math.abs(Number(item.total)), 0);
 
   const workedDays = data.worked_days_line_ids || [];
 

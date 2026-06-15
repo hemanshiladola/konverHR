@@ -1137,28 +1137,28 @@ const AddEditContractModal: React.FC<AddEditContractModalProps> = ({
       } = formData as any;
 
       const finalPFBase =
-  manualPFBase !== null
-    ? manualPFBase
-    : (formData.components || [])
-        .filter((c: any) => c.addition && c.is_pf_base)
-        .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+        manualPFBase !== null
+          ? manualPFBase
+          : (formData.components || [])
+            .filter((c: any) => c.addition && c.is_pf_base)
+            .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
 
-const finalESICBase =
-  manualESICBase !== null
-    ? manualESICBase
-    : (formData.components || [])
-        .filter((c: any) => c.addition && c.is_esic_base)
-        .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+      const finalESICBase =
+        manualESICBase !== null
+          ? manualESICBase
+          : (formData.components || [])
+            .filter((c: any) => c.addition && c.is_esic_base)
+            .reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
 
       const finalPayload: any = {
         ...contractData,
         employee_id: Number(formData.employee_id),
         contract_end: formData.date_end || null,
-          // New fields
-  pf_base_amount: finalPFBase,
-  esic_base_amount: finalESICBase,
-  pf_percentage: employerPFPct,
-  esic_percentage: employerESICPct,
+        // New fields
+        pf_base_amount: finalPFBase,
+        esic_base_amount: finalESICBase,
+        pf_percentage: employerPFPct,
+        esic_percentage: employerESICPct,
         components: (contractData.components || [])
           .filter((c: any) => c.structure_head_id)
           .map((c: any) => ({
@@ -1181,8 +1181,8 @@ const finalESICBase =
       };
 
 
-      console.log(finalPayload,"finalPayload");
-      
+      console.log(finalPayload, "finalPayload");
+
 
       // 4. Call Single API (Add or Edit)
       // Note: Use contract_id from the JSON response if available
@@ -2247,11 +2247,12 @@ const finalESICBase =
                                           {(comp.structure_head_id === 18 || comp.structure_head_id === 19) && (
                                             <div className="input-group input-group-sm flex-shrink-0" style={{ width: '90px' }} title="Employee % Rate">
                                               <input
-                                                type="number"
+                                                type="text"
                                                 step="0.01"
                                                 className="form-control border-danger px-2"
                                                 placeholder={comp.structure_head_id === 18 ? "12" : "0.75"}
                                                 value={comp.percentage !== undefined ? comp.percentage : ""}
+                                                readOnly
                                                 onChange={(e) =>
                                                   handleDeductionPercentageChange(
                                                     index,

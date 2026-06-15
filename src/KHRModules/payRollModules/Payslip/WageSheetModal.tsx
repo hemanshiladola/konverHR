@@ -10,8 +10,6 @@ interface WageSheetModalProps {
   onClose: () => void;
 }
 
-
-
 const WageSheetModal: React.FC<WageSheetModalProps> = ({ show, onClose }) => {
   const [selectedMonth, setSelectedMonth] = useState<dayjs.Dayjs | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,6 +28,38 @@ const WageSheetModal: React.FC<WageSheetModalProps> = ({ show, onClose }) => {
 
     setErrors(tempErrors);
     return isValid;
+  };
+
+  // ✅ Helper to extract server error message from Axios error
+  const extractErrorMessage = async (err: any): Promise<string> => {
+    const fallback = "Failed to download wage sheet";
+
+    try {
+      // Case 1: response data is a Blob (happens when responseType: 'blob' is set)
+      if (err.response?.data instanceof Blob) {
+        const text = await err.response.data.text();
+        try {
+          const parsed = JSON.parse(text);
+          return parsed.message || parsed.error || fallback;
+        } catch {
+          return text || fallback;
+        }
+      }
+
+      // Case 2: response data is a plain JSON object
+      if (err.response?.data) {
+        return (
+          err.response.data.message ||
+          err.response.data.error ||
+          fallback
+        );
+      }
+
+      // Case 3: Axios network or generic error
+      return err.message || fallback;
+    } catch {
+      return fallback;
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,7 +100,9 @@ const WageSheetModal: React.FC<WageSheetModalProps> = ({ show, onClose }) => {
       toast.success("Wage sheet downloaded successfully");
       handleClose();
     } catch (err: any) {
-      toast.error(err.message || "Failed to download wage sheet");
+      // ✅ Properly extract and show the actual server error message
+      const message = await extractErrorMessage(err);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -122,13 +154,6 @@ const WageSheetModal: React.FC<WageSheetModalProps> = ({ show, onClose }) => {
                 <div className="bg-light p-1 rounded-pill border d-flex gap-2">
                   <span className="px-4 py-1 rounded-pill fs-11 fw-bold text-uppercase bg-primary text-white shadow-sm">
                     1. Select Month
-                  </span>
-                  <span
-                    className={`px-4 py-1 rounded-pill fs-11 fw-bold text-uppercase ${
-                      loading ? "bg-warning text-dark shadow-sm" : "text-muted"
-                    }`}
-                  >
-                    2. Download File
                   </span>
                 </div>
               </div>
